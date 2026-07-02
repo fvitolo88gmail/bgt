@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import { supabase } from './supabase';
 import { geminiClient } from './gemini';
 
