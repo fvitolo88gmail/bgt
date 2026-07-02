@@ -144,6 +144,22 @@
 
 ---
 
+### D17 — Modello embedding e dimensioni vettore
+**Contesto:** `text-embedding-004` (768 dim, previsto in development.md) non disponibile con la chiave Gemini AI Studio; libreria `@google/generative-ai` sostituita da `@google/genai`  
+**Opzioni:** `gemini-embedding-001` nativo a 3072 dim · `gemini-embedding-001` con `outputDimensionality: 768` · `gemini-embedding-2` (preview)  
+**Scelta:** `gemini-embedding-001` con `outputDimensionality: 768`  
+**Motivazione:** 3072 dimensioni supera il limite di Supabase per indici ivfflat e hnsw (max 2000). 768 con riduzione dimensionale è supportato nativamente dal modello, mantiene l'indice vettoriale funzionante, e per testi di regole di giochi da tavolo la qualità è più che sufficiente.
+
+---
+
+### D18 — Modello generazione testo
+**Contesto:** `gemini-1.5-flash` non disponibile con la chiave Gemini AI Studio; `gemini-2.0-flash` e `gemini-2.0-flash-lite` hanno quota RPD = 0 sul piano free  
+**Opzioni:** `gemini-2.0-flash` · `gemini-2.0-flash-lite` · `gemini-3.1-flash-lite`  
+**Scelta:** `gemini-3.1-flash-lite`  
+**Motivazione:** unico modello con quota RPD significativa (500/giorno) sul piano free attuale. Sufficiente per MVP condiviso con amici (~250 domande/giorno considerando 2 chiamate per query).
+
+---
+
 ## Template per sessioni future
 
 ```

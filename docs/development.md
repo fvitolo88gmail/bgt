@@ -11,7 +11,7 @@
 | Embedding + LLM | Google Gemini | @google/generative-ai |
 | PDF parsing | pdfplumber (Python) | 0.10+ |
 | Deploy | Vercel | Hobby plan |
- 
+
 ---
 
 ## Dipendenze principali
@@ -19,7 +19,7 @@
 ### Runtime (app)
 ```
 @supabase/supabase-js     → client DB e storage
-@google/generative-ai     → Gemini embeddings + Flash
+@google/genai                 → Gemini embeddings + Flash
 ```
 
 ### Script ingest (dev/local only)
@@ -35,7 +35,7 @@ eslint
 prettier
 vitest                    → unit test e eval runner
 ```
- 
+
 ---
 
 ## Variabili d'ambiente
@@ -45,27 +45,27 @@ vitest                    → unit test e eval runner
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=     # solo script ingest, mai client-side
- 
+
 # Gemini
 GEMINI_API_KEY=
- 
+
 # Config
-EMBEDDING_MODEL=text-embedding-004
+EMBEDDING_MODEL=gemini-embedding-001
 EMBEDDING_DIMENSIONS=768
-CHAT_MODEL=gemini-1.5-flash
+CHAT_MODEL=gemini-3.1-flash-lite
 LLM_PROVIDER=gemini             # gemini | ollama
 OLLAMA_BASE_URL=                # solo se LLM_PROVIDER=ollama
 ```
- 
+
 ---
 
 ## Gemini — modelli da usare
 
 | Uso | Modello | Note |
 |---|---|---|
-| Embedding | `text-embedding-004` | 768 dimensioni, free tier |
-| Generazione risposta | `gemini-1.5-flash` | free tier, 1.500 req/giorno |
- 
+| Embedding | `gemini-embedding-001` | 768 dimensioni (outputDimensionality), free tier |
+| Generazione risposta | `gemini-3.1-flash-lite` | free tier, 500 req/giorno |
+
 ---
 
 ## Supabase — setup iniziale
@@ -75,6 +75,7 @@ OLLAMA_BASE_URL=                # solo se LLM_PROVIDER=ollama
 3. Applica migrations da `/supabase/migrations/` in ordine
 4. Crea funzione RPC `match_chunks` (definita in architecture.md)
 5. Configura storage bucket `manuals` (privato)
+
 ---
 
 ## BGG XML API2
@@ -89,7 +90,7 @@ OLLAMA_BASE_URL=                # solo se LLM_PROVIDER=ollama
 
 Rate limit: attendere 5 secondi tra richieste. Gestire 429 con retry + backoff.
 Nessuna autenticazione richiesta. Nessun full-text search disponibile.
- 
+
 ---
 
 ## Eval harness
@@ -100,6 +101,7 @@ Nessuna autenticazione richiesta. Nessun full-text search disponibile.
 - Output: percentuale di risposte corrette + log dei fallimenti
 - Giochi fixture: Brass Birmingham (MVP), Ark Nova (Fase 2)
 - Soglia minima accettabile: da definire dopo prima run baseline
+
 ---
 
 ## Configurazione Vercel
@@ -108,6 +110,7 @@ Nessuna autenticazione richiesta. Nessun full-text search disponibile.
 - Fluid Compute: abilitare per gestire timeout su ingest PDF lato server
 - Environment variables: configurare da dashboard Vercel
 - Le cartelle `/scripts` e `/eval` sono escluse dal bundle Vercel
+
 ---
 
 ## Sviluppo locale
@@ -115,17 +118,20 @@ Nessuna autenticazione richiesta. Nessun full-text search disponibile.
 ```bash
 # installa dipendenze
 npm install
- 
+
 # avvia dev server
 npm run dev
- 
-# esegui ingest PDF (richiede Python + pdfplumber)
-npx ts-node scripts/ingest-pdf.ts --pdf ./manuals/brass.pdf --game-id {uuid}
- 
+
+# esegui ingest PDF (richiede Python + pdfplumber + .venv attivo)
+source .venv/bin/activate
+npx ts-node --project scripts/tsconfig.json scripts/ingest-pdf.ts --json manuals/brass.json --game-id {uuid}
+# oppure con npm script:
+npm run ingest:pdf -- --json manuals/brass.json --game-id {uuid}
+
 # esegui eval
 npx vitest run eval/runner.ts
 ```
- 
+
 ---
 
 ## Note operative

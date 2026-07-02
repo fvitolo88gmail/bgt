@@ -2,7 +2,7 @@
 
 ## Visione
 Assistente conversazionale per regole di giochi da tavolo. L'utente seleziona un gioco, il sistema risponde a domande citando il manuale ufficiale e il forum BGG come fonti distinte. Nessuna allucinazione: se la risposta non è nelle fonti, lo dichiara esplicitamente.
- 
+
 ---
 
 ## Principi architetturali
@@ -15,7 +15,7 @@ Assistente conversazionale per regole di giochi da tavolo. L'utente seleziona un
 | DB condiviso, isolamento per proprietà | I giochi `shared` sono disponibili a tutti; i giochi `private` sono visibili solo a chi li ha caricati tramite owner_token — vedi D16 |
 | Ingest offline | La pipeline di ingest non gira mai in una request utente — è sempre un job separato |
 | Schema forward-compatible | Campi per Fase 2 (forum) presenti nello schema MVP anche se non usati subito |
- 
+
 ---
 
 ## Topologia
@@ -28,12 +28,12 @@ Browser (owner_token in cookie/localStorage)
               ├── Gemini Embeddings  → vettore query
               └── Supabase pgvector  → retrieval chunk (scoped per owner_token/shared)
                         └── Gemini Flash → risposta citata
- 
+
 Script locale (ingest — mai su Vercel)
   ├── PDF parser → chunk → Gemini Embeddings → Supabase
   └── BGG crawler → chunk → Gemini Embeddings → Supabase
 ```
- 
+
 ---
 
 ## Schema database (Supabase / Postgres + pgvector)
@@ -84,20 +84,20 @@ Script locale (ingest — mai su Vercel)
 ```sql
 -- ricerca vettoriale
 create index on chunks using ivfflat (embedding vector_cosine_ops) with (lists = 100);
- 
+
 -- filtro per gioco
 create index on chunks (game_id, source);
- 
+
 -- filtro per proprietà/visibilità (D16)
 create index on games (owner_token);
 create index on games (visibility);
- 
+
 -- deduplicazione ingest — ogni upload privato crea una riga games propria,
 -- quindi due utenti che caricano lo stesso manuale non collidono su questo vincolo
 create unique index on chunks (game_id, page, section) where source = 'manual';
 create unique index on chunks (bgg_article_id) where source = 'forum';
 ```
- 
+
 ---
 
 ## Pipeline RAG
@@ -150,7 +150,7 @@ domanda utente + game_id + owner_token (da cookie/localStorage)
  → Gemini Flash → risposta JSON { answer, sources[] }
  → render in UI con citazioni
 ```
- 
+
 ---
 
 ## Struttura cartelle
@@ -197,7 +197,7 @@ domanda utente + game_id + owner_token (da cookie/localStorage)
     │   └── ark-nova.json
     └── runner.ts               # esegue eval, stampa accuratezza
 ```
- 
+
 ---
 
 ## Astrazioni chiave
@@ -213,7 +213,7 @@ UUID generato lato client (cookie o localStorage) al primo utilizzo dell'app, se
 
 ### Prompt grounded
 Costante in `lib/prompt.ts`. Istruisce il modello a rispondere esclusivamente dal contesto fornito e a dichiarare esplicitamente quando la risposta non è presente nelle fonti.
- 
+
 ---
 
 ## Fase 2 — Forum BGG
@@ -222,4 +222,5 @@ Lo schema è già pronto (campi bgg_* in chunks, tabella forum_threads). La Fase
 - Retrieval su source=forum in aggiunta a source=manual
 - Label provenienza in UI (ufficiale vs community vs designer)
 - Eval fixture con domande forum-dipendenti (Ark Nova)
-  **Regola:** non iniziare Fase 2 prima che l'eval harness (task E1) giri e produca una baseline.
+
+**Regola:** non iniziare Fase 2 prima che l'eval harness (task E1) giri e produca una baseline.
