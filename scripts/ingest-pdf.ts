@@ -1,6 +1,7 @@
+import 'dotenv/config';
 import fs from 'fs';
-import path from 'path';
 import { createServiceClient } from '../lib/supabase';
+import { geminiClient } from '../lib/gemini';
 
 const CHUNK_MAX_WORDS = 500;
 const OVERLAP_WORDS = 50;
@@ -35,7 +36,6 @@ function buildChunks(pages: ExtractedPage[]): Chunk[] {
             continue;
         }
 
-        // split con overlap per pagine lunghe
         let start = 0;
         let chunkIndex = 1;
 
@@ -61,16 +61,11 @@ function buildChunks(pages: ExtractedPage[]): Chunk[] {
 
 async function main() {
     const args = process.argv.slice(2);
-    if (args.length < 2) {
-        console.error('Usage: npx ts-node scripts/ingest-pdf.ts --json <path> --game-id <uuid>');
-        process.exit(1);
-    }
-
     const jsonIndex = args.indexOf('--json');
     const gameIdIndex = args.indexOf('--game-id');
 
     if (jsonIndex === -1 || gameIdIndex === -1) {
-        console.error('Missing --json or --game-id');
+        console.error('Usage: npm run ingest:pdf -- --json <path> --game-id <uuid>');
         process.exit(1);
     }
 
@@ -89,27 +84,55 @@ async function main() {
 
     const raw = fs.readFileSync(jsonPath, 'utf-8');
     const pages: ExtractedPage[] = JSON.parse(raw);
-
-    console.log(`Pagine caricate: ${pages.length}`);
-
     const chunks = buildChunks(pages);
-    console.log(`Chunk generati: ${chunks.length}`);
 
-    // verifica che nessun chunk superi 600 parole
-    const oversized = chunks.filter(
-        (c) => splitIntoWords(c.content).length > 600
-    );
-    if (oversized.length > 0) {
-        console.warn(`⚠️  ${oversized.length} chunk superano 600 parole`);
+    console.log(`Pagine: ${pages.length} — Chunk: ${chunks.length}`);
+
+    const supabase = createServiceClient();
+    let saved = 0;
+    let errors = 0;
+
+    for (const [i, chunk] of chunks.entries()) {
+        console.log(`Embedding chunk ${i + 1}/${chunks.length}: ${chunk.section}...`);
+
+        try {
+            const embedding = await geminiClient.embed(chunk.content);
+
+            const { error } = await supabase.from('chunks').insert({
+                game_id: gameId,
+                source: 'manual',
+                content: chunk.content,
+                embedding,
+                model_version: process.env.EMBEDDING_MODEL ?? 'gemini-embedding-001',
+                page: chunk.page,
+                section: chunk.section,
+            });
+
+            if (error) {
+                console.error(`  Errore salvataggio chunk ${i + 1}:`, error.message);
+                errors++;
+            } else {
+                saved++;
+            }
+
+            // pausa per evitare rate limit Gemini
+            await new Promise((res) => setTimeout(res, 200));
+
+        } catch (err) {
+            console.error(`  Errore embedding chunk ${i + 1}:`, err);
+            errors++;
+        }
     }
 
-    chunks.forEach((c, i) => {
-        const wordCount = splitIntoWords(c.content).length;
-        console.log(`  Chunk ${i + 1}: ${c.section} — ${wordCount} parole`);
-    });
+    await supabase
+        .from('games')
+        .update({ manual_ready: true })
+        .eq('id', gameId);
+
+    console.log(`\nCompletato: ${saved} salvati, ${errors} errori`);
 }
 
 main().catch((err) => {
-    console.error('Errore:', err);
+    console.error('Errore fatale:', err);
     process.exit(1);
 });
