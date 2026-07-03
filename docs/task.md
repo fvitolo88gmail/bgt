@@ -62,22 +62,56 @@
 
 | ID | Task | DoD |
 |---|---|---|
-| E1 | Fixture `eval/fixtures/brass-birmingham.json`: 20 Q&A con ground truth (domande con risposta certa nel manuale) | file JSON valido, domande coprenti edge case noti |
-| E2 | Runner `eval/runner.ts`: esegue ogni domanda contro il RAG, confronta risposta, stampa accuratezza % e fallimenti | output leggibile con % e lista domande fallite |
-| E3 | Baseline: esegui eval su MVP, documenta % accuratezza in questo file | baseline documentata → punto di riferimento per Fase 2 |
+| E1 | ✅ Fixture `eval/fixtures/brass-birmingham.json`: 20 Q&A con ground truth (domande con risposta certa nel manuale) | file JSON valido, domande coprenti edge case noti |
+| E2 | ✅ Runner `eval/runner.test.ts`: esegue ogni domanda contro il RAG, confronta risposta con LLM-as-judge (Gemini), stampa accuratezza % e fallimenti | output leggibile con % e lista domande fallite |
+| E3 | ✅ Baseline: esegui eval su MVP, documenta % accuratezza in questo file | baseline documentata → punto di riferimento per Fase 2 |
 
-**Baseline MVP (da compilare dopo E3):**
+**Baseline MVP — storico:**
+
 ```
-Data:
-Modello embedding:
-Chunking strategy:
-Accuratezza: __/20 (__%)
-Note:
+[001 — 2026-07-03, pre D19/D20]
+Chunking strategy: pagina-based, 500 parole, overlap fisso (S1.2 originale)
+Accuratezza: 9/20 (45%)
+Soglia target: 80% (non raggiunta)
+Log completo: docs/baselines/001-20260703.md
+Note: 3 domande su 20 "non trovato" nonostante l'informazione fosse presente (bb-07, bb-13, bb-20)
+  → problema di retrieval. 1 domanda (bb-18) con risposta che contraddice la regola corretta
+  → allucinazione da chunk mal tagliato. Causa radice diagnosticata in D19: chunking meccanico
+  per pagina, indipendente dalla struttura semantica del documento.
+```
+
+```
+[002 — 2026-07-03, post D19/D20]
+Modello embedding: gemini-embedding-001 (outputDimensionality: 768)
+Modello generazione: gemini-3.1-flash-lite
+Metodo di valutazione: LLM-as-judge (gemini-3.1-flash-lite), confronto semantico risposta vs expected_answer
+Chunking strategy: sezione-based via Gemini a due fasi, D19 (estrattore PDF con rilevamento
+  spread/colonne + markdown-from-json.ts + ingest-pdf.ts riscritti)
+Accuratezza: 16/20 (80%) — dopo correzione di bb-18 (ground truth incompleta: non distingueva
+  Periodo dei Canali da Periodo delle Ferrovie sul limite di Tessere Industria per località;
+  la risposta del RAG era corretta, la fixture era sbagliata — vedi eval/fixtures/brass-birmingham.json)
+Soglia target: 80% (RAGGIUNTA ✅)
+Fix rilevante durante questa sessione: D20, indice ivfflat (lists=100) inefficace su dataset
+  piccolo (23 chunk) causava "non trovato" sistematico su query nuove non identiche a embedding
+  già indicizzati — rimosso l'indice, ora scansione sequenziale.
+Fallimenti residui (5, poi 4 dopo fix bb-18): principalmente omissioni di dettagli minori
+  (eccezioni, distinzioni di periodo) più che errori sostanziali — nessuna allucinazione grave
+  residua rilevata nei test manuali.
+```
+
+**Nota per la prossima sessione — D21 non ancora misurata:**
+Dopo la baseline 002, `lib/prompt.ts` è stato riscritto (D21) per permettere deduzioni dichiarate
+esplicitamente (invece del solo binario fatto-diretto / "non trovato"), a seguito di falsi negativi
+osservati in test manuali (es. "Cos'è una Tessera Collegamento?" → prima "non trovato", ora risposta
+corretta con deduzione dichiarata). Questo cambiamento **non è ancora stato misurato con l'eval
+harness** — probabile che il judge in `eval/runner.test.ts` vada rivisto per riconoscere risposte
+con deduzione dichiarata come corrette quando ben fondate, non penalizzarle. Prossimo passo:
+rilanciare `npx vitest run eval/runner.test.ts` e documentare baseline 003.
 ```
 
 ---
 
-## Fase 2 — Forum BGG ⛔ non iniziare prima di E3
+## Fase 2 — Forum BGG ✅ sbloccata (baseline 002: 16/20, 80%, soglia raggiunta — 2026-07-03)
 
 | ID | Task | DoD |
 |---|---|---|

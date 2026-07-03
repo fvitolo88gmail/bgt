@@ -28,7 +28,7 @@ export const geminiClient: LLMClient = {
 
     async generate(prompt: string): Promise<string> {
         const result = await ai.models.generateContent({
-            model: process.env.CHAT_MODEL ?? 'gemini-1.5-flash',
+            model: process.env.CHAT_MODEL ?? 'gemini-3.1-flash-lite',
             contents: prompt,
         });
         const text = result.text;

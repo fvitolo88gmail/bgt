@@ -1,0 +1,122 @@
+[
+  {
+    "id": "bb-01",
+    "question": "In quanti Periodi si svolge la partita di Brass Birmingham e come si chiamano?",
+    "expected_answer": "La partita si svolge su 2 Periodi: il Periodo dei Canali (1770-1830) e il Periodo delle Ferrovie (1830-1870).",
+    "source_page": 6
+  },
+  {
+    "id": "bb-02",
+    "question": "Quante azioni esegue un giocatore nel proprio turno?",
+    "expected_answer": "Nel proprio turno un giocatore esegue un totale di 2 azioni (eccetto il primo turno del Periodo dei Canali, in cui ogni giocatore esegue 1 sola azione).",
+    "source_page": 6
+  },
+  {
+    "id": "bb-03",
+    "question": "Puoi eseguire la stessa azione due volte nello stesso turno?",
+    "expected_answer": "Sì, per ciascuna azione puoi scegliere di eseguirne una tra quelle disponibili, e puoi eseguire la stessa azione 2 volte nello stesso turno.",
+    "source_page": 6
+  },
+  {
+    "id": "bb-04",
+    "question": "Quali sono le azioni disponibili nel gioco?",
+    "expected_answer": "Costruzione, Espansione della Rete, Sviluppo, Vendita, Prestito e Ricognizione.",
+    "source_page": 6
+  },
+  {
+    "id": "bb-05",
+    "question": "Cosa succede quando spendi denaro per eseguire un'azione?",
+    "expected_answer": "Ogni volta che spendi denaro per eseguire un'azione, devi mettere l'importo speso sopra la tua Tessera Personaggio nella Traccia Ordine di Turno; questo denaro serve poi a determinare l'ordine dei giocatori nel turno successivo (chi ha speso di più gioca dopo).",
+    "source_page": 6
+  },
+  {
+    "id": "bb-06",
+    "question": "Quando finisce un Periodo di gioco?",
+    "expected_answer": "Ogni Periodo termina alla fine del turno in cui tutti i giocatori hanno usato l'ultima carta della propria Mano.",
+    "source_page": 6
+  },
+  {
+    "id": "bb-07",
+    "question": "Chi vince la partita di Brass Birmingham?",
+    "expected_answer": "Vince il giocatore che ha totalizzato il maggior numero di Punti Vittoria (PV) dopo la fine del Periodo delle Ferrovie. In caso di parità vince chi ha la Rendita maggiore, e in caso di ulteriore parità chi ha più denaro rimasto; se c'è ancora parità la partita è patta.",
+    "source_page": 6
+  },
+  {
+    "id": "bb-08",
+    "question": "Quanto denaro riceve un giocatore con l'azione di Prestito e cosa comporta?",
+    "expected_answer": "Con l'azione di Prestito il giocatore prende £30 dalla Banca, ma il suo livello di Rendita retrocede di 3 livelli (non spazi) sulla Traccia Progresso.",
+    "source_page": 6
+  },
+  {
+    "id": "bb-09",
+    "question": "Cosa ottiene un giocatore con l'azione di Ricognizione?",
+    "expected_answer": "Con l'azione di Ricognizione il giocatore scarta 2 carte addizionali e aggiunge alla mano 1 Carta Jolly Località e 1 Carta Jolly Industria. Non si può eseguire questa azione se si ha già in mano una Carta Jolly.",
+    "source_page": 6
+  },
+  {
+    "id": "bb-10",
+    "question": "Cosa è necessario per eseguire l'azione di Vendita?",
+    "expected_answer": "Per vendere è necessario un collegamento a una Tessera Mercante e la birra necessaria da consumare; scarti una carta dalla mano e giri la Tessera Cotonificio, Manifattura o Fornaci che vendi, facendo avanzare il Segnalino Rendita del numero di spazi indicato sulla tessera.",
+    "source_page": 10
+  },
+  {
+    "id": "bb-11",
+    "question": "Cosa succede se il livello di Rendita di un giocatore è negativo?",
+    "expected_answer": "Se il livello di Rendita è negativo, il giocatore deve pagare quell'importo alla Banca alla fase di riscossione della rendita.",
+    "source_page": 6
+  },
+  {
+    "id": "bb-12",
+    "question": "Cosa succede se un giocatore non ha abbastanza denaro per pagare una Rendita negativa?",
+    "expected_answer": "Se il denaro nella Banca personale non è sufficiente a coprire l'ammanco, il giocatore deve rimuovere una o più delle proprie Tessere Industria (non Tessere Collegamento); per ogni tessera rimossa incassa la metà del suo costo, arrotondato per difetto.",
+    "source_page": 6
+  },
+  {
+    "id": "bb-13",
+    "question": "Qual è il livello massimo di Rendita raggiungibile in Brass Birmingham?",
+    "expected_answer": "Il livello di Rendita non può essere aumentato oltre il livello 30.",
+    "source_page": 8
+  },
+  {
+    "id": "bb-14",
+    "question": "Come può un giocatore procurarsi carbone se non è collegato a una Carbonaia non girata?",
+    "expected_answer": "Può comprare il carbone dal Mercato del Carbone, a partire dal prezzo più basso; se il Mercato del Carbone è vuoto può comunque acquistare carbone per £8.",
+    "source_page": 8
+  },
+  {
+    "id": "bb-15",
+    "question": "Da dove deve provenire il ferro consumato, a differenza del carbone?",
+    "expected_answer": "A differenza del carbone, il ferro consumato non deve necessariamente provenire dalla Ferriera più vicina: si può scegliere qualunque Ferriera non girata su tutto il tabellone, oppure comprarlo dal Mercato del Ferro se non ce ne sono; consumare il ferro in questo modo è gratuito.",
+    "source_page": 8
+  },
+  {
+    "id": "bb-16",
+    "question": "Cosa permette di fare l'azione di Espansione della Rete?",
+    "expected_answer": "Permette di piazzare Tessere Collegamento, che espandono la rete del giocatore permettendogli l'accesso a nuove Località; nel Periodo dei Canali si possono costruire Collegamenti Fluviali, nel Periodo delle Ferrovie Collegamenti Ferroviari.",
+    "source_page": 10
+  },
+  {
+    "id": "bb-17",
+    "question": "Cos'è la Cementificazione?",
+    "expected_answer": "La Cementificazione è l'operazione che permette di rimpiazzare una Tessera Industria già piazzata con una tessera di livello più alto dello stesso tipo di Industria (pagando comunque i costi necessari), a patto che non ci siano cubetti risorsa sulla tessera che viene sostituita.",
+    "source_page": 10
+  },
+  {
+    "id": "bb-18",
+    "question": "Quante Tessere Industria può avere un giocatore nella stessa località?",
+    "expected_answer": "Dipende dal periodo. Nel Periodo dei Canali, un giocatore può avere un massimo di 1 Tessera Industria per località (ma più giocatori possono avere ciascuno una propria Tessera Industria nella stessa località). Nel Periodo delle Ferrovie questo limite non si applica più: si può costruire più di una Tessera Industria nella stessa località.",
+    "source_page": 10
+  },
+  {
+    "id": "bb-19",
+    "question": "Cosa succede alle Tessere Industria di livello 1 alla fine del Periodo dei Canali?",
+    "expected_answer": "Alla fine del Periodo dei Canali le Tessere Industria di livello 1 girate vengono rimosse dal tabellone. Le Tessere Industria di livello 2 o superiore non vengono rimosse.",
+    "source_page": 6
+  },
+  {
+    "id": "bb-20",
+    "question": "Qual è l'eccezione per le Tessere Fornaci rispetto alle altre Tessere Industria di livello 1?",
+    "expected_answer": "A differenza delle altre Tessere Industria di livello 1, le Tessere Fornaci di livello 1 possono essere costruite anche durante il Periodo delle Ferrovie.",
+    "source_page": 12
+  }
+]
