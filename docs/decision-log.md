@@ -186,6 +186,72 @@
 
 ---
 
+---
+
+## Sessione 4 — 2026-07-05
+
+### D22 — Riordino sequenza: Fase Forum BGG prima di S3.2–S3.5
+**Contesto:** Francesco vuole passare all'implementazione dei task Forum (F1–F8). Il gate D15
+(baseline eval E3 ≥80%) è già soddisfatto dalla baseline 002 (16/20, 80%), quindi la Fase Forum
+è formalmente sbloccabile — ma `task.md` la elencava comunque dopo S3.2–S3.5 (fallback soglia,
+ricerca BGG, UI selezione gioco, game-status API), non ancora completati. Procedere senza
+aggiornare `task.md` violerebbe la disciplina dichiarata in `CLAUDE.md` ("non anticipare task
+futuri: completa e verifica il corrente prima di procedere") e in `task.md` stesso ("non passare
+al task successivo prima che il DoD del corrente sia soddisfatto").
+**Opzioni:** completare prima S3.2–S3.5, poi Forum · saltare avanti al Forum senza aggiornare la
+documentazione · aggiornare esplicitamente `task.md` per riflettere il nuovo ordine di esecuzione
+**Scelta:** terza opzione — `task.md` riscritto per riflettere l'ordine reale di esecuzione: F1–F8
+prima, S3.2–S3.5 spostati in una tabella "Fase 3 (continua)" dopo F8. Contenuto dei task S3.2–S3.5
+invariato, solo la posizione nel file.
+**Motivazione:** la richiesta esplicita di Francesco è una decisione di scoping legittima (il gate
+D15 è comunque soddisfatto, quindi non si sta bypassando un controllo di qualità, solo
+riordinando lavoro entrambi non bloccante). Aggiornare il documento invece di ignorarlo mantiene
+`task.md` come stato autoritativo (principio dichiarato altrove nel progetto) — evita che il file
+diventi disallineato dal lavoro reale, cosa che altrimenti richiederebbe una verifica manuale ad
+ogni sessione futura per capire cosa è davvero prossimo. S3.2–S3.5 restano comunque da fare, non
+sono stati eliminati né riclassificati come opzionali.
+**Nota collaterale:** durante la verifica è emerso che S3.1 in `task.md` non è marcato ✅ mentre le
+note di sessione lo indicano come completo — discrepanza segnalata a Francesco, non corretta
+d'autorità in questa modifica (serve conferma che sia effettivamente completo prima di marcarlo).
+
+---
+
+## Sessione 5 — 2026-07-11
+
+### D23 — Scope AI Provider Adapters: solo generazione, embedding centralizzato
+**Contesto:** l'epica "AI API adapters" richiede di generalizzare i provider LLM per singolo
+utente (Gemini/Claude/ChatGPT con account propri). L'embedding usato in ingest e retrieval è però
+vincolato a `gemini-embedding-001` con `outputDimensionality: 768` (D17), e lo schema `chunks` ha
+una colonna vettoriale a dimensione fissa — provider diversi hanno dimensioni diverse (OpenAI,
+Claude non offre nemmeno embedding nativi), rendendo BYOK esteso all'embedding incompatibile con
+lo schema attuale senza una migration multi-colonna/multi-tabella.
+**Opzioni:** BYOK completo (generazione + embedding) con migration schema · adapter solo per
+generazione, embedding centralizzato gestito da admin
+**Scelta:** adapter multi-provider solo per la generazione della risposta; l'embedding resta
+un'operazione di ingest centralizzata, sempre Gemini, mai selezionabile dall'utente. Per i giochi
+non ancora presenti, l'utente può richiedere il caricamento (nuovo task S3.7) invece di fare
+self-service upload.
+**Motivazione:** disaccoppia una scelta cosmetica/di preferenza utente (che modello genera la
+risposta) da una scelta strutturale del sistema (come è indicizzato il DB), evitando di rompere
+lo schema pgvector esistente per un beneficio marginale. Centralizzare l'ingest mantiene anche
+invariato il principio "ingest offline, mai in path utente" di `architecture.md`.
+
+---
+
+### D24 — Storage conversazionale per Chat con contesto: server-side
+**Contesto:** l'architettura attuale (`architecture.md`) è stateless lato API — ogni chiamata a
+`/api/chat` non ha memoria dei turni precedenti. La feature "Chat con contesto" richiede di
+scegliere se lo stato conversazionale vive lato client (rimandato ad ogni richiesta) o lato server
+(persistito in Supabase).
+**Opzioni:** client-side (browser rimanda history) · server-side (nuove tabelle Supabase)
+**Scelta:** server-side — nuove tabelle `chat_sessions` e `chat_messages`.
+**Motivazione:** coerente con il pattern owner_token già esistente (D16): lo stato è legato al
+dispositivo/browser ma vive nel DB condiviso, non solo nel client, permettendo eventualmente di
+riprendere una conversazione da un altro contesto e di applicare un cap esplicito su token/turni
+lato server (necessario per contenere il consumo della quota Gemini free tier).
+
+---
+
 ## Template per sessioni future
 
 ```

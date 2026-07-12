@@ -76,12 +76,25 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
 
                             {msg.sources && msg.sources.length > 0 && (
                                 <div className="mt-2 pt-2 border-t border-gray-300">
-                                    <p className="text-xs text-gray-500 font-medium mb-1">Fonti:</p>
-                                    {msg.sources.map((s, j) => (
-                                        <p key={j} className="text-xs text-gray-400">
-                                            {s.section ?? `Pagina ${s.page}`} — score: {s.similarity.toFixed(2)}
-                                        </p>
-                                    ))}
+                                    <p className="text-xs text-gray-500 font-medium mb-1">Fonti dal manuale:</p>
+                                    <ul className="space-y-0.5">
+                                        {[...msg.sources]
+                                            .sort((a, b) => b.similarity - a.similarity)
+                                            .map((s, j) => (
+                                                <li key={j} className="text-xs text-gray-500">
+                                                    <span className="font-medium text-gray-600">
+                                                        {s.section ?? 'Sezione non specificata'}
+                                                    </span>
+                                                    {s.page != null && (
+                                                        <span className="text-gray-400"> · pag. {s.page}</span>
+                                                    )}
+                                                    <span className="text-gray-400">
+                                                        {' '}
+                                                        · rilevanza {Math.round(s.similarity * 100)}%
+                                                    </span>
+                                                </li>
+                                            ))}
+                                    </ul>
                                 </div>
                             )}
                         </div>

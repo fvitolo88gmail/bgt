@@ -323,7 +323,7 @@ async function main() {
         generatedSections.push({ section, body: body.trim(), pageLabel });
 
         // pausa per evitare rate limit Gemini
-        await new Promise((res) => setTimeout(res, 300));
+        await new Promise((res) => setTimeout(res, 5000));
     }
 
     console.log('\nControllo duplicati (Fix B)...');
