@@ -144,14 +144,6 @@
 
 ---
 
-### D17 — Modello embedding e dimensioni vettore
-**Contesto:** `text-embedding-004` (768 dim, previsto in development.md) non disponibile con la chiave Gemini AI Studio; libreria `@google/generative-ai` sostituita da `@google/genai`  
-**Opzioni:** `gemini-embedding-001` nativo a 3072 dim · `gemini-embedding-001` con `outputDimensionality: 768` · `gemini-embedding-2` (preview)  
-**Scelta:** `gemini-embedding-001` con `outputDimensionality: 768`  
-**Motivazione:** 3072 dimensioni supera il limite di Supabase per indici ivfflat e hnsw (max 2000). 768 con riduzione dimensionale è supportato nativamente dal modello, mantiene l'indice vettoriale funzionante, e per testi di regole di giochi da tavolo la qualità è più che sufficiente.
-
----
-
 ### D18 — Modello generazione testo
 **Contesto:** `gemini-1.5-flash` non disponibile con la chiave Gemini AI Studio; `gemini-2.0-flash` e `gemini-2.0-flash-lite` hanno quota RPD = 0 sul piano free  
 **Opzioni:** `gemini-2.0-flash` · `gemini-2.0-flash-lite` · `gemini-3.1-flash-lite`  
@@ -183,8 +175,6 @@
 **Opzioni:** mantenere il divieto assoluto di dedurre (accetta più falsi negativi, zero rischio di over-inference) · rimuovere il divieto e permettere deduzione libera (rischio di confondere sintesi legittima con invenzione) · permettere la deduzione ma richiedere che sia dichiarata esplicitamente come tale, distinta dai fatti riportati direttamente
 **Scelta:** terza opzione — il prompt ora distingue esplicitamente "fatto diretto" (informazione dichiarata da una fonte, riportata normalmente) da "deduzione" (informazione ricostruita combinando più fonti, introdotta con una frase che segnala la ricostruzione, es. "Il manuale non lo definisce esplicitamente, ma si può dedurre che..."). Resta vietato in ogni caso inventare informazioni non presenti nel contesto.
 **Motivazione:** il giocatore ha il manuale fisico in mano e può verificare le fonti citate — la trasparenza sulla natura della risposta (fatto vs ricostruzione) sposta la responsabilità di validazione al lettore invece di forzare il sistema a un binario "risponde/non risponde" che scartava sintesi utili e corrette. Coerente con il principio anti-allucinazione di architecture.md ("se la risposta non è nelle fonti, lo dichiara esplicitamente") esteso a un caso intermedio: non più solo "c'è / non c'è", ma anche "c'è ma va ricostruita". Impatto da verificare: la fixture di eval (in particolare il criterio del judge in eval/runner.test.ts) potrebbe dover essere aggiornata per riconoscere risposte che iniziano con "si può dedurre che..." come corrette quando la deduzione è ben fondata, non penalizzarle come se fossero omissioni o invenzioni.
-
----
 
 ---
 
