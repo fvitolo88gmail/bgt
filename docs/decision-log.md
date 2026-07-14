@@ -242,6 +242,30 @@ lato server (necessario per contenere il consumo della quota Gemini free tier).
 
 ---
 
+## Sessione 6 — 2026-07-14
+
+### D25 — Ristrutturazione task.md in directory task/ per epica
+**Contesto:** `task.md` era un unico file con tutte le epiche, in crescita costante ad ogni
+sessione (11 epiche a questo punto). Diventava scomodo da navigare e da editare senza rischiare
+conflitti/rumore su epiche non toccate nella sessione corrente.
+**Opzioni:** mantenere `task.md` unico · directory `docs/task/` con un file per epica, numerato,
+più `progress.md` per lo stato aggregato e `closed/` per le epiche completate
+**Scelta:** seconda opzione — `docs/task/NNNN-nome-epica.md` (4 cifre, numerazione a passi di 100
+nell'ordine di esecuzione: 0000, 0100, 0200…), `docs/task/progress.md` come stato autoritativo
+aggregato, `docs/task/closed/` per le epiche interamente completate (Setup, Eval harness, Ingest
+PDF, Retrieval e risposta spostate lì in questa sessione). `CLAUDE.md` aggiornato con una sezione
+dedicata alla gestione di questa struttura.
+**Motivazione:** un file per epica isola le modifiche (meno rumore nei diff quando si lavora su
+una sola epica alla volta, coerente con la regola "un task alla volta" di `CLAUDE.md`).
+`progress.md` dà una vista d'insieme senza dover aprire tutti i file. La cartella `closed/` separa
+visivamente lavoro concluso da lavoro attivo, mantenendo comunque lo storico consultabile. La
+numerazione a passi di 100 lascia spazio per inserire epiche future senza rinumerare quelle
+esistenti. La larghezza fissa a 4 cifre (invece di 3) è stata scelta dopo aver notato che con 12
+epiche a step 100 si superano le 999 unità — mescolare larghezze diverse (es. "900" e "1000")
+romperebbe l'ordinamento alfabetico dei file nel filesystem.
+
+---
+
 ## Template per sessioni future
 
 ```

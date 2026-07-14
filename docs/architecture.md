@@ -160,7 +160,10 @@ domanda utente + game_id + owner_token (da cookie/localStorage)
 ├── CLAUDE.md
 ├── architecture.md
 ├── development.md
-├── task.md
+├── task/
+│   ├── progress.md
+│   ├── NNNN-nome-epica.md      # un file per epica attiva/futura (4 cifre, step 100)
+│   └── closed/                 # epiche completate
 ├── .env.local
 │
 ├── app/                        # Next.js app router
