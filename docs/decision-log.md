@@ -266,6 +266,43 @@ romperebbe l'ordinamento alfabetico dei file nel filesystem.
 
 ---
 
+### D26 — Auth Bearer token per BGG XMLAPI2 in `lib/bgg.ts`
+**Contesto:** `docs/task/0500-forum-bgg.md` (F1) richiedeva auth Bearer token per `lib/bgg.ts`,
+citando un riferimento "D23-BGG" mai effettivamente loggato in questo file — un dangling
+reference. Verifica in sessione: `lib/bgg.ts` (commit `01e65aa`) era stato implementato senza
+alcun header di autenticazione, nonostante `.env.local` contenesse già `BGG_TOKEN`, mai
+referenziato nel codice. F1 non era marcato ✅.
+**Opzioni:** lasciare l'API pubblica senza auth (rischio: BGG può bloccare le richieste se il
+token è davvero richiesto) · wire `BGG_TOKEN` come header `Authorization: Bearer` su ogni
+richiesta, fail-fast a import-time se assente
+**Scelta:** seconda opzione — `bggToken` letto da `process.env.BGG_TOKEN` con throw immediato se
+mancante (stesso pattern di `lib/gemini.ts`), header `Authorization: Bearer ${bggToken}` aggiunto
+a `fetchBggXml`. F1 marcato ✅ in `0500-forum-bgg.md`, riferimento fantasma "D23-BGG" sostituito
+con questa entry.
+**Motivazione:** Francesco ha confermato che BGG richiede il token per questi endpoint. La
+presenza già pronta di `BGG_TOKEN` in env (mai wired) indicava un'implementazione incompleta, non
+solo documentazione disallineata — coerente con la disciplina del progetto di non lasciare gap
+silenziosi tra DoD dichiarato e codice.
+
+---
+
+### D27 — Pipeline ingest forum multi-fase
+**Contesto**: una singola run di forum-ingest.ts per un gioco popolare implica
+centinaia di chiamate BGG con rate limit 5s (15-25+ minuti), rendendo un
+crash a metà (rete, sleep, 503 non gestito) costoso da recuperare.
+**Opzioni**: script singolo con checkpoint interni · 3 script separati con
+file JSON intermedi su disco, ciascuno rilanciabile e idempotente
+**Scelta**: 3 script — forum-discover.ts (forumlist+forum, filtro reply_count>0)
+→ forum-fetch.ts (fetch thread + pulizia, incrementale/resumable) →
+forum-ingest.ts (embedding + insert Supabase, idempotente su
+chunks.bgg_article_id già unique).
+Motivazione: stesso pattern già collaudato per il PDF (estrazione →
+markdown → ingest), nessuna chiamata Gemini prima della fase 3, crash
+recuperabile senza rifare il lavoro già fatto. Le cartelle forum-data/
+sono escluse da git (come i manuali PDF).
+
+---
+
 ## Template per sessioni future
 
 ```

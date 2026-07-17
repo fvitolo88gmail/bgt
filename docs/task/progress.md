@@ -22,7 +22,7 @@
 
 ## Priorità corrente
 
-Epica **0500 — Forum BGG** (F1–F8): sbloccata, `BGG_API_TOKEN` disponibile in env (D22).
+Epica **0500 — Forum BGG** (F1–F8): sbloccata, `BGG_TOKEN` disponibile in env (D22).
 
 ## Note aperte
 

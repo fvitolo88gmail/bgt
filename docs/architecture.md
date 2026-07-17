@@ -188,7 +188,7 @@ domanda utente + game_id + owner_token (da cookie/localStorage)
 │
 ├── scripts/                    # ingest — mai su Vercel
 │   ├── ingest-pdf.ts
-│   ├── ingest-forum.ts
+│   ├── forum-ingest.ts
 │   └── sync-forum.ts           # aggiornamento periodico
 │
 ├── supabase/
@@ -221,7 +221,7 @@ Costante in `lib/prompt.ts`. Istruisce il modello a rispondere esclusivamente da
 
 ## Fase 2 — Forum BGG
 Lo schema è già pronto (campi bgg_* in chunks, tabella forum_threads). La Fase 2 aggiunge:
-- Script `ingest-forum.ts` e `sync-forum.ts`
+- Script `forum-ingest.ts` e `sync-forum.ts`
 - Retrieval su source=forum in aggiunta a source=manual
 - Label provenienza in UI (ufficiale vs community vs designer)
 - Eval fixture con domande forum-dipendenti (Ark Nova)

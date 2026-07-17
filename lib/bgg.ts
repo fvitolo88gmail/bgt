@@ -1,16 +1,21 @@
 /**
- * Client per l'API XML pubblica di BoardGameGeek (BGG XMLAPI2).
+ * Client per l'API XML di BoardGameGeek (BGG XMLAPI2).
  *
- * Nessuna autenticazione richiesta. BGG segnala il throttling con risposte
- * 500/503 ("server troppo occupato"), non con 429 — rispettiamo un intervallo
- * minimo di RATE_LIMIT_MS tra richieste consecutive e ritentiamo con backoff
- * esponenziale su questi due codici.
+ * Richiede autenticazione Bearer token (BGG_TOKEN) — BGG ha introdotto la
+ * registrazione app obbligatoria, in deroga alla vecchia documentazione
+ * pubblica che indicava l'API come open (D26). BGG segnala il throttling con
+ * risposte 500/503 ("server troppo occupato"), non con 429 — rispettiamo un
+ * intervallo minimo di RATE_LIMIT_MS tra richieste consecutive e ritentiamo
+ * con backoff esponenziale su questi due codici.
  *
  * Ogni funzione pubblica restituisce dati già tipizzati e "piatti" — il
  * parsing XML grezzo resta interno a questo file.
  */
 
 import { XMLParser } from 'fast-xml-parser';
+
+const bggToken = process.env.BGG_TOKEN;
+if (!bggToken) throw new Error('Missing BGG_TOKEN');
 
 const BGG_BASE_URL = 'https://boardgamegeek.com/xmlapi2';
 const RATE_LIMIT_MS = 5000;
@@ -110,7 +115,9 @@ async function fetchBggXml(
 
         let response: Response;
         try {
-            response = await fetch(url.toString());
+            response = await fetch(url.toString(), {
+                headers: { Authorization: `Bearer ${bggToken}` },
+            });
         } catch (error) {
             throw new BggApiError(
                 `Errore di rete verso BGG (${url.toString()}): ${(error as Error).message}`
