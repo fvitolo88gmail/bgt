@@ -7,11 +7,14 @@ Il contesto può contenere la risposta in due modi diversi, e devi trattarli in 
 1. FATTO DIRETTO — l'informazione richiesta è dichiarata esplicitamente in una singola fonte del contesto.
    → Rispondi normalmente, citando la fonte. Non serve segnalare nulla di speciale.
 
-2. DEDUZIONE — l'informazione richiesta non è dichiarata esplicitamente da nessuna parte, ma può essere ricostruita combinando o riorganizzando fatti presenti in una o più fonti del contesto (es. la domanda chiede una definizione generale e il contesto descrive solo l'uso pratico del concetto in più punti).
-   → Puoi rispondere, ma devi segnalare chiaramente che si tratta di una tua ricostruzione e non di una definizione esplicita del manuale. Usa una frase introduttiva tipo: "Il manuale non lo definisce esplicitamente, ma dalle regole descritte si può dedurre che..." Cita comunque le fonti da cui hai ricostruito la risposta, così chi legge può verificare direttamente sul manuale.
+2. DEDUZIONE — l'informazione richiesta non è dichiarata esplicitamente da nessuna parte, ma può essere ricostruita combinando o riorganizzando fatti presenti in una o più fonti del contesto.
+   → Puoi rispondere, ma devi segnalare chiaramente che si tratta di una tua ricostruzione. Usa una frase introduttiva tipo: "Il manuale non lo definisce esplicitamente, ma dalle regole descritte si può dedurre che..."
 
 Se il contesto non contiene abbastanza informazione nemmeno per una deduzione ragionevole, di' esattamente: "Non ho trovato questa informazione nel manuale."
 
+COME CITARE LE FONTI:
+- Per fonti dal manuale: cita pagina e/o sezione, come già presenti nell'etichetta della fonte.
+- Per fonti dal forum: NON citare mai "Fonte N" da sola. Cita invece nella forma: nel thread «Titolo del thread», NomeAutore risponde che... Se un autore nel testo è marcato esplicitamente come [DESIGNER UFFICIALE DEL GIOCO], menzionalo sempre esplicitamente nella risposta, ad esempio: il designer NomeDesigner conferma che... — perché è un'informazione particolarmente autorevole per il lettore.
 Non presentare mai una deduzione come se fosse un fatto direttamente dichiarato: la distinzione tra le due modalità sopra è obbligatoria, non facoltativa.
 
 CONTESTO:
@@ -20,14 +23,11 @@ ${context}
 DOMANDA:
 ${query}
 
-RISPOSTA (in italiano, citando pagina e sezione quando disponibile, e segnalando esplicitamente se si tratta di una deduzione):`;
+RISPOSTA (in italiano, citando le fonti secondo le regole sopra, e segnalando esplicitamente se si tratta di una deduzione):`;
 }
 
-export function buildContext(chunks: Array<{ content: string; page: number | null; section: string | null }>): string {
+export function buildContext(chunks: Array<{ content: string; sourceLabel: string }>): string {
     return chunks
-        .map((chunk, i) => {
-            const source = chunk.section ?? `Pagina ${chunk.page}`;
-            return `[Fonte ${i + 1} — ${source}]\n${chunk.content}`;
-        })
+        .map((chunk, i) => `[Fonte ${i + 1} — ${chunk.sourceLabel}]\n${chunk.content}`)
         .join('\n\n---\n\n');
 }

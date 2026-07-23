@@ -4,13 +4,14 @@
 // lista dei thread con reply_count > 0 (D10). Nessun fetch dei post qui —
 // solo discovery, così un rerun in caso di errore costa poche chiamate BGG.
 //
+// Artefatti in ingest/{game-slug}/forum/discover.json (alberatura D28).
+//
 // Uso:
 //   npx ts-node --project scripts/tsconfig.json scripts/forum-discover.ts \
-//     --bgg-id 224517 --out forum-data/224517/discover.json
+//     --bgg-id 224517 --game-slug brass
 
 import 'dotenv/config';
 import { mkdir, writeFile } from 'node:fs/promises';
-import { dirname } from 'node:path';
 import { getThing, getForumList, getForumThreads } from '../lib/bgg';
 
 interface DiscoverOutput {
@@ -32,18 +33,18 @@ function getFlag(args: string[], name: string): string | undefined {
     return index >= 0 ? args[index + 1] : undefined;
 }
 
-function parseArgs(): { bggId: number; out: string } {
+function parseArgs(): { bggId: number; gameSlug: string } {
     const args = process.argv.slice(2);
     const bggIdRaw = getFlag(args, '--bgg-id');
-    const out = getFlag(args, '--out');
-    if (!bggIdRaw || !out) {
-        throw new Error('Uso: --bgg-id <numero> --out <path>');
+    const gameSlug = getFlag(args, '--game-slug');
+    if (!bggIdRaw || !gameSlug) {
+        throw new Error('Uso: --bgg-id <numero> --game-slug <slug>');
     }
     const bggId = Number.parseInt(bggIdRaw, 10);
     if (!Number.isFinite(bggId)) {
         throw new Error(`--bgg-id non valido: ${bggIdRaw}`);
     }
-    return { bggId, out };
+    return { bggId, gameSlug };
 }
 
 function findRulesForum(
@@ -59,7 +60,9 @@ function findRulesForum(
 }
 
 async function main(): Promise<void> {
-    const { bggId, out } = parseArgs();
+    const { bggId, gameSlug } = parseArgs();
+    const outDir = `ingest/${gameSlug}/forum`;
+    const outPath = `${outDir}/discover.json`;
 
     console.log(`[discover] recupero designer per bggId=${bggId}...`);
     const thing = await getThing(bggId);
@@ -99,9 +102,9 @@ async function main(): Promise<void> {
         threads,
     };
 
-    await mkdir(dirname(out), { recursive: true });
-    await writeFile(out, JSON.stringify(output, null, 2), 'utf-8');
-    console.log(`[discover] scritto ${out}`);
+    await mkdir(outDir, { recursive: true });
+    await writeFile(outPath, JSON.stringify(output, null, 2), 'utf-8');
+    console.log(`[discover] scritto ${outPath}`);
 }
 
 main().catch((error) => {

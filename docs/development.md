@@ -20,6 +20,7 @@
 ```
 @supabase/supabase-js     → client DB e storage
 @google/genai                 → Gemini embeddings + Flash
+react-markdown             → rendering markdown delle risposte in chat (grassetti, elenchi)
 ```
 
 ### Script ingest (dev/local only)
@@ -59,12 +60,17 @@ OLLAMA_BASE_URL=                # solo se LLM_PROVIDER=ollama
 
 ---
 
-## Gemini — modelli da usare
+## Gemini — modelli e limiti (free tier)
 
-| Uso | Modello | Note |
-|---|---|---|
-| Embedding | `gemini-embedding-001` | 768 dimensioni (outputDimensionality), free tier |
-| Generazione risposta | `gemini-3.1-flash-lite` | free tier, 500 req/giorno |
+| Uso | Modello | RPM | TPM | RPD |
+|---|---|---|---|---|
+| Embedding | `gemini-embedding-001` | 100 | 30K | 1.000 |
+| Generazione risposta | `gemini-3.1-flash-lite` | 15 | 250K | 500 |
+
+Nota: i limiti RPD si resettano a **mezzanotte Pacific Time**, non a
+mezzanotte locale — da Napoli, il reset avviene intorno alle 9:00 del
+mattino. I rate limit sono applicati **per progetto Google Cloud**, non
+per singola API key.
 
 ---
 

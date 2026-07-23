@@ -2,10 +2,14 @@
 
 import { use } from 'react';
 import { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
 
 interface Source {
+    source: 'manual' | 'forum';
     page: number | null;
     section: string | null;
+    threadSubject: string | null;
+    isDesignerResponse: boolean | null;
     similarity: number;
 }
 
@@ -13,6 +17,13 @@ interface ChatMessage {
     role: 'user' | 'assistant';
     content: string;
     sources?: Source[];
+}
+
+function sourceLabel(s: Source): string {
+    if (s.source === 'forum') {
+        return s.threadSubject ? `Forum — ${s.threadSubject}` : 'Forum';
+    }
+    return s.section ?? (s.page != null ? `Pagina ${s.page}` : 'Manuale');
 }
 
 export default function GamePage({ params }: { params: Promise<{ id: string }> }) {
@@ -72,21 +83,27 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                 ? 'bg-blue-600 text-white'
                                 : 'bg-gray-100 text-gray-900'
                         }`}>
-                            <p className="text-sm">{msg.content}</p>
+                            {msg.role === 'assistant' ? (
+                                <div className="text-sm [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-2 [&_strong]:font-semibold">
+                                    <ReactMarkdown>{msg.content}</ReactMarkdown>
+                                </div>
+                            ) : (
+                                <p className="text-sm">{msg.content}</p>
+                            )}
 
                             {msg.sources && msg.sources.length > 0 && (
                                 <div className="mt-2 pt-2 border-t border-gray-300">
-                                    <p className="text-xs text-gray-500 font-medium mb-1">Fonti dal manuale:</p>
+                                    <p className="text-xs text-gray-500 font-medium mb-1">Fonti:</p>
                                     <ul className="space-y-0.5">
                                         {[...msg.sources]
                                             .sort((a, b) => b.similarity - a.similarity)
                                             .map((s, j) => (
                                                 <li key={j} className="text-xs text-gray-500">
                                                     <span className="font-medium text-gray-600">
-                                                        {s.section ?? 'Sezione non specificata'}
+                                                        {sourceLabel(s)}
                                                     </span>
-                                                    {s.page != null && (
-                                                        <span className="text-gray-400"> · pag. {s.page}</span>
+                                                    {s.isDesignerResponse && (
+                                                        <span className="text-amber-600 font-medium"> · risposta del designer</span>
                                                     )}
                                                     <span className="text-gray-400">
                                                         {' '}
@@ -104,7 +121,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                 {loading && (
                     <div className="flex justify-start">
                         <div className="bg-gray-100 rounded-lg px-4 py-2">
-                            <p className="text-sm text-gray-400">Sto cercando nel manuale...</p>
+                            <p className="text-sm text-gray-400">Sto cercando...</p>
                         </div>
                     </div>
                 )}

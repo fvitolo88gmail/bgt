@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { matchChunks } from '@/lib/retrieval';
+import { matchChunksForPrompt } from '@/lib/retrieval';
 import { buildPrompt, buildContext } from '@/lib/prompt';
 import { geminiClient } from '@/lib/gemini';
 
@@ -15,23 +15,27 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const chunks = await matchChunks(question, gameId, 5, 'manual');
+        const { context: promptChunks, sources: matches } = await matchChunksForPrompt(question, gameId, 5);
 
-        if (chunks.length === 0) {
+        if (promptChunks.length === 0) {
             return NextResponse.json({
                 answer: 'Non ho trovato questa informazione nel manuale.',
                 sources: [],
             });
         }
 
-        const context = buildContext(chunks);
+        const context = buildContext(promptChunks);
+        console.log('Prompt:', context);
         const prompt = buildPrompt(question, context);
         const answer = await geminiClient.generate(prompt);
 
-        const sources = chunks.map((chunk) => ({
-            page: chunk.page,
-            section: chunk.section,
-            similarity: chunk.similarity,
+        const sources = matches.map((match) => ({
+            source: match.source,
+            page: match.page,
+            section: match.section,
+            threadSubject: match.threadSubject,
+            isDesignerResponse: match.isDesignerResponse,
+            similarity: match.similarity,
         }));
 
         return NextResponse.json({ answer, sources });

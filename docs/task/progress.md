@@ -22,7 +22,9 @@
 
 ## Priorità corrente
 
-Epica **0500 — Forum BGG** (F1–F8): sbloccata, `BGG_TOKEN` disponibile in env (D22).
+Epica **0500 — Forum BGG**: F1-F3 e F5 completati per Brass Birmingham
+(verificato in chat, retrieval multi-fonte funzionante). Restano F4
+(sync incrementale), F6 (rifinitura UI), F7-F8 (eval Ark Nova).
 
 ## Note aperte
 
@@ -30,3 +32,14 @@ Epica **0500 — Forum BGG** (F1–F8): sbloccata, `BGG_TOKEN` disponibile in en
   discrepanza da confermare prima di chiudere l'epica (D22).
 - Baseline eval 003 (impatto D21) resta deferred — vedi `closed/0100-eval-harness.md` e
   `docs/baselines/`.
+- Upgrade Tier 1 Gemini (a pagamento): dati di prezzo raccolti (embedding
+    $0.15/1M token, generazione $0.25/$1.50 per 1M input/output), deciso di
+    rimandare finché non si valida l'ingest su un secondo gioco oltre Brass.
+    Potrebbe ridurre l'urgenza dell'Epica A (BYOK, D23) se il tetto RPD
+    condiviso smette di essere un vincolo reale — da rivalutare quando si
+    arriva a quell'epica, non prima.
+- Qualità contenuto manuale Brass: la sezione "Cementificazione" risulta
+  spezzata scorrettamente in due chunk durante il porting D19 (un
+  condizionale "se è tua / se è dell'avversario" finito diviso tra due
+  header diversi) — causa una generalizzazione errata osservata in test
+  manuale. Fix rimandato a una revisione futura di Brass, non bloccante.

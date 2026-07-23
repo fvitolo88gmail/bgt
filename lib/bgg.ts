@@ -25,10 +25,19 @@ const INITIAL_BACKOFF_MS = 2000;
 const xmlParser = new XMLParser({
     ignoreAttributes: false,
     attributeNamePrefix: '',
-    // Tag che possono ripetersi: forziamo sempre un array, anche con 0/1 occorrenze,
-    // per non dover distinguere object-vs-array a valle nel codice di parsing.
-    isArray: (tagName) =>
-        ['item', 'link', 'name', 'forum', 'thread', 'article'].includes(tagName),
+    // 'forum' ha due significati diversi a seconda dell'endpoint:
+    // - dentro /forumlist è un elemento ripetuto (jPath 'forums.forum') → array
+    // - come radice di /forum è un nodo singolo (jPath 'forum') → NON forzarlo
+    //   ad array, altrimenti parsed.forum diventa un array e .threads sparisce
+    isArray: (tagName, jPath) => {
+        if (tagName === 'forum') {
+            return jPath === 'forums.forum';
+        }
+        if (tagName === 'thread') {
+            return jPath === 'forum.threads.thread';
+        }
+        return ['item', 'link', 'name', 'thread', 'article'].includes(tagName);
+    },
 });
 
 export class BggApiError extends Error {
@@ -309,7 +318,7 @@ interface RawArticleNode {
 }
 
 export async function getThread(threadId: number): Promise<BggThreadDetails> {
-    const xml = await fetchBggXml('/thread', { id: String(threadId) });
+    const xml = await fetchBggXml('/thread', { id: String(threadId), count: '1000' });
     const parsed = xmlParser.parse(xml) as {
         thread?: {
             subject?: string;

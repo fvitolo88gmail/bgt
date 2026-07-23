@@ -1,26 +1,28 @@
 // scripts/forum-fetch.ts
 //
 // Fase 2/3 dell'ingest forum (D27): scarica i post di ogni thread trovato
-// da forum-discover.ts, li pulisce (lib/bgg-clean.ts) e li filtra per
-// lunghezza minima (D10, >50 caratteri sul testo GIÀ pulito, non sul body
-// grezzo — altrimenti markup HTML/quote gonfia artificialmente la lunghezza).
+// da forum-discover.ts, li pulisce (lib/bgg-clean.ts). NESSUN filtro di
+// lunghezza per post (D10 non si applica più qui): con l'approccio
+// small-to-big, solo la radice del thread viene embeddata — un post breve
+// isolato ("Sì è corretto") non serve a essere trovato da solo, serve solo
+// come contenuto grezzo recuperabile in fase di espansione (F5).
 //
-// RESUMABILE: se --out esiste già, i thread già presenti vengono saltati.
-// Scrive su disco dopo OGNI thread, non solo alla fine — un crash o un
-// Ctrl+C a metà non fa perdere il lavoro già fatto.
+// RESUMABILE: se posts.json esiste già, i thread già presenti vengono
+// saltati. Scrittura atomica (tmp+rename) dopo OGNI thread.
+//
+// Legge/scrive in ingest/{game-slug}/forum/ (alberatura D28).
 //
 // Uso:
 //   npx ts-node --project scripts/tsconfig.json scripts/forum-fetch.ts \
-//     --in forum-data/224517/discover.json --out forum-data/224517/posts.json
+//     --game-slug brass
+//   npx ts-node --project scripts/tsconfig.json scripts/forum-fetch.ts \
+//     --game-slug brass --refetch 3724051,3429143
 
 import 'dotenv/config';
-import {mkdir, readFile, writeFile} from 'node:fs/promises';
-import {dirname} from 'node:path';
-import {existsSync} from 'node:fs';
-import {getThread} from '../lib/bgg';
-import {cleanForumBody} from '../lib/bgg-clean';
-
-const MIN_BODY_LENGTH = 50;
+import { mkdir, readFile, writeFile, rename } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { getThread } from '../lib/bgg';
+import { cleanForumBody } from '../lib/bgg-clean';
 
 interface DiscoverInput {
     bggId: number;
@@ -34,6 +36,7 @@ interface FetchedPost {
     authorUsername: string;
     postDate: string;
     bodyClean: string;
+    quotedAuthor: string | null;
 }
 
 interface FetchedThread {
@@ -55,14 +58,22 @@ function getFlag(args: string[], name: string): string | undefined {
     return index >= 0 ? args[index + 1] : undefined;
 }
 
-function parseArgs(): { in: string; out: string } {
+function parseArgs(): { gameSlug: string; refetchIds: Set<number> } {
     const args = process.argv.slice(2);
-    const inPath = getFlag(args, '--in');
-    const outPath = getFlag(args, '--out');
-    if (!inPath || !outPath) {
-        throw new Error('Uso: --in <discover.json> --out <posts.json>');
+    const gameSlug = getFlag(args, '--game-slug');
+    if (!gameSlug) {
+        throw new Error('Uso: --game-slug <slug> [--refetch <id1,id2,...>]');
     }
-    return {in: inPath, out: outPath};
+    const refetchRaw = getFlag(args, '--refetch');
+    const refetchIds = new Set(
+        (refetchRaw ?? '')
+            .split(',')
+            .map((s) => s.trim())
+            .filter((s) => s.length > 0)
+            .map((s) => Number.parseInt(s, 10))
+            .filter((n) => Number.isFinite(n))
+    );
+    return { gameSlug, refetchIds };
 }
 
 async function loadExistingOutput(
@@ -70,14 +81,30 @@ async function loadExistingOutput(
     fallback: Pick<FetchOutput, 'bggId' | 'gameName' | 'designers'>
 ): Promise<FetchOutput> {
     if (!existsSync(outPath)) {
-        return {...fallback, threads: []};
+        return { ...fallback, threads: [] };
     }
     const raw = await readFile(outPath, 'utf-8');
+    if (raw.trim().length === 0) {
+        return { ...fallback, threads: [] };
+    }
     return JSON.parse(raw) as FetchOutput;
 }
 
+async function writeOutputAtomic(outPath: string, output: FetchOutput): Promise<void> {
+    const tmpPath = `${outPath}.tmp`;
+    await writeFile(tmpPath, JSON.stringify(output, null, 2), 'utf-8');
+    await rename(tmpPath, outPath);
+}
+
 async function main(): Promise<void> {
-    const {in: inPath, out: outPath} = parseArgs();
+    const { gameSlug, refetchIds } = parseArgs();
+    const dir = `ingest/${gameSlug}/forum`;
+    const inPath = `${dir}/discover.json`;
+    const outPath = `${dir}/posts.json`;
+
+    if (!existsSync(inPath)) {
+        throw new Error(`${inPath} non trovato — lancia prima forum-discover.ts`);
+    }
 
     const discover = JSON.parse(await readFile(inPath, 'utf-8')) as DiscoverInput;
     const output = await loadExistingOutput(outPath, {
@@ -86,12 +113,23 @@ async function main(): Promise<void> {
         designers: discover.designers,
     });
 
+    if (refetchIds.size > 0) {
+        const before = output.threads.length;
+        output.threads = output.threads.filter((t) => !refetchIds.has(t.threadId));
+        const removed = before - output.threads.length;
+        console.log(`[fetch] --refetch: rimossi ${removed}/${refetchIds.size} thread (torneranno pending)`);
+        if (removed > 0) {
+            await mkdir(dir, { recursive: true });
+            await writeOutputAtomic(outPath, output);
+        }
+    }
+
     const alreadyFetched = new Set(output.threads.map((t) => t.threadId));
     const pending = discover.threads.filter((t) => !alreadyFetched.has(t.threadId));
 
     console.log(`[fetch] ${alreadyFetched.size} thread già scaricati, ${pending.length} da fare`);
 
-    await mkdir(dirname(outPath), {recursive: true});
+    await mkdir(dir, { recursive: true });
 
     let done = 0;
     let errori = 0;
@@ -99,37 +137,30 @@ async function main(): Promise<void> {
         try {
             const detail = await getThread(thread.threadId);
 
-            const posts: FetchedPost[] = [];
-            for (const post of detail.posts) {
-                const bodyClean = cleanForumBody(post.body);
-                if (bodyClean.length > MIN_BODY_LENGTH) {
-                    posts.push({
-                        postId: post.postId,
-                        authorUsername: post.authorUsername,
-                        postDate: post.postDate,
-                        bodyClean,
-                    });
-                }
-            }
+            const posts: FetchedPost[] = detail.posts.map((post) => {
+                const { bodyClean, quotedAuthor } = cleanForumBody(post.body);
+                return {
+                    postId: post.postId,
+                    authorUsername: post.authorUsername,
+                    postDate: post.postDate,
+                    bodyClean,
+                    quotedAuthor,
+                };
+            });
 
             output.threads.push({
                 threadId: thread.threadId,
                 subject: thread.subject,
                 replyCount: thread.replyCount,
-                posts
+                posts,
             });
-            await writeFile(outPath, JSON.stringify(output, null, 2), 'utf-8');
+            await writeOutputAtomic(outPath, output);
 
             done += 1;
-            console.log(
-                `[fetch] ${done}/${pending.length} — thread ${thread.threadId} (${posts.length}/${detail.posts.length} post sopra soglia)`
-            );
+            console.log(`[fetch] ${done}/${pending.length} — thread ${thread.threadId} (${posts.length} post)`);
         } catch (error) {
             errori += 1;
             console.error(`[fetch] errore su thread ${thread.threadId}:`, error);
-            // Non interrompe la run: il thread non è stato aggiunto a
-            // output.threads, quindi un rilancio dello stesso comando lo
-            // ritenta automaticamente.
         }
     }
 

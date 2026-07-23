@@ -287,19 +287,52 @@ silenziosi tra DoD dichiarato e codice.
 ---
 
 ### D27 — Pipeline ingest forum multi-fase
-**Contesto**: una singola run di forum-ingest.ts per un gioco popolare implica
+**Contesto:** una singola run di forum-ingest.ts per un gioco popolare implica
 centinaia di chiamate BGG con rate limit 5s (15-25+ minuti), rendendo un
 crash a metà (rete, sleep, 503 non gestito) costoso da recuperare.
-**Opzioni**: script singolo con checkpoint interni · 3 script separati con
+**Opzioni:** script singolo con checkpoint interni · 3 script separati con
 file JSON intermedi su disco, ciascuno rilanciabile e idempotente
-**Scelta**: 3 script — forum-discover.ts (forumlist+forum, filtro reply_count>0)
+**Scelta:** 3 script — forum-discover.ts (forumlist+forum, filtro reply_count>0)
 → forum-fetch.ts (fetch thread + pulizia, incrementale/resumable) →
 forum-ingest.ts (embedding + insert Supabase, idempotente su
-chunks.bgg_article_id già unique).
-Motivazione: stesso pattern già collaudato per il PDF (estrazione →
+chunks.bgg_article_id e forum_posts.bgg_article_id già unique).
+**Motivazione:** stesso pattern già collaudato per il PDF (estrazione →
 markdown → ingest), nessuna chiamata Gemini prima della fase 3, crash
-recuperabile senza rifare il lavoro già fatto. Le cartelle forum-data/
+recuperabile senza rifare il lavoro già fatto. Le cartelle `ingest/{slug}/`
 sono escluse da git (come i manuali PDF).
+
+---
+
+### D28 — Chunking forum "small-to-big": solo radice embeddata, espansione a runtime
+**Contesto:** un chunk = un post isolato produce match semantici deboli su
+risposte brevi ("Sì è corretto"); un chunk = albero conversazionale
+(costruito euristicamente via match autore/citazione) richiede assunzioni
+fragili e complessità di schema per gestire multi-autore. Serviva una
+soluzione che non richiedesse ricostruire la struttura della conversazione
+a ingest-time.
+**Opzioni:** 1 post = 1 chunk · albero conversazionale (parent/child via
+quotedAuthor + fallback lineare) · solo la radice del thread embeddata,
+resto del thread recuperato per intero a runtime quando la radice vince
+**Scelta:** solo la radice di ogni thread viene embeddata e inserita in
+`chunks` (source='forum'); tutti i post (radice inclusa) vengono salvati
+senza embedding in una nuova tabella `forum_posts`. A runtime (F5), quando
+una radice vince il retrieval, il thread intero viene recuperato da
+`forum_posts` e ricostruito in ordine cronologico per il prompt di
+generazione — nessun filtro di similarità aggiuntivo, nessun tetto di
+espansione.
+**Motivazione:** analisi quantitativa su Brass Birmingham (675 thread, 4635
+post) mostra che il 92.7% dei thread ha meno di 15 post, e solo una
+manciata (~1%, verificato a campione: "Commonly missed rules" e simili)
+sono genuinamente multi-argomento — il rischio di perdere recall su una
+domanda "sepolta" a metà thread è raro, non la norma. Elimina interamente
+il bisogno di euristiche di parent-matching (fragili, verificato durante
+lo sviluppo che il fallback lineare produceva catene che mescolavano
+argomenti scollegati). Riduce anche il numero di chiamate embedding da
+~4900 a ~675 per Brass.
+**Nota collaterale:** `chunks.author_username` resta `text` (non
+`text[]`/array) — la migration ad array, proposta durante un'iterazione
+precedente della progettazione (albero conversazionale), non è mai stata
+applicata, resa superflua da questa scelta finale.
 
 ---
 

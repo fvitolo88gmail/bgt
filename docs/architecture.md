@@ -80,6 +80,23 @@ Script locale (ingest — mai su Vercel)
 | reply_count | int | per rilevare nuove risposte in sync |
 | fetched_at | timestamptz | |
 
+### `forum_posts`
+| Campo | Tipo | Note |
+|---|---|---|
+| id | uuid PK | |
+| game_id | uuid FK → games | |
+| bgg_thread_id | int FK → forum_threads(bgg_thread_id) | |
+| bgg_article_id | int unique | id del post BGG |
+| author_username | text | |
+| quoted_author | text null | autore citato (reply-with-quote), se presente |
+| post_date | timestamptz | |
+| body_clean | text | testo pulito, nessun embedding — solo storage grezzo per espansione a runtime |
+| created_at | timestamptz | |
+
+Contiene **tutti** i post di ogni thread (radice inclusa), senza vettore —
+usata da F5 per ricostruire il thread intero quando la radice (l'unico
+chunk embeddato per thread) vince il retrieval. Vedi D28.
+
 ### Indici
 ```sql
 -- ricerca vettoriale
@@ -146,6 +163,10 @@ domanda utente + game_id + owner_token (da cookie/localStorage)
  → verifica visibilità: games.owner_token = owner_token OR games.visibility = 'shared'
  → Gemini Embeddings → vettore query
  → match_chunks(vettore, game_id, top_k=5)
+ → per ogni chunk vincente con source='forum': espandi SEMPRE
+   recuperando l'intero thread da forum_posts (filtro per bgg_thread_id),
+   ricostruito in ordine cronologico — vedi D28. I chunk source='manual'
+   passano invariati.
  → costruisci prompt con chunk come contesto
  → Gemini Flash → risposta JSON { answer, sources[] }
  → render in UI con citazioni
@@ -186,10 +207,17 @@ domanda utente + game_id + owner_token (da cookie/localStorage)
 │   ├── owner-token.ts          # generazione/lettura owner_token client-side (D16)
 │   └── bgg.ts                  # client BGG XML API2
 │
+├── ingest/                     # artefatti locali di ingest, gitignored (D27)
+│   └── {game-slug}/
+│       ├── manuals/            # json/md intermedi del PDF
+│       └── forum/              # discover.json, posts.json
+│
 ├── scripts/                    # ingest — mai su Vercel
 │   ├── ingest-pdf.ts
-│   ├── forum-ingest.ts
-│   └── sync-forum.ts           # aggiornamento periodico
+│   ├── forum-discover.ts       # fase 1/3 — D27
+│   ├── forum-fetch.ts          # fase 2/3 — D27
+│   ├── forum-ingest.ts         # fase 3/3 — D27
+│   └── sync-forum.ts           # aggiornamento periodico, non ancora implementato (F4)
 │
 ├── supabase/
 │   └── migrations/             # schema SQL versionato
