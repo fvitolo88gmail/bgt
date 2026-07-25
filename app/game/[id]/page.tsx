@@ -11,6 +11,7 @@ interface Source {
     threadSubject: string | null;
     isDesignerResponse: boolean | null;
     similarity: number;
+    bggUrl: string | null;
 }
 
 interface ChatMessage {
@@ -84,8 +85,16 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                 : 'bg-gray-100 text-gray-900'
                         }`}>
                             {msg.role === 'assistant' ? (
-                                <div className="text-sm [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-2 [&_strong]:font-semibold">
-                                    <ReactMarkdown>{msg.content}</ReactMarkdown>
+                                <div className="text-sm [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-2 [&_strong]:font-semibold [&_a]:text-blue-600 [&_a]:underline [&_a]:font-medium hover:[&_a]:text-blue-800">
+                                    <ReactMarkdown
+                                        components={{
+                                            a: ({ ...props }) => (
+                                                <a {...props} target="_blank" rel="noopener noreferrer" />
+                                            ),
+                                        }}
+                                    >
+                                        {msg.content}
+                                    </ReactMarkdown>
                                 </div>
                             ) : (
                                 <p className="text-sm">{msg.content}</p>
@@ -99,9 +108,20 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                             .sort((a, b) => b.similarity - a.similarity)
                                             .map((s, j) => (
                                                 <li key={j} className="text-xs text-gray-500">
-                                                    <span className="font-medium text-gray-600">
-                                                        {sourceLabel(s)}
-                                                    </span>
+                                                    {s.bggUrl ? (
+                                                        <a
+                                                            href={s.bggUrl}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="font-medium text-blue-600 underline hover:text-blue-800"
+                                                        >
+                                                            {sourceLabel(s)}
+                                                        </a>
+                                                    ) : (
+                                                        <span className="font-medium text-gray-600">
+                                                            {sourceLabel(s)}
+                                                        </span>
+                                                    )}
                                                     {s.isDesignerResponse && (
                                                         <span className="text-amber-600 font-medium"> · risposta del designer</span>
                                                     )}

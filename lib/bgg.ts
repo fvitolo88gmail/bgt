@@ -346,3 +346,14 @@ export async function getThread(threadId: number): Promise<BggThreadDetails> {
 
     return { threadId, subject: thread.subject ?? '', posts };
 }
+
+/**
+ * Costruisce l'URL diretto a un thread BGG, o a un post specifico al suo
+ * interno se bggArticleId è fornito. Formato verificato su un post reale
+ * BGG (post-redesign forum, 2023): /thread/{id}/article/{id}#{id}.
+ */
+export function buildBggThreadUrl(bggThreadId: number, bggArticleId?: number | null): string {
+    const base = `https://boardgamegeek.com/thread/${bggThreadId}`;
+    if (bggArticleId == null) return base;
+    return `${base}/article/${bggArticleId}#${bggArticleId}`;
+}

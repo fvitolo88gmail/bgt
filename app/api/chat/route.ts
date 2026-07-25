@@ -36,6 +36,7 @@ export async function POST(req: NextRequest) {
             threadSubject: match.threadSubject,
             isDesignerResponse: match.isDesignerResponse,
             similarity: match.similarity,
+            bggUrl: match.bggUrl,
         }));
 
         return NextResponse.json({ answer, sources });

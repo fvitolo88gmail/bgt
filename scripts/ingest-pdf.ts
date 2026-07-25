@@ -79,13 +79,21 @@ function splitIntoSections(markdown: string): Section[] {
     };
 
     for (const line of lines) {
-        if (line.trim().startsWith('##')) {
+        // Solo "## Titolo" (esattamente 2 cancelletti) apre una nuova sezione/pagina.
+        // "### Sottotitolo" (3+ cancelletti) resta contenuto della sezione corrente,
+        // altrimenti perde il riferimento pagina del "##" padre (bug osservato:
+        // sottosezioni come "### Cementificazione" finivano con page: null).
+        if (/^##(?!#)\s/.test(line.trim())) {
             flush();
             currentTitle = cleanTitle(line);
             currentPages = parsePagesFromHeader(line);
             currentContent = [];
         } else {
-            currentContent.push(line);
+            // Le righe "###" (sottosezioni) non aprono un nuovo chunk, ma non
+            // devono nemmeno finire come testo letterale nel contenuto embeddato.
+            if (!/^###\s/.test(line.trim())) {
+                currentContent.push(line);
+            }
         }
     }
     flush();
