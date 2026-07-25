@@ -336,6 +336,97 @@ applicata, resa superflua da questa scelta finale.
 
 ---
 
+### D29 — Bug ingest manuale: sezioni intere mancanti, fix parser sezioni
+**Contesto:** confronto manuale tra `brass.md` (ingested, 306 righe) e una
+trascrizione fedele del PDF originale (953 righe) ha rivelato 3 sezioni
+azione intere mancanti dal markdown ingested: Azione - Vendita, Azione -
+Ricognizione, Azione - Sviluppo. Causa probabile: nella Fase 1 (outline) di
+`markdown-from-json.ts`, più sezioni compresse sulla stessa pagina fisica
+del manuale originale (tutte `p. 11`: Prestito, Ricognizione, Sviluppo,
+Espansione della Rete) sono state collassate/saltate invece di essere
+trattate come confini distinti. La revisione manuale prevista da D19 non
+le ha intercettate.
+**Scelta:** non rieseguita la pipeline automatica (Fase 1+2) su Brass —
+ricostruito a mano il markdown completo dal testo del PDF, con marcatori
+pagina reali (`=== PAGINA N ===`) forniti dall'utente e mappati sugli
+header `##`. Contestualmente, fix strutturale in `scripts/ingest-pdf.ts`
+(`splitIntoSections`): il controllo apriva erroneamente una nuova sezione
+anche su `###` (non solo `##`), causando sia perdita del riferimento
+pagina sulle sottosezioni sia, con un fix incompleto intermedio, la riga
+`### Titolo` che restava come testo letterale nel contenuto embeddato.
+Corretto con regex `^##(?!#)\s` per il confine di sezione, e scarto
+esplicito delle righe `###` dal contenuto accumulato.
+**Verifica:** re-ingest completo (18 chunk, 0 errori, tutte le pagine
+valorizzate), confermato via test di retrieval mirati (Cementificazione +
+Vendita, Sviluppo) e successivamente via eval completo (vedi baseline 004).
+**Effetto collaterale noto, non risolto qui:** trattare `###` come testo
+muto invece che come confine di chunk ha causato la fusione di 5-7
+sotto-argomenti eterogenei in singoli chunk grandi (es. `Concetti di
+Gioco`), causando una regressione osservata su domande specifiche (bb-13,
+bb-18, bb-20 nell'eval — vedi baseline 004 e nota 0560 aperta a riguardo).
+
+### D30 — Link diretti a BGG nelle citazioni forum
+**Contesto:** le citazioni forum in UI mostravano solo "Thread: {subject}"
+come testo, senza modo di verificare la fonte originale su BGG.
+**Scelta:** costruire l'URL a runtime da `bgg_thread_id`/`bgg_article_id`
+(già presenti su `chunks` e `forum_posts`, nessuna migration necessaria),
+formato verificato su un post reale BGG post-redesign: `https://
+boardgamegeek.com/thread/{bgg_thread_id}/article/{bgg_article_id}#{bgg_article_id}`.
+Helper `buildBggThreadUrl` aggiunto a `lib/bgg.ts`. `ChunkMatch` guadagna
+`bggUrl`; `expandForumThread` (F5) ora restituisce anche l'elenco
+strutturato `posts[]` con URL per-post (prima si perdeva nella
+concatenazione in un'unica stringa), permettendo di linkare il post esatto
+citato, non solo la radice del thread.
+**UI:** `page.tsx` rende il link fonte sempre evidenziato (blu/sottolineato,
+non solo su hover); il corpo della risposta (già renderizzato via
+ReactMarkdown) ora stila anche i link generati inline dal modello e li apre
+in nuova scheda.
+
+### D31 — Epica Q (0550): query enhancement combinato decomposizione+HyDE
+**Contesto:** verificato sperimentalmente (vedi 0550) che la decomposizione
+pura di una query composta risolve la dilution (concetti diversi che si
+annacquano a vicenda in un solo embedding) ma, se riformulata come
+sotto-domanda anziché come prosa dichiarativa, può *peggiorare* il
+retrieval — la similarità domanda-vs-domanda tra query e thread forum è
+strutturalmente più alta di domanda-vs-prosa-dichiarativa del manuale, a
+prescindere dal contenuto (rischio: allontanarsi dal lessico corretto del
+gioco se l'LLM non lo conosce con precisione).
+**Scelta:** le due tecniche unite in un solo step (`generateEnhancedQueries`
+in `lib/retrieval.ts`), un solo prompt/chiamata Gemini che scompone la
+domanda in massimo 3 concetti e per ciascuno genera un paragrafo
+dichiarativo in stile manuale (non una sotto-domanda). Il risultato è
+SEMPRE unito al retrieval sulla query originale (baseline), mai in
+sostituzione — merge deduplicato per chunk id, tenendo la similarità più
+alta osservata tra tutte le query. Fail-soft per design: se la
+generazione fallisce (quota, parsing), si prosegue con la sola query
+originale, senza far cadere la risposta.
+**Verifica:** baseline pre-0550 post-fix-ingest = 70% (20/20 fixture,
+6 fallimenti, vedi baseline "003" mai completata formalmente prima).
+Baseline post-0550 = 85% (17/20) — vedi `docs/baselines/004-20260725.md`.
+
+### D32 — Prompt: non introdurre argomenti non richiesti, non confondere fonte-diversa con deduzione
+**Contesto:** osservato ripetutamente (3 varianti nello stesso pomeriggio)
+che il modello, avendo altre fonti pertinenti nel contesto anche quando il
+fatto diretto rispondeva già pienamente alla domanda, aggiungeva sezioni
+"si può dedurre che..." con argomenti non richiesti (es. varianti di
+gioco, casi speciali) — e in un caso etichettava come deduzione un fatto
+in realtà dichiarato esplicitamente in una fonte diversa da quella
+principale.
+**Scelta:** rafforzate le istruzioni in `lib/prompt.ts`: (1) test esplicito
+"questa frase è necessaria per la domanda o sto solo aggiungendo contenuto
+perché disponibile? nel dubbio, ometti"; (2) chiarito che "fonte diversa da
+quelle già citate" non equivale automaticamente a "deduzione" — se una
+fonte lo dichiara esplicitamente, resta un fatto diretto anche se sta in
+una sezione diversa.
+**Verifica:** confermato risolto sul caso concreto osservato (domanda
+"Chi vince a Brass?" non più seguita da divagazioni su partita
+introduttiva). Nota aperta: variabilità naturale del query enhancement
+(D31) può comunque far sì che risposte alla stessa domanda includano set
+di fonti leggermente diversi tra una run e l'altra (es. "Vincere la
+Partita" presente in alcune run e assente in altre) — non è un difetto
+del prompt, è un effetto collaterale della non-determinismo del paragrafo
+HyDE generato ad ogni chiamata. Da monitorare, non ancora da correggere.
+
 ## Template per sessioni future
 
 ```

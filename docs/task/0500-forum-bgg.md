@@ -14,6 +14,10 @@
 | F6 | 🟡 Label provenienza in UI: badge "risposta del designer" + etichetta "Forum — {subject}" fatti in `app/game/[id]/page.tsx`; stile visivo differenziato manuale/community/designer non ancora rifinito | parziale |
 | F7 | Fixture `eval/fixtures/ark-nova.json`: 15 Q&A forum-dipendenti | non iniziato |
 | F8 | Eval su Ark Nova, confronto con baseline MVP | non iniziato |
+- ✅ `forum_posts.is_designer_response` — verificato in sessione
+  2026-07-25: migration applicata, backfill presente, flag calcolato sia
+  su ogni post sia sulla radice, `ForumPostRow`/`expandForumThread` lo
+  espongono correttamente in espansione runtime.
 
 ## Bug post-F1 trovati durante l'ingest reale (sessione 2026-07-23)
 
@@ -26,8 +30,5 @@
 
 ## Da fare, non ancora applicato (vedi artifact sessione)
 
-- `forum_posts.is_designer_response` (nuova colonna + backfill Brass +
-  aggiornamento `forum-ingest.ts`/`lib/retrieval.ts`) — per marcare il
-  designer per singolo post durante l'espansione, non solo sulla radice
 - Decodifica entità HTML su `thread.subject` (mai passato da
   `decodeHtmlEntities`, visibile es. `Overbuilding one&#039;s industy`)

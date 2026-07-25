@@ -13,7 +13,7 @@
  *   EVAL_BASE_URL         (es. http://localhost:3000, default)
  *   EVAL_GAME_ID          (uuid del gioco in Supabase, default = Brass Birmingham)
  */
-
+import 'dotenv/config';
 import { describe, it, expect } from "vitest";
 import { GoogleGenAI } from "@google/genai";
 import fs from "node:fs";

@@ -98,8 +98,7 @@
   {
     "id": "bb-17",
     "question": "Cos'è la Cementificazione?",
-    "expected_answer": "La Cementificazione è l'operazione che permette di rimpiazzare una Tessera Industria già piazzata con una tessera di livello più alto dello stesso tipo di Industria (pagando comunque i costi necessari), a patto che non ci siano cubetti risorsa sulla tessera che viene sostituita.",
-    "source_page": 10
+    "expected_answer": "La Cementificazione permette di rimpiazzare una Tessera Industria già piazzata con una tessera di livello più alto dello stesso tipo (pagando comunque i costi necessari). Se la tessera è tua puoi cementificare qualunque Industria, rimuovendo gli eventuali cubetti risorsa residui. Se la tessera è di un avversario puoi cementificare solo una Carbonaia o una Ferriera, e solo se non ci sono cubetti dello stesso tipo su nessuna tessera (di qualunque giocatore) né nel relativo Mercato.",    "source_page": 10
   },
   {
     "id": "bb-18",

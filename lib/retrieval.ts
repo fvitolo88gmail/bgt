@@ -62,6 +62,56 @@ export async function matchChunks(
     });
 }
 
+// --- Epica Q (0550): query enhancement — decomposizione + HyDE combinati ---
+//
+// Verificato manualmente in sessione (vedi decision-log): la decomposizione
+// pura risolve la dilution su domande composte (concetti diversi che si
+// annacquano a vicenda in un solo embedding), ma può PEGGIORARE il retrieval
+// se riformulata come sotto-domanda anziché come prosa dichiarativa in stile
+// manuale (HyDE) — la similarità domanda-vs-domanda tra query e thread forum
+// è strutturalmente più alta di domanda-vs-prosa-dichiarativa del manuale, a
+// prescindere dal contenuto. Per questo le due tecniche sono unite in un
+// solo step: un unico prompt scompone la domanda in concetti distinti (1 se
+// la domanda è già singola) e per ciascuno genera un breve paragrafo
+// ipotetico in stile regolamento, non una sotto-domanda.
+//
+// Il risultato viene SEMPRE unito al retrieval sulla query originale
+// (baseline), mai usato in sostituzione — rischio osservato: una
+// riformulazione che si allontana dal lessico corretto del gioco può far
+// perdere un chunk che il baseline grezzo trovava già.
+//
+// Fail-soft per design: se la generazione fallisce (quota, errore di
+// parsing, ecc.) si prosegue con la sola query originale — questo step è un
+// arricchimento, non deve mai far cadere l'intera risposta.
+
+const MAX_QUERY_ENHANCEMENT_CONCEPTS = 3;
+
+const QUERY_ENHANCEMENT_PROMPT = (question: string) => `Sei un assistente che migliora domande su regole di giochi da tavolo per un sistema di ricerca semantica (RAG).
+
+Domanda dell'utente: "${question}"
+
+Compito, in un solo passaggio:
+1. Identifica i concetti/meccaniche di gioco distinti coinvolti nella domanda (1 se la domanda riguarda già un solo concetto, fino a un massimo di ${MAX_QUERY_ENHANCEMENT_CONCEPTS} se ne combina diversi).
+2. Per ciascun concetto, scrivi un breve paragrafo (2-4 frasi) in prosa dichiarativa e affermativa, come se fosse un estratto di un manuale di regole che risponde a quel concetto — NON una domanda, NON un elenco puntato, NON un "forse"/"probabilmente". Usa terminologia plausibile e naturale anche se non conosci quella esatta usata dal gioco specifico: è più importante lo stile dichiarativo del contenuto esatto.
+
+Rispondi SOLO con un array JSON di stringhe (un paragrafo per concetto), nient'altro, senza backtick, senza preamboli. Esempio di formato:
+["Paragrafo dichiarativo sul primo concetto...", "Paragrafo dichiarativo sul secondo concetto..."]`;
+
+async function generateEnhancedQueries(question: string): Promise<string[]> {
+    try {
+        const raw = await geminiClient.generate(QUERY_ENHANCEMENT_PROMPT(question));
+        const cleaned = raw.replace(/```json|```/g, '').trim();
+        const parsed = JSON.parse(cleaned);
+        if (!Array.isArray(parsed) || parsed.length === 0 || !parsed.every((s) => typeof s === 'string')) {
+            throw new Error('formato risposta inatteso');
+        }
+        return parsed as string[];
+    } catch (err) {
+        console.error('[retrieval] query enhancement fallita, procedo con la sola query originale:', err);
+        return [];
+    }
+}
+
 // --- F5: retrieval multi-fonte con espansione thread forum (small-to-big) ---
 
 export interface ExpandedForumPost {
@@ -116,10 +166,6 @@ async function expandForumThread(
 
     const rows = (data ?? []) as ForumPostRow[];
 
-    // Ogni segmento porta il proprio URL inline ([URL: ...]) — così il
-    // modello può citare il link esatto del post che sta riportando,
-    // non solo un link generico alla radice del thread. Vedi buildPrompt
-    // in lib/prompt.ts per le istruzioni che dicono al modello di usarlo.
     const segments = rows.map((post) => {
         const replyTag = post.quoted_author ? ` [in risposta a: ${post.quoted_author}]` : '';
         const designerTag = post.is_designer_response ? ' [DESIGNER UFFICIALE DEL GIOCO]' : '';
@@ -142,27 +188,57 @@ async function expandForumThread(
 }
 
 /**
- * Retrieval per il prompt (F5, small-to-big). Cerca su ENTRAMBE le fonti
- * (nessun filtro source di default — prima era hardcoded solo 'manual' in
- * app/api/chat/route.ts). Per ogni chunk source='forum' vincente, espande
- * SEMPRE l'intero thread da forum_posts (nessun filtro/tetto aggiuntivo —
- * deciso in sessione, i thread grandi e pertinenti sono rari, ~1% su
- * Brass). I chunk source='manual' passano invariati. `sources` mantiene i
- * match originali (non espansi) per le citazioni mostrate in UI.
- *
- * Ogni PromptChunk di fonte forum porta anche `url` (link al thread/post
- * radice) e, se espanso, `posts` con il link diretto a ciascun post del
- * thread — la UI può linkare il post esatto, non solo l'inizio del
- * thread. Nel `content` stesso, ogni post espanso porta anche il proprio
- * [URL: ...] inline, in modo che il modello possa citarlo direttamente
- * nel testo della risposta (vedi lib/prompt.ts).
+ * Retrieval per il prompt (F5, small-to-big + Epica Q query enhancement).
+ * Cerca su ENTRAMBE le fonti. La query viene arricchita con paragrafi
+ * decomposti+HyDE (vedi generateEnhancedQueries), e il risultato è
+ * l'unione deduplicata (per chunk id, tenendo la similarità più alta) di:
+ *   - retrieval sulla query originale (baseline, sempre incluso)
+ *   - retrieval su ciascun paragrafo generato
+ * Per ogni chunk source='forum' vincente nell'insieme finale, espande
+ * SEMPRE l'intero thread da forum_posts. I chunk source='manual' passano
+ * invariati. `sources` mantiene i match finali (non espansi) per le
+ * citazioni mostrate in UI.
  */
 export async function matchChunksForPrompt(
     query: string,
     gameId: string,
     topK: number = 5,
 ): Promise<RetrievalResult> {
-    const matches = await matchChunks(query, gameId, topK); // nessun filterSource → entrambe le fonti
+    const enhancedQueries = await generateEnhancedQueries(query);
+    const searchQueries = [query, ...enhancedQueries];
+
+    const settled = await Promise.allSettled(
+        searchQueries.map((q) => matchChunks(q, gameId, topK)),
+    );
+
+    const matchLists: ChunkMatch[][] = [];
+    settled.forEach((result, i) => {
+        if (result.status === 'fulfilled') {
+            matchLists.push(result.value);
+        } else {
+            console.error(`[retrieval] retrieval fallito per la query arricchita #${i}:`, result.reason);
+        }
+    });
+
+    if (matchLists.length === 0) {
+        throw new Error('Retrieval fallito su tutte le query, inclusa quella originale');
+    }
+
+    // Merge deduplicato per id, tenendo la similarità più alta osservata
+    // tra tutte le query (originale + arricchite) per quel chunk.
+    const bestById = new Map<string, ChunkMatch>();
+    for (const list of matchLists) {
+        for (const match of list) {
+            const existing = bestById.get(match.id);
+            if (!existing || match.similarity > existing.similarity) {
+                bestById.set(match.id, match);
+            }
+        }
+    }
+
+    const matches = [...bestById.values()]
+        .sort((a, b) => b.similarity - a.similarity)
+        .slice(0, topK);
 
     const context: PromptChunk[] = [];
     const expandedThreadIds = new Set<number>();

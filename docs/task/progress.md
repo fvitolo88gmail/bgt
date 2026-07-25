@@ -38,8 +38,14 @@ Epica **0500 — Forum BGG**: F1-F3 e F5 completati per Brass Birmingham
     Potrebbe ridurre l'urgenza dell'Epica A (BYOK, D23) se il tetto RPD
     condiviso smette di essere un vincolo reale — da rivalutare quando si
     arriva a quell'epica, non prima.
-- Qualità contenuto manuale Brass: la sezione "Cementificazione" risulta
-  spezzata scorrettamente in due chunk durante il porting D19 (un
-  condizionale "se è tua / se è dell'avversario" finito diviso tra due
-  header diversi) — causa una generalizzazione errata osservata in test
-  manuale. Fix rimandato a una revisione futura di Brass, non bloccante.
+- Puntatore a `docs/task/0560-ingest-manuale-miglioramento.md` —
+    priorità alzata: la baseline 004 (2026-07-25) mostra che tutti e 3 i
+    fallimenti residui post-0550 sono riconducibili al problema di
+    granularità chunk descritto in quella nota.
+- Puntatore a `docs/task/0900-riferimenti-visivi.md` — nice to have, in
+  coda dopo 1100.
+- Puntatore a `docs/task/0570-bgg-link-citazioni.md` — fatto per il caso
+  principale, aperto il caso dei link per-post nei thread espansi.
+- Nota su D32 (prompt: non introdurre argomenti non richiesti): verificato
+  su un caso concreto, da ri-controllare con un eval completo quando si
+  riprende il lavoro — potrebbe migliorare ulteriormente bb-09 (Epica Q).

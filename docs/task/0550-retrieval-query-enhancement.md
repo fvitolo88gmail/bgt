@@ -73,3 +73,22 @@ prima di implementare.
   nella stessa sessione, poi giudicata un problema diverso — ambiguità
   della domanda, non debolezza del retrieval — e scartata per ora per
   mancanza di stato conversazionale, dipendenza da Epica 0900)
+
+**Stato:** ✅ implementato — decomposizione + HyDE combinati in
+`generateEnhancedQueries` (lib/retrieval.ts), verificato su baseline eval
+(70% → 85%, vedi docs/baselines/004-20260725.md) e su casi mirati
+(bb-07/Cementificazione+Vendita, bb-13/Sviluppo, entrambi in sessione
+2026-07-24).
+
+Q1 (fixture dedicata forum-interazioni) non è stata costruita
+formalmente come file a sé — è stata sostituita nei fatti dai test
+manuali mirati (`scripts/test-decomposition.ts`) più dalla fixture eval
+generale già esistente. Segnare Q1 come "soddisfatta informalmente,
+non tramite fixture dedicata" piuttosto che "non fatta".
+Q2 (decisione tra le opzioni) risolta: non OR ma combinazione, vedi D31.
+Q3 (implementazione): ✅ fatto.
+Q4 (misurazione costo/latenza): parzialmente fatto — noto l'impatto
+qualitativo (1 generate + N embed aggiuntivi per domanda) ma non
+misurato con numeri precisi di latenza reale in produzione. Da
+completare se diventa rilevante (es. lamentele utenti su tempi di
+risposta).
