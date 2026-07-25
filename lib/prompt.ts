@@ -14,7 +14,9 @@ Se il FATTO DIRETTO risponde già completamente alla domanda, fermati lì: non a
 
 Inoltre, prima di etichettare qualcosa come DEDUZIONE, verifica che sia davvero tale: se una fonte del contesto descrive quel fatto esplicitamente (anche se in una sezione diversa da quella usata per il resto della risposta, es. una variante di gioco descritta passo-passo), è un FATTO DIRETTO di quella fonte, non una deduzione, anche se richiede di leggere una fonte diversa dalle altre già citate nella risposta.
 
-Se la domanda dell'utente è ambigua o sottintende un caso specifico non dichiarato e la regola effettiva dipende da quel caso, NON forzare una risposta binaria assoluta in apertura (es. "Sì, è possibile" oppure "Non è possibile" come prima frase categorica). Apri invece riconoscendo esplicitamente la condizionalità, ad esempio: "Dipende da ..." seguito dai casi distinti. Una risposta che afferma categoricamente una cosa nella prima frase e poi la contraddice o la sfuma nel resto del testo è un errore da evitare sempre, indipendentemente da quanto la domanda sia formulata in modo assoluto.
+Se la domanda dell'utente è ambigua o sottintende un caso specifico non dichiarato (es. "un'industria" senza specificare se propria o di un avversario) e la regola effettiva dipende da quel caso, NON forzare una risposta binaria assoluta in apertura (es. "Sì, è possibile" oppure "Non è possibile" come prima frase categorica). Apri invece riconoscendo esplicitamente la condizionalità, ad esempio: "Dipende da chi possiede la tessera:" seguito dai casi distinti. Una risposta che afferma categoricamente una cosa nella prima frase e poi la contraddice o la sfuma nel resto del testo è un errore da evitare sempre, indipendentemente da quanto la domanda sia formulata in modo assoluto.
+
+ATTENZIONE — AMBIGUITÀ TERMINOLOGICA TRA AZIONI DISTINTE: alcuni termini della domanda (es. "costruire") possono riferirsi a più azioni di gioco distinte, ciascuna con regole proprie e diverse tra loro (es. piazzare una Tessera Industria tramite l'azione di Costruzione, oppure piazzare una Tessera Collegamento tramite l'azione di Espansione della Rete). Se il contesto fornito contiene fonti pertinenti per più di una di queste interpretazioni, NON scegliere silenziosamente una sola interpretazione e rispondere come se fosse l'unica possibile. Segnala esplicitamente l'ambiguità in apertura, ad esempio: "Dipende da cosa intendi costruire:" seguito dalla risposta per ciascuna interpretazione plausibile supportata dal contesto, invece di rispondere a una sola e lasciare l'utente a scoprire il fraintendimento da solo.
 
 Se il contesto non contiene abbastanza informazione nemmeno per una deduzione ragionevole, di' esattamente: "Non ho trovato questa informazione nel manuale."
 
@@ -36,7 +38,7 @@ ${context}
 DOMANDA:
 ${query}
 
-RISPOSTA (in italiano, in Markdown, citando le fonti secondo le regole sopra — grassetto per gli autori, link SOLO per i thread forum, mai per il manuale — e segnalando esplicitamente se si tratta di una deduzione):`;
+RISPOSTA (in italiano, in Markdown, citando le fonti secondo le regole sopra — grassetto per gli autori, link SOLO per i thread forum, mai per il manuale — segnalando esplicitamente se si tratta di una deduzione, e segnalando esplicitamente eventuali ambiguità terminologiche prima di rispondere):`;
 }
 
 export function buildContext(

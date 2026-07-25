@@ -188,12 +188,68 @@ async function expandForumThread(
 }
 
 /**
+ * Budget riservato per fonte (sessione diagnostica Hegemony, in attesa di
+ * numero decision-log): senza questo, il merge globale per similarità può
+ * far sì che più thread forum sullo stesso argomento (comune quando un
+ * argomento è molto discusso sul forum) affollino il topK e spingano fuori
+ * l'UNICO chunk manuale pertinente — la fonte più autorevole e completa,
+ * ma strutturalmente "in minoranza numerica" contro N thread forum simili.
+ * Verificato: domanda su Hegemony (Middle Class "buy from itself") con
+ * chunk manuale a similarità 68.6% esclusa dal contesto finale a favore di
+ * 4 chunk forum su varianti dello stesso argomento.
+ *
+ * Il budget scatta SOLO se il chunk manuale ha una similarità minima
+ * ragionevole (MIN_MANUAL_SIMILARITY) — altrimenti, su una domanda per
+ * cui il manuale non ha davvero nulla di pertinente (es. domanda
+ * fuori-scope, o specifica del forum come una FAQ community), forzare
+ * comunque 2 chunk manuale deboli sottrarrebbe spazio a candidati forum
+ * più utili solo per riempire una quota. Soglia iniziale stimata dai dati
+ * osservati in sessione (match pertinenti oggi: 65-79%; da validare
+ * empiricamente con più domande/giochi, stesso spirito di S3.2).
+ */
+const MIN_MANUAL_CHUNKS = 2;
+const MIN_MANUAL_SIMILARITY = 0.4;
+
+function selectWithReservedBudget(
+    allMatches: ChunkMatch[],
+    topK: number,
+    minManual: number,
+    minManualSimilarity: number,
+): ChunkMatch[] {
+    const sorted = [...allMatches].sort((a, b) => b.similarity - a.similarity);
+    const manualSorted = sorted.filter(
+        (m) => m.source === 'manual' && m.similarity >= minManualSimilarity,
+    );
+
+    const selected: ChunkMatch[] = [];
+    const selectedIds = new Set<string>();
+
+    for (const m of manualSorted.slice(0, minManual)) {
+        selected.push(m);
+        selectedIds.add(m.id);
+    }
+
+    for (const m of sorted) {
+        if (selected.length >= topK) break;
+        if (selectedIds.has(m.id)) continue;
+        selected.push(m);
+        selectedIds.add(m.id);
+    }
+
+    return selected.sort((a, b) => b.similarity - a.similarity).slice(0, topK);
+}
+
+/**
  * Retrieval per il prompt (F5, small-to-big + Epica Q query enhancement).
  * Cerca su ENTRAMBE le fonti. La query viene arricchita con paragrafi
  * decomposti+HyDE (vedi generateEnhancedQueries), e il risultato è
  * l'unione deduplicata (per chunk id, tenendo la similarità più alta) di:
  *   - retrieval sulla query originale (baseline, sempre incluso)
  *   - retrieval su ciascun paragrafo generato
+ * La selezione finale riserva un budget minimo al manuale (vedi
+ * selectWithReservedBudget) prima di riempire il resto per similarità
+ * globale, così l'unica fonte manuale non viene sistematicamente
+ * schiacciata da più thread forum sullo stesso argomento.
  * Per ogni chunk source='forum' vincente nell'insieme finale, espande
  * SEMPRE l'intero thread da forum_posts. I chunk source='manual' passano
  * invariati. `sources` mantiene i match finali (non espansi) per le
@@ -207,8 +263,21 @@ export async function matchChunksForPrompt(
     const enhancedQueries = await generateEnhancedQueries(query);
     const searchQueries = [query, ...enhancedQueries];
 
+    // Fetch separato per fonte, per ogni query (originale + arricchite): un
+    // pool ampio per lato (RAW_CANDIDATES_PER_SOURCE > topK finale) evita che
+    // il forum "saturi" già a questo stadio il top-K misto di una singola
+    // query, escludendo un chunk manuale pertinente prima ancora che la
+    // selezione finale (selectWithReservedBudget) abbia la possibilità di
+    // intervenire. Verificato: bug osservato dove un chunk manuale al 2°
+    // posto tra i soli candidati manuale non arrivava comunque al contesto
+    // finale, perché non sopravviveva al top-5 misto per-query a monte.
+    const RAW_CANDIDATES_PER_SOURCE = 8;
+
     const settled = await Promise.allSettled(
-        searchQueries.map((q) => matchChunks(q, gameId, topK)),
+        searchQueries.flatMap((q) => [
+            matchChunks(q, gameId, RAW_CANDIDATES_PER_SOURCE, 'manual'),
+            matchChunks(q, gameId, RAW_CANDIDATES_PER_SOURCE, 'forum'),
+        ]),
     );
 
     const matchLists: ChunkMatch[][] = [];
@@ -236,9 +305,7 @@ export async function matchChunksForPrompt(
         }
     }
 
-    const matches = [...bestById.values()]
-        .sort((a, b) => b.similarity - a.similarity)
-        .slice(0, topK);
+    const matches = selectWithReservedBudget([...bestById.values()], topK, MIN_MANUAL_CHUNKS, MIN_MANUAL_SIMILARITY);
 
     const context: PromptChunk[] = [];
     const expandedThreadIds = new Set<number>();

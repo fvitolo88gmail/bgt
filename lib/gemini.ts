@@ -36,3 +36,21 @@ export const geminiClient: LLMClient = {
         return text;
     },
 };
+
+export async function generateFromPdfBase64(prompt: string, pdfBase64: string): Promise<string> {
+    const result = await ai.models.generateContent({
+        model: process.env.CHAT_MODEL ?? 'gemini-3.1-flash-lite',
+        contents: [
+            {
+                role: 'user',
+                parts: [
+                    { text: prompt },
+                    { inlineData: { mimeType: 'application/pdf', data: pdfBase64 } },
+                ],
+            },
+        ],
+    });
+    const text = result.text;
+    if (!text) throw new Error('No text returned from Gemini (PDF input)');
+    return text;
+}

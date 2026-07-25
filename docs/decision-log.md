@@ -427,6 +427,305 @@ Partita" presente in alcune run e assente in altre) — non è un difetto
 del prompt, è un effetto collaterale della non-determinismo del paragrafo
 HyDE generato ad ogni chiamata. Da monitorare, non ancora da correggere.
 
+---
+
+## Sessione 7 — 2026-07-25 (ingest Hegemony)
+
+### D33 — Rilevamento colonne PDF: da soglia fissa a quorum riga-per-riga
+**Contesto:** l'ingest del manuale di Hegemony ha rivelato che
+`cluster_columns` (extract-pdf.py) falliva sistematicamente su pagine a
+due colonne con gutter stretto: il gap reale tra colonne era di soli
+10px, quasi indistinguibile per larghezza assoluta dalla spaziatura
+normale tra parole (5-8px). Diagnosticato con una serie di script
+`scripts/diagnose/*` dedicati: prima ipotesi (elemento a ponte che azzera
+il gap su tutta la pagina) smentita dai dati; causa reale isolata via
+misura esatta del gap (`find-true-gap.py`). Tentativi con soglia fissa
+calibrata (10px, poi 12px, poi Otsu 14.6px) hanno tutti fallito sulla
+stessa pagina, perché nessuna soglia assoluta in px generalizza quando il
+gutter reale è così vicino alla spaziatura normale.
+**Opzioni:** soglia fissa calibrata per documento (con script di
+calibrazione dedicato) · soglia fissa Otsu (clustering bimodale
+automatico sull'intero documento) · rilevamento a quorum riga-per-riga
+(matrice riga × posizione, gap valido se vuoto sulla maggioranza delle
+righe, non su tutte)
+**Scelta:** quorum riga-per-riga. `cluster_columns` riscritta: raggruppa
+le parole in righe, poi per ogni banda verticale calcola la frazione di
+righe che la occupano; una banda è un gap valido se `occupancy <=
+GAP_MAX_OCCUPANCY` (0.05) e larga almeno `GAP_MIN_WIDTH` (6px). I gap che
+toccano i bordi della pagina (margini, non separatori interni) sono
+scartati.
+**Motivazione:** una banda con occupancy ~0% è un segnale forte
+indipendentemente dalla sua larghezza assoluta o dalla tipografia del
+documento — elimina la necessità di calibrare una soglia per ogni nuovo
+manuale. Tollera anche righe-eccezione (header a piena larghezza,
+giustificazione estrema di una singola riga) senza far collassare il
+rilevamento per l'intera pagina, il bug originale che aveva innescato
+questa indagine.
+**Verifica:** pagina critica di Hegemony (gutter 10px) risolta; nessun
+falso positivo su pagine campione a strutture diverse (box multipli,
+colonna singola, tabella). Script diagnostici temporanei creati durante
+l'indagine (`check-word-spacing.py`, `calibrate-column-gap.py`,
+`find-true-gap.py`, `diagnose-page-columns.py`) sono stati rimossi dopo
+la convalida — la logica finale vive solo in `extract-pdf.py`.
+`scripts/diagnose/matrix-column-preview.py` mantenuto come strumento
+diagnostico per manuali futuri, importa `cluster_columns` direttamente
+da `extract-pdf.py` (via `importlib`, dato il trattino nel nome file) per
+evitare divergenza silenziosa dalla logica di produzione.
+
+---
+
+### D34 — Contenuto icona-dipendente: non automatizzabile da solo testo, verificato prima di rinunciare
+**Contesto:** pagine con layout a griglia 2D icona+didascalia (lista
+componenti, legenda simboli, diagramma di setup) producevano testo
+disordinato e semanticamente inutile con l'estrazione testuale — il
+significato è veicolato graficamente (icone, posizione), non ricostruibile
+da coordinate x/y linearizzate in ordine di lettura.
+**Opzioni:** clustering 2D delle parole in "celle" via posizione (icona +
+didascalia vicine) · sfruttare bordi/linee vettoriali per table extraction
+nativa di pdfplumber, se presenti · accettare il limite e trattare come
+eccezione manuale
+**Scelta (iniziale, poi superata da D36):** verificato con
+`diagnose-graphics.py` che le pagine non hanno bordi/linee vettoriali
+utilizzabili (solo curve bezier delle icone stesse) — niente table
+extraction nativa possibile. Clustering 2D generico giudicato troppo
+fragile per il valore (1-2 pagine su 39, contenuto di inventario più che
+di regolamento) — sostituito con uno stub testuale esplicativo che rimanda
+alla pagina originale, per non intasare il retrieval con testo spazzatura.
+Componenti di pagina 2-3 riordinati a mano come eccezione una-tantum.
+**Motivazione:** non automatizzare qualcosa che il testo non può
+ricostruire in modo affidabile, invece di costruire un clustering 2D
+fragile per un beneficio marginale e circoscritto a poche pagine.
+**Nota:** questa limitazione è stata poi effettivamente risolta (non solo
+aggirata) passando a ingest via vision — vedi D36.
+
+---
+
+### D35 — ingest-pdf.ts diventa idempotente (skip chunk già presenti)
+**Contesto:** ingest manuale di Hegemony interrotto a metà da esaurimento
+quota Gemini (55/61 chunk salvati, 6 falliti con 503/429 a cascata).
+`ingest-pdf.ts`, a differenza di `forum-ingest.ts` (D27), non aveva
+logica di skip per chunk già presenti — un rilancio avrebbe ri-embeddato
+anche i 55 già andati a buon fine, sprecando quota già consumata (protetto
+solo passivamente dal vincolo di unicità `(game_id, page, section) where
+source='manual'` in Postgres, che evita duplicati ma non lo spreco di
+chiamate).
+**Scelta:** aggiunta lettura dei chunk esistenti per `(game_id,
+source='manual')` prima del loop principale; skip di quelli il cui
+`(page, section)` combacia già. Stesso pattern già validato in
+`forum-ingest.ts`.
+**Motivazione:** resilienza a interruzioni per quota/rete su ingest
+lunghi, senza introdurre codice nuovo — riuso di un pattern già in
+produzione.
+
+---
+
+### D36 — Ingest manuale: da testo estratto a vision PDF per-sezione (nuovo sotto-sistema `scripts/manual-parser/`)
+**Contesto:** una sessione di debug estesa sulla pipeline testuale
+(`markdown-from-json.ts`) ha prodotto una sequenza di bug via via diversi,
+mai definitivamente convergente: sezioni intere mancanti dall'outline
+(Fase 1, non deterministica — stesso bug di D29 su Brass, ricomparso qui),
+falsi positivi nella deduplicazione post-generazione (Fix B ha scartato
+un'intera sezione "Classe Lavoratrice" per similarità testuale con
+"Classe Media", meccaniche di gioco deliberatamente a specchio tra classi
+producono alta similarità lessicale senza essere duplicati), header `##`
+spuri generati dentro il corpo di una sezione (rompendo il parsing a
+valle in `ingest-pdf.ts`), lingua incoerente tra sezioni (alcune tradotte
+in italiano nonostante l'istruzione esplicita di mantenere l'originale),
+e il problema di fondo D34 (contenuto icona-dipendente irrecuperabile dal
+solo testo). Il pattern comune: ogni sezione è generata da una chiamata
+Gemini isolata, senza contesto delle altre — margine per bug sempre
+diversi, non convergente rincorrendo un controllo euristico alla volta.
+**Opzioni:** continuare a irrigidire la pipeline testuale con più
+controlli euristici a valle · ingest via Gemini vision sull'intero PDF in
+una chiamata · ingest via Gemini vision per-sezione (stesso schema "poco
+contesto per chiamata" già validato per il testo in D19, ma applicato a
+immagini di pagine reali invece che testo pre-estratto)
+**Scelta:** vision per-sezione. Nuovo sotto-sistema `scripts/manual-parser/`:
+- `types.ts` — interfacce condivise
+- `pdf-utils.ts` — estrazione di sotto-PDF in memoria per un insieme di
+  pagine fisiche, via `pdf-lib` (nuova dipendenza)
+- `outline.ts` — Fase 1 (identificazione sezioni), invariata nella logica
+  di fondo ma con i fix del prompt maturati in sessione (vedi sotto) e
+  `checkPageCoverage` (nuovo controllo: verifica che l'unione dei range di
+  pagina dell'outline copra ogni pagina del documento, segnalando
+  esplicitamente quelle scoperte — invece di scoprire sezioni mancanti
+  solo a campione)
+- `generate-section.ts` — Fase 2 (generazione), ora riceve il PDF vero
+  (sotto-insieme di pagine fisiche via `pdf-utils.ts`) invece di testo
+  grezzo pre-estratto
+- `verify-completeness.ts` — Fase 3, nuova (vedi D37)
+- `regenerate-section.ts` — utility per rigenerare una singola sezione
+  senza rifare l'intera Fase 1+2, per correzioni mirate
+- `ingest-manual.ts` — orchestratore CLI
+
+`extract-pdf.py` guadagna il campo `physicalPage` per ogni pagina (indice
+0-based nel PDF originale), necessario per mappare i range di pagine
+logiche dell'outline alle pagine fisiche da estrarre con `pdf-lib` — resta
+comunque necessario per il rilevamento spread/pagine fisiche, non è stato
+eliminato.
+`lib/gemini.ts` guadagna `generateFromPdfBase64`, funzione separata che
+NON tocca l'interfaccia `LLMClient` esistente (usata nel path di risposta
+chat) — invia `contents` multipart con `inlineData` PDF via SDK
+`@google/genai`.
+
+Il `SECTION_PROMPT` per la Fase 2 vision aggiunge, rispetto alla versione
+testuale: (0) istruzione esplicita e rinforzata di mantenere sempre la
+lingua originale del PDF, mai tradurre — l'istruzione singola non era
+sufficiente in isolamento, serve ripeterla nella chiamata specifica; (1)
+divieto esplicito di usare `##`/`#` per sottosezioni interne, riservati al
+titolo aggiunto dal codice chiamante; (7) istruzione di descrivere in
+prosa il contenuto visivo (icone, simboli) invece di ometterlo o
+inventare — ora possibile perché il modello vede le pagine reali.
+
+Fix B (deduplicazione post-generazione per similarità testuale) è stato
+RIMOSSO, non solo corretto — il rischio di falsi positivi su meccaniche di
+gioco a specchio tra ruoli è strutturale, non risolvibile con una sola
+soglia; sostituito da `checkPageCoverage` (ripetuto anche dopo eventuale
+scarto di sezioni) più la nuova Fase 3 di verifica.
+**Motivazione:** la vision legge le pagine reali (colonne, icone, tabelle,
+box) invece di dover ricostruire l'ordine di lettura da coordinate
+testuali pre-estratte e potenzialmente già rovinate — risolve alla radice
+sia D33 (colonne) sia D34 (icone), non li aggira soltanto. Mantenere lo
+schema "poco contesto per chiamata" (per-sezione, non intero documento in
+una chiamata) resta valido indipendentemente dal fatto che l'input sia
+testo o immagine — lo stesso rischio di riassunto/omissione osservato in
+D19 su input testuale si applica anche a input immagine.
+**Verifica:** rapporto parole markdown/testo-grezzo salito da ~59-68%
+(pipeline testuale, iterazioni multiple) a 86.8% (vision) sullo stesso
+manuale (Hegemony, 39 pagine). Copertura pagine completa dopo i fix
+all'outline (solo indice a p.39 escluso, intenzionale — verificato).
+**Costo:** consumo quota Gemini significativamente più alto per manuale
+rispetto alla pipeline testuale (ogni chiamata di Fase 2 processa
+un'immagine di pagina, non solo testo) — causa diretta di parte degli
+errori di quota (503/429) verificatisi durante l'ingest finale in questa
+sessione. Da tenere presente per manuali futuri più lunghi di 39 pagine.
+
+---
+
+### D37 — Fase 3 di verifica completezza post-generazione (`verify-completeness.ts`)
+**Contesto:** la sequenza di bug diversi osservata in D36 ha reso chiaro
+che continuare a irrigidire la generazione con controlli euristici mirati
+non converge — ogni fix apre la porta a un nuovo tipo di errore non
+previsto. Anticipato già in D19 come possibile evoluzione futura ("secondo
+prompt LLM-as-judge che confronta markdown vs JSON grezzo") quando la
+pipeline fosse scalata oltre il primo gioco.
+**Scelta:** nuovo script `scripts/manual-parser/verify-completeness.ts`:
+una singola chiamata Gemini che riceve l'INTERO testo grezzo e l'INTERO
+markdown finale, e restituisce un array JSON di omissioni sospette
+(numeri, vincoli, eccezioni, argomenti interi assenti), ciascuna con
+`severity` (alta/bassa) e `sourceHint` (riferimento pagina). Non sostituisce
+la revisione umana finale, ma la rende trattabile: invece di rileggere
+l'intero documento, il revisore controlla solo i punti segnalati.
+**Verifica:** su Hegemony ha segnalato 5 punti (3 alta gravità, 2 bassa).
+Controllo manuale ha rivelato che **2 dei 3 "alta gravità" erano falsi
+positivi** — contenuto effettivamente presente nel markdown finale, ma in
+una sezione diversa da quella di riferimento incrociato nel testo grezzo
+(es. "IMF Intervention" descritto per esteso in "Altre Regole" ma non
+duplicato nel punto in cui "Check IMF" vi rimanda esplicitamente — comportamento
+corretto, non omissione). Resta genuina solo 1 omissione minore
+(posizionamento fisico di un componente di setup).
+**Nota aperta:** il verificatore sembra confrontare in modo più locale
+(pagina-per-pagina) che a piena consapevolezza dell'intero markdown
+finale — da rinforzare nel prompt con l'istruzione esplicita di cercare
+nell'INTERO markdown, non solo nella porzione plausibilmente corrispondente
+alla stessa pagina del grezzo, prima di segnalare un'omissione. Non
+corretto in questa sessione.
+**Costo:** singola chiamata ma pesante in token (intero documento grezzo +
+intero markdown nello stesso prompt, stimato 45-50k parole totali su
+Hegemony) — da tenere presente per manuali più lunghi.
+
+---
+
+### D38 — `lib/retrieval.ts`: budget riservato per fonte manuale + fetch separato per fonte nel merge multi-query
+**Contesto:** verificato su una domanda reale di Hegemony ("la Classe
+Media può usare i propri beni per sé stessa?") che la risposta finale
+presentava come "deduzione" un fatto in realtà dichiarato esplicitamente
+nel manuale — violazione apparente di D32, ma diagnosticato con
+`scripts/diagnose-full-context.ts` (nuovo, replica `matchChunksForPrompt`
+esattamente come `/api/chat`, a differenza di `diagnose-retrieval.ts` che
+non applica il query enhancement) che il chunk manuale corretto (score
+isolato 68-70%, tra i migliori anche filtrando solo `source=manual`) non
+arrivava affatto al contesto finale passato al prompt — non era un
+problema di prompt/generazione, ma di assemblaggio del contesto a monte.
+**Causa radice, due strati:**
+1. Ogni chiamata `matchChunks(query, gameId, topK)` per ciascuna query
+   (originale + varianti arricchite HyDE/decomposizione, D31) cercava
+   SENZA filtro di fonte — quando un argomento è molto discusso sul forum
+   (più thread pertinenti sullo stesso tema), il top-K misto di quella
+   singola chiamata poteva già escludere l'unico chunk manuale pertinente,
+   prima ancora del merge tra query.
+2. Anche a valle del merge, chunk manuale simili tra loro (sezioni lunghe
+   spezzate meccanicamente in "parte N", vedi D39) competevano per gli
+   stessi slot — quale vincesse dipendeva da rumore nella formulazione
+   della query più che dalla pertinenza reale dell'azione specifica
+   richiesta.
+**Opzioni per lo strato 1:** aumentare `topK` globale · fetch separato per
+fonte con pool ampio, poi merge. **Opzioni per lo strato 2:** aumentare il
+budget riservato manuale · affrontare la causa strutturale del chunking
+(vedi D39, scelto in aggiunta)
+**Scelta:**
+- Fetch separato per fonte: `matchChunks` invocato due volte per ogni
+  query (una volta `filterSource='manual'`, una volta `'forum'`), ciascuna
+  con `RAW_CANDIDATES_PER_SOURCE=8` candidati, poi merge deduplicato come
+  prima.
+- `selectWithReservedBudget`: garantisce almeno `MIN_MANUAL_CHUNKS=2`
+  chunk manuale nel set finale (i migliori per similarità tra i candidati
+  manuale), MA solo se sopra `MIN_MANUAL_SIMILARITY=0.4` — per non forzare
+  chunk manuale irrilevanti quando il manuale non ha nulla di pertinente
+  per una data domanda (es. domanda fuori-scope, o specifica di una FAQ
+  community). Sotto soglia, il budget non scatta e si torna alla
+  selezione per similarità globale.
+**Verifica:** dopo il fix, il numero di chunk manuale nel contesto finale
+per la domanda di test è salito da 1/5 a 3-4/5. Il chunk esatto atteso
+("Buy Goods & Services") non è comunque comparso fino a quando non è
+stato applicato ANCHE D39 (chunking troppo grezzo lo faceva competere con
+altre 7 "parti" della stessa sezione) — i due fix erano entrambi
+necessari, nessuno dei due da solo sufficiente.
+**Nota aperta:** `MIN_MANUAL_CHUNKS=2`, `MIN_MANUAL_SIMILARITY=0.4`,
+`RAW_CANDIDATES_PER_SOURCE=8` sono stime a occhio dai dati osservati in
+questa sessione (match pertinenti oggi: 65-79%), non validate
+empiricamente su un campione ampio — stesso status del backlog
+`SIMILARITY_THRESHOLD` (S3.2, ancora non implementato). Da rivedere
+insieme in un giro di eval più esteso.
+
+---
+
+### D39 — `ingest-pdf.ts`: chunking a livello di sottosezione (`###`), non più sezione intera con fallback a 500 parole
+**Contesto:** diagnosticato (vedi D38) che sezioni `##` lunghe (es. "Classe
+Media", 8 azioni distinte) venivano spezzate meccanicamente in "parte
+1..N" da `CHUNK_MAX_WORDS=500` con overlap, senza rispettare i confini
+delle singole azioni di gioco — causa diretta della competizione
+inter-chunk osservata in D38. Stesso problema già annotato come nota
+aperta in `docs/task/0560-ingest-manuale-migliorato.md`, mai risolto prima
+d'ora.
+**Scelta:** `splitIntoSections` riscritta con due livelli di confine: `##`
+apre una sezione/pagina come prima, ma ora anche `###` apre un nuovo
+chunk DENTRO la sezione corrente, ereditandone la pagina dal `##` padre
+più vicino (non più trattato come testo muto). Titolo del chunk combinato
+`"Sezione — Sottosezione"`, per non perdere il contesto di quale area di
+gioco appartiene anche con chunk piccoli. Header più profondi (`####`+)
+restano contenuto piatto del chunk corrente — non aprono un ulteriore
+livello. Il fallback a 500 parole resta come rete di sicurezza, ma ora
+scatta solo su sottosezioni davvero lunghe, non sistematicamente.
+**Verifica:** funziona bene per la maggioranza del documento (Componenti,
+Anatomia dei Componenti, Setup, Overview per ciascuna classe — chunk
+piccoli e mirati, non più "parte N" arbitrarie). NON risolve però i casi
+in cui la pipeline vision (D36) ha usato convenzioni di header incoerenti
+tra sezioni generate da chiamate isolate diverse — verificato che le
+singole azioni di gioco sono marcate in modo non uniforme: a volte `###`,
+a volte `####` (un livello più annidato del previsto), a volte solo testo
+in **grassetto** su riga propria senza alcun header Markdown (16
+occorrenze di questo pattern verificate nel documento finale). Un parser
+basato solo su `###` non può essere robusto quando la struttura del
+markdown stesso non è coerente.
+**Sessione chiusa qui** — fix rimandato. Prossimo passo identificato ma
+non implementato: trattare `###` e `####` come lo stesso livello di
+confine (appiattire la gerarchia), E in aggiunta riconoscere una riga che
+è interamente un'etichetta in grassetto (pattern
+`^\*\*[A-Za-z][a-zA-Z &]*\*\*$`) come lo stesso tipo di confine — per
+essere robusti a qualunque convenzione la vision abbia scelto per una data
+sezione, invece di assumerne una sola.
+
 ## Template per sessioni future
 
 ```

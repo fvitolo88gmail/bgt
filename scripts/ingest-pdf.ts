@@ -4,28 +4,42 @@ import { createServiceClient } from '../lib/supabase';
 import { geminiClient } from '../lib/gemini';
 
 /**
- * scripts/ingest-pdf.ts (D19)
+ * scripts/ingest-pdf.ts (D19, aggiornato sessione Hegemony — fix 0560)
  *
- * Legge il Markdown strutturato prodotto da markdown-from-json.ts
- * (e revisionato a mano) e crea un chunk per ogni sezione (## header),
- * invece del precedente chunking meccanico a 500 parole indipendente
- * dalla struttura semantica del documento.
+ * Legge il Markdown strutturato prodotto dalla pipeline di ingest manuale
+ * (revisionato a mano) e crea un chunk per ogni SOTTOSEZIONE (###), non più
+ * un chunk per intera sezione (##) con fallback meccanico a 500 parole.
  *
- * Se una sezione supera CHUNK_MAX_WORDS viene comunque sub-divisa con
- * overlap, per evitare chunk enormi — ma il taglio di default rispetta
- * sempre i confini di sezione.
+ * Motivo del cambio (vedi docs/task/0560-ingest-manuale-migliorato.md e
+ * sessione diagnostica Hegemony): trattare "###" come testo muto dentro
+ * un chunk "##" unico causava la fusione di 5-8 azioni/argomenti eterogenei
+ * in singoli chunk grandi (es. "Classe Media" spezzata meccanicamente in
+ * "parte 1..8" da 500 parole, senza rispettare i confini delle singole
+ * azioni). Risultato osservato: un'azione specifica (es. "Buy Goods &
+ * Services") competeva per gli stessi slot di retrieval con altre 7 parti
+ * della stessa sezione, e quale vincesse dipendeva da rumore nella query
+ * più che dalla pertinenza reale.
+ *
+ * Ogni "###" diventa ora un chunk a sé, ereditando la pagina dal "##"
+ * padre più vicino. Il titolo del chunk combina sezione+sottosezione
+ * ("Classe Media — Buy Goods & Services") per non perdere il contesto di
+ * quale area di gioco appartiene. Il testo prima della prima "###" (se
+ * presente) diventa un chunk "introduttivo" a sé, titolato solo con il
+ * nome della sezione "##". Se una sottosezione supera CHUNK_MAX_WORDS,
+ * viene comunque sub-divisa con overlap come fallback — ma ora è un
+ * evento raro, non la norma.
  *
  * Uso:
  *   npx ts-node --project scripts/tsconfig.json scripts/ingest-pdf.ts \
- *     --md manuals/brass.md --game-id {uuid}
+ *     --md ingest/hegemony/manual.md --game-id {uuid}
  */
 
 const CHUNK_MAX_WORDS = 500;
 const OVERLAP_WORDS = 50;
 
 interface Section {
-    title: string;
-    pages: number[]; // pagine di origine estratte dall'header, es. [10, 11]
+    title: string; // "Sezione — Sottosezione", o solo "Sezione" per il blocco introduttivo
+    pages: number[]; // pagine ereditate dal "##" padre più vicino
     content: string;
 }
 
@@ -61,44 +75,59 @@ function cleanTitle(headerLine: string): string {
         .trim();
 }
 
+function cleanSubTitle(headerLine: string): string {
+    return headerLine.replace(/^###\s*/, '').trim();
+}
+
+/**
+ * Due livelli di confine: "##" apre una nuova sezione top-level (pagina),
+ * "###" apre un nuovo chunk DENTRO la sezione corrente, ereditandone la
+ * pagina. Header più profondi ("####" e oltre) restano contenuto normale
+ * del chunk corrente — non aprono un ulteriore livello di split.
+ */
 function splitIntoSections(markdown: string): Section[] {
     const lines = markdown.split('\n');
     const sections: Section[] = [];
 
-    let currentTitle: string | null = null;
-    let currentPages: number[] = [];
-    let currentContent: string[] = [];
+    let sectionTitle: string | null = null;
+    let sectionPages: number[] = [];
 
-    const flush = () => {
-        if (currentTitle === null) return;
-        sections.push({
-            title: currentTitle,
-            pages: currentPages,
-            content: currentContent.join('\n').trim(),
-        });
+    let blockTitle: string | null = null; // null = blocco introduttivo, prima di qualsiasi "###"
+    let blockContent: string[] = [];
+
+    const flushBlock = () => {
+        if (sectionTitle === null) return;
+        const content = blockContent.join('\n').trim();
+        if (content.length === 0) return;
+        const title = blockTitle ? `${sectionTitle} — ${blockTitle}` : sectionTitle;
+        sections.push({ title, pages: sectionPages, content });
     };
 
     for (const line of lines) {
-        // Solo "## Titolo" (esattamente 2 cancelletti) apre una nuova sezione/pagina.
-        // "### Sottotitolo" (3+ cancelletti) resta contenuto della sezione corrente,
-        // altrimenti perde il riferimento pagina del "##" padre (bug osservato:
-        // sottosezioni come "### Cementificazione" finivano con page: null).
-        if (/^##(?!#)\s/.test(line.trim())) {
-            flush();
-            currentTitle = cleanTitle(line);
-            currentPages = parsePagesFromHeader(line);
-            currentContent = [];
-        } else {
-            // Le righe "###" (sottosezioni) non aprono un nuovo chunk, ma non
-            // devono nemmeno finire come testo letterale nel contenuto embeddato.
-            if (!/^###\s/.test(line.trim())) {
-                currentContent.push(line);
-            }
-        }
-    }
-    flush();
+        const trimmed = line.trim();
 
-    return sections.filter((s) => s.content.length > 0);
+        if (/^##(?!#)\s/.test(trimmed)) {
+            flushBlock();
+            sectionTitle = cleanTitle(line);
+            sectionPages = parsePagesFromHeader(line);
+            blockTitle = null;
+            blockContent = [];
+            continue;
+        }
+
+        if (/^###(?!#)\s/.test(trimmed)) {
+            flushBlock();
+            blockTitle = cleanSubTitle(line);
+            blockContent = [];
+            continue;
+        }
+
+        // "####" e oltre, o testo normale: contenuto del blocco corrente
+        blockContent.push(line);
+    }
+    flushBlock();
+
+    return sections;
 }
 
 function splitIntoWords(text: string): string[] {
@@ -106,8 +135,9 @@ function splitIntoWords(text: string): string[] {
 }
 
 /**
- * Un chunk = una sezione, salvo che la sezione sia troppo lunga:
- * in quel caso viene sub-divisa mantenendo l'overlap, come fallback.
+ * Un chunk = una sezione/sottosezione, salvo che sia troppo lunga: in quel
+ * caso viene sub-divisa con overlap, come fallback (ora raro, dato che le
+ * sottosezioni sono naturalmente più piccole delle vecchie sezioni intere).
  */
 function buildChunks(sections: Section[]): Chunk[] {
     const chunks: Chunk[] = [];
@@ -125,8 +155,6 @@ function buildChunks(sections: Section[]): Chunk[] {
             continue;
         }
 
-        // Sezione troppo lunga: sub-dividi con overlap, mantenendo il
-        // riferimento alla sezione originale nel nome (parte N).
         let start = 0;
         let partIndex = 1;
 
@@ -178,22 +206,46 @@ async function main() {
 
     const markdown = fs.readFileSync(mdPath, 'utf-8');
 
-    if (markdown.includes('<!-- OCR illeggibile')) {
+    if (markdown.includes('<!-- OCR illeggibile') || markdown.includes('illeggibile, verificare manualmente')) {
         console.warn(
-            '⚠️  Attenzione: il markdown contiene marcature "OCR illeggibile" non risolte. Verifica di averle revisionate prima di procedere.',
+            '⚠️  Attenzione: il markdown contiene marcature "illeggibile" non risolte. Verifica di averle revisionate prima di procedere.',
         );
     }
 
     const sections = splitIntoSections(markdown);
     const chunks = buildChunks(sections);
 
-    console.log(`Sezioni: ${sections.length} — Chunk: ${chunks.length}`);
+    console.log(`Sezioni/sottosezioni: ${sections.length} — Chunk: ${chunks.length}`);
 
     const supabase = createServiceClient();
+
+    const { data: existingRows, error: existingError } = await supabase
+        .from('chunks')
+        .select('page, section')
+        .eq('game_id', gameId)
+        .eq('source', 'manual');
+
+    if (existingError) {
+        console.error('Errore leggendo chunk esistenti:', existingError.message);
+        process.exit(1);
+    }
+
+    const alreadyIngested = new Set(
+        (existingRows ?? []).map((row) => `${row.page}::${row.section}`)
+    );
+    console.log(`${alreadyIngested.size} chunk già presenti, verranno saltati`);
+
     let saved = 0;
+    let skipped = 0;
     let errors = 0;
 
     for (const [i, chunk] of chunks.entries()) {
+        const key = `${chunk.page}::${chunk.section}`;
+        if (alreadyIngested.has(key)) {
+            skipped += 1;
+            continue;
+        }
+
         console.log(`Embedding chunk ${i + 1}/${chunks.length}: ${chunk.section}...`);
 
         try {
@@ -216,8 +268,7 @@ async function main() {
                 saved++;
             }
 
-            // pausa per evitare rate limit Gemini
-            await new Promise((res) => setTimeout(res, 200));
+            await new Promise((res) => setTimeout(res, 800));
         } catch (err) {
             console.error(`  Errore embedding chunk ${i + 1}:`, err);
             errors++;
@@ -226,7 +277,7 @@ async function main() {
 
     await supabase.from('games').update({ manual_ready: true }).eq('id', gameId);
 
-    console.log(`\nCompletato: ${saved} salvati, ${errors} errori`);
+    console.log(`\nCompletato: ${saved} salvati, ${skipped} già presenti (saltati), ${errors} errori`);
 }
 
 main().catch((err) => {
