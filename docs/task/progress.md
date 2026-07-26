@@ -17,7 +17,7 @@
 | 0550 | `0550-retrieval-query-enhancement.md` | Retrieval query enhancement | quasi chiusa (resta Q4) |
 | 0560 | `0560-ingest-manuale-migliorato.md` | Miglioramento ingest manuale | punto 1 ✅, punto 2 ✅ (D40), punto 3 aperto |
 | 0570 | `0570-link-bgg-citazioni.md` | Link BGG nelle citazioni | parziale (aperto caso link per-post) |
-| 0600 | `0600-fase3-continua.md` | Fase 3 (continua) — S3.2–S3.5, S3.7 | dopo 0500 |
+| 0600 | `0600-fase3-continua.md` | Fase 3 (continua) — S3.2–S3.5, S3.7 | dopo 0500 (S3.4 anticipata, D41) |
 | 0700 | `0700-chat-multilingua.md` | Chat multilingua | dopo 0600 |
 | 0800 | `0800-ui-uplifting.md` | UI Uplifting | dopo 0700 |
 | 0900 | `0900-chat-con-contesto.md` | Chat con contesto | dopo 0800 |
@@ -34,10 +34,18 @@ invece di 224517). Epica 0510 (refactor tecnico) chiusa — v.
 `closed/0510-refactor-tech-debt.md`.
 Epica 0550 (query enhancement) quasi chiusa, resta solo Q4 (misurazione costo/latenza).
 
+**D41:** anticipata una versione minima di S3.4 (0600) prima della chiusura di 0500 —
+`/home` con dropdown di selezione gioco (`manual_ready`/`forum_ready` true) e redirect a
+`/game/[id]`. Resto di 0600 (S3.2, S3.3, S3.5, S3.7) resta dopo 0500. V. `0600-fase3-continua.md`
+e decision-log.
+
 ## Note aperte
 
 - Brass Birmingham da re-ingestare da capo (manuale + forum) dopo la correzione di
   `games.bgg_id` — v. `0500-forum-bgg.md`, sezione bug F4. Non ancora pianificato come task.
+- `app/home/page.tsx` (D41): non verificato con `next build`/`next dev` in questa sessione
+  — il build in sandbox fallisce su `next/font/google` (rete verso fonts.googleapis.com non
+  disponibile), non collegato al codice della pagina. Da confermare visivamente in locale.
 - Baseline eval 003 (impatto D21) resta deferred — vedi `closed/0100-eval-harness.md` e
   `docs/baselines/`.
 - Upgrade Tier 1 Gemini (a pagamento): dati di prezzo raccolti (embedding

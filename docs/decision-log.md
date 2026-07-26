@@ -343,6 +343,12 @@ poi esistono solo qui, in forma condensata fin da subito.*
 **Motivazione:** robustezza a qualunque convenzione scelta dalla vision per una data sezione, invece di assumerne una sola — chiude il gap lasciato aperto in D39.
 **Nota collaterale:** `cleanSubTitle` resta nel file ma non più usato dal nuovo percorso — warning ESLint (`no-unused-vars`), non un errore, da pulire in un prossimo giro.
 
+### D41 — Anticipata una versione minima di S3.4 (home `/home` con selezione gioco) prima della chiusura di 0500
+**Contesto:** Francesco ha bisogno subito di una home su `/home` con menu a tendina per scegliere il gioco e andare alla chat — funzione già prevista come S3.4 nell'epica 0600, che D22 aveva rimandato a dopo 0500.
+**Scelta:** implementata solo la fetta minima — `app/home/page.tsx` + `components/home/GameSelectForm.tsx`, dropdown sui giochi con `manual_ready` o `forum_ready` true, redirect a `/game/[id]` — non l'intera S3.4 originale (che prevedeva ricerca testuale + lista risultati) né il resto di 0600 (S3.2, S3.3, S3.5, S3.7), rimasti nella sequenza dopo 0500.
+**Motivazione:** bisogno pratico immediato di navigare tra i giochi già ingested (Brass, Hegemony), a costo implementativo minimo; non giustifica anticipare l'intera epica 0600.
+→ dettaglio in `0600-fase3-continua.md` (S3.4 marcato ✅, variante dropdown) e `progress.md`.
+
 ## Template per sessioni future
 
 ```

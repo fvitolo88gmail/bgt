@@ -191,7 +191,9 @@ domanda utente + game_id + owner_token (da cookie/localStorage)
 ├── .env.local
 │
 ├── app/                        # Next.js app router
-│   ├── page.tsx                # home: selezione gioco
+│   ├── page.tsx                # ancora boilerplate create-next-app, non riutilizzata
+│   ├── home/
+│   │   └── page.tsx            # selezione gioco: dropdown + redirect a /game/[id] (D41)
 │   ├── game/[id]/
 │   │   └── page.tsx            # chat UI
 │   └── api/
@@ -199,9 +201,12 @@ domanda utente + game_id + owner_token (da cookie/localStorage)
 │           └── route.ts
 │
 ├── components/
-│   └── chat/                   # componenti UI estratti da app/game/[id]/page.tsx (R1.3)
-│       ├── MessageBubble.tsx
-│       ├── SourcesList.tsx
+│   ├── chat/                   # componenti UI estratti da app/game/[id]/page.tsx (R1.3)
+│   │   ├── MessageBubble.tsx
+│   │   ├── SourcesList.tsx
+│   │   └── types.ts
+│   └── home/                   # dropdown selezione gioco (D41)
+│       ├── GameSelectForm.tsx
 │       └── types.ts
 │
 ├── lib/
