@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "ingest:pdf": "ts-node --project scripts/tsconfig.json scripts/manual/ingest-pdf.ts"
+    "ingest:pdf": "ts-node --project scripts/tsconfig.json scripts/manual/ingest-pdf.ts",
+    "eval:brass": "vitest run eval/runner.test.ts",
+    "eval:hegemony": "EVAL_FIXTURE=hegemony vitest run eval/runner.test.ts"
   },
   "dependencies": {
     "@google/genai": "^2.10.0",
