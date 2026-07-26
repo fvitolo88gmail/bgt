@@ -1,7 +1,6 @@
 # Epica F — Forum BGG
 
-**Stato:** in corso — F1-F6 completati; F7 pronta (fixture creata, runner parametrizzato),
-F8 in attesa di esecuzione in locale (rete non raggiungibile da questo ambiente)
+**Stato:** ✅ chiusa (sessione 2026-07-27) — F1-F8 completati
 
 ## Task
 
@@ -14,7 +13,7 @@ F8 in attesa di esecuzione in locale (rete non raggiungibile da questo ambiente)
 | F5 | ✅ Espansione runtime `lib/retrieval.ts` (`matchChunksForPrompt`): ricostruzione thread intero da `forum_posts` quando una radice vince il retrieval | verificato manualmente su Brass Birmingham, contesto espanso arriva correttamente al prompt |
 | F6 | ✅ Label provenienza in UI: `components/chat/SourcesList.tsx` — badge colorato per fonte (`Manuale` grigio, `Community` blu, `Designer` ambra) al posto del testo inline "· risposta del designer" | verificato con `tsc`/eslint; badge coerenti su manuale/forum-community/forum-designer |
 | F7 | ✅ Fixture `eval/fixtures/hegemony.json`: 15 Q&A forum-dipendenti | domande/risposte estratte da 15 thread reali in `ingest/hegemony/forum/posts.json` (id thread tracciato in `source_thread` per verificabilità), nessuna fonte manuale (Hegemony non ha manuale ingested — coerente con D14, "molti edge case solo nel forum"). `eval/runner.test.ts` generalizzato (`EVAL_FIXTURE`, `DEFAULT_GAME_IDS`) per poter eseguire su fixture diverse da Brass senza duplicare il runner |
-| F8 | 🟡 Eval su Hegemony, confronto con baseline MVP | fixture e runner pronti; esecuzione richiede rete verso Gemini + server locale (`npm run dev`), non disponibile in questo ambiente — da eseguire con Francesco in locale: `EVAL_FIXTURE=hegemony npx vitest run eval/runner.test.ts` |
+| F8 | ✅ Eval su Hegemony, confronto con baseline MVP | eseguito in locale (`npm run eval:hegemony`, sessione 2026-07-27): **14/15 (93.3%)**, sopra la soglia dell'80% (D15/E3). 1 fallimento (`heg-09`, mercato estero e Salute via carta specifica): il retrieval ha pescato un thread diverso e genuino (["State has to provide unavailable health or education"](https://boardgamegeek.com/thread/3221787)) sulla regola generale ("Salute/Istruzione non importabili"), non il thread con l'eccezione di una carta specifica (`source_thread` 3607610) usato per la fixture — i due thread non sono contraddittori (regola generale vs eccezione di una carta), ma il retrieval non ha portato in contesto quello corretto per rispondere a questa domanda specifica. Non è un bug di codice, è un limite di retrieval su un caso limite reale — fixture non modificata per non falsare il risultato |
 - ✅ `forum_posts.is_designer_response` — verificato in sessione
   2026-07-25: migration applicata, backfill presente, flag calcolato sia
   su ogni post sia sulla radice, `ForumPostRow`/`expandForumThread` lo
@@ -66,3 +65,15 @@ F8 in attesa di esecuzione in locale (rete non raggiungibile da questo ambiente)
   `lib/retrieval.ts` (`matchChunks`) e `components/chat/types.ts`
   (`sourceLabel`) per i dati già in DB, senza richiedere un backfill.
   Test aggiunti in `lib/bgg-clean.test.ts`.
+
+## Limite noto emerso dall'eval Hegemony (non risolto, per epiche future)
+
+- `heg-09`: quando esistono due thread genuini sullo stesso argomento con
+  angolazioni diverse (regola generale vs eccezione di una carta
+  specifica), il retrieval può portare in contesto solo quello "più
+  generico" per similarità e perdere quello con l'eccezione puntuale
+  richiesta dalla domanda. Non è uno scenario isolato per definizione —
+  potrebbe valere la pena, in un'epica di retrieval futura, indagare se
+  aumentare `topK` per query molto specifiche o un query rewriting
+  mirato ("carta X" → cerca sia la regola generale sia le eccezioni)
+  aiuti. Nessuna azione presa ora, fuori scope per 0500.

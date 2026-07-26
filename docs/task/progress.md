@@ -12,7 +12,7 @@
 | 0200 | `closed/0200-ingest-pdf.md` | Ingest PDF | ✅ chiusa |
 | 0300 | `closed/0300-retrieval-risposta.md` | Retrieval e risposta | ✅ chiusa |
 | 0400 | `closed/0400-fase3-citazioni-fallback-deploy-selezione-gioco.md` | Fase 3 — citazioni, fallback, deploy, selezione gioco | ✅ chiusa |
-| 0500 | `0500-forum-bgg.md` | Forum BGG | **priorità corrente** |
+| 0500 | `closed/0500-forum-bgg.md` | Forum BGG | ✅ chiusa |
 | 0510 | `closed/0510-refactor-tech-debt.md` | Refactor tecnico (package, doc, decision-log) | ✅ chiusa |
 | 0550 | `0550-retrieval-query-enhancement.md` | Retrieval query enhancement | quasi chiusa (resta Q4) |
 | 0560 | `0560-ingest-manuale-migliorato.md` | Miglioramento ingest manuale | punto 1 ✅, punto 2 ✅ (D40), punto 3 aperto |
@@ -26,26 +26,29 @@
 
 ## Priorità corrente
 
-Epica **0500 — Forum BGG**: F1-F5 completati (F4 verificato end-to-end su Hegemony,
-sessione 2026-07-26 — v. `0500-forum-bgg.md` per i bug trovati e corretti nel processo).
-Restano F6 (rifinitura UI), F7-F8 (eval Hegemony). Brass Birmingham va re-ingestato da
-capo (manuale + forum): `games.bgg_id` risultava errato (28720, id di Brass: Lancashire,
-invece di 224517). Epica 0510 (refactor tecnico) chiusa — v.
-`closed/0510-refactor-tech-debt.md`.
-Epica 0550 (query enhancement) quasi chiusa, resta solo Q4 (misurazione costo/latenza).
+Epica **0500 — Forum BGG** chiusa (sessione 2026-07-27) — v. `closed/0500-forum-bgg.md`.
+F1-F8 completati; eval Hegemony 14/15 (93.3%), sopra soglia 80% (D15/E3), 1 fallimento
+documentato come limite noto di retrieval (non un bug), non risolto in questa epica.
 
 **D41:** anticipata una versione minima di S3.4 (0600) prima della chiusura di 0500 —
 `/home` con dropdown di selezione gioco (`manual_ready`/`forum_ready` true) e redirect a
-`/game/[id]`. Resto di 0600 (S3.2, S3.3, S3.5, S3.7) resta dopo 0500. V. `0600-fase3-continua.md`
+`/game/[id]`. Resto di 0600 (S3.2, S3.3, S3.5, S3.7) resta da fare. V. `0600-fase3-continua.md`
 e decision-log.
+
+Nessuna epica è marcata come priorità corrente al momento — più epiche parziali candidate
+(0550 resta solo Q4, 0560 resta punto 3, 0570 resta il caso link per-post, 0600 il resto
+dopo S3.4) oltre al re-ingest di Brass Birmingham. Da Francesco: quale si affronta ora.
 
 ## Note aperte
 
 - Brass Birmingham da re-ingestare da capo (manuale + forum) dopo la correzione di
-  `games.bgg_id` — v. `0500-forum-bgg.md`, sezione bug F4. Non ancora pianificato come task.
-- `app/home/page.tsx` (D41): non verificato con `next build`/`next dev` in questa sessione
-  — il build in sandbox fallisce su `next/font/google` (rete verso fonts.googleapis.com non
-  disponibile), non collegato al codice della pagina. Da confermare visivamente in locale.
+  `games.bgg_id` — v. `closed/0500-forum-bgg.md`, sezione bug F4. Non ancora pianificato
+  come task.
+- Limite di retrieval emerso dall'eval Hegemony (`heg-09`, v.
+  `closed/0500-forum-bgg.md`): quando due thread genuini coprono lo stesso argomento con
+  angolazioni diverse (regola generale vs eccezione di una carta specifica), il retrieval
+  può portare in contesto solo il più generico. Da valutare in una futura epica di
+  retrieval (topK più alto su query specifiche, o query rewriting mirato).
 - Baseline eval 003 (impatto D21) resta deferred — vedi `closed/0100-eval-harness.md` e
   `docs/baselines/`.
 - Upgrade Tier 1 Gemini (a pagamento): dati di prezzo raccolti (embedding
