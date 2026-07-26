@@ -1,0 +1,92 @@
+[
+  {
+    "id": "heg-01",
+    "question": "Il giocatore della Classe Operaia (WC) può assegnare liberamente un lavoratore a un'azienda della Classe Media (MC) per uno slot opzionale? Il giocatore MC può rifiutare?",
+    "expected_answer": "Sì, il giocatore WC può assegnare un proprio lavoratore a un'azienda MC come parte dell'azione Assegna Lavoratori, esattamente come farebbe con aziende CC o statali — l'azione non è gratuita come lo Scambio Lavoratori. Il giocatore MC non può rifiutare: nessun giocatore può rifiutare un'azione compiuta da un altro nel proprio turno.",
+    "source_thread": 3731285
+  },
+  {
+    "id": "heg-02",
+    "question": "Nella fase di Produzione, c'è un ordine fisso tra Classe Media e Classe Operaia per la Copertura dei Bisogni (Cover Needs)?",
+    "expected_answer": "Sì. Durante la Fase di Produzione l'ordine dei giocatori è invertito rispetto al normale: Stato, poi Classe Capitalista, poi Classe Media, infine Classe Operaia — sia per la Copertura dei Bisogni sia per il pagamento delle tasse nella stessa fase (rulebook p.11, fase di Produzione). Quindi la Classe Media compra prima della Classe Operaia.",
+    "source_thread": 3731915
+  },
+  {
+    "id": "heg-03",
+    "question": "Con la carta Prestazioni Sanitarie (Healthcare Benefits), che permette di comprare Salute dallo Stato pagando metà del costo arrotondato per eccesso, l'arrotondamento va applicato a ogni singola unità di Salute acquistata o solo una volta sul costo totale?",
+    "expected_answer": "L'arrotondamento si applica una sola volta sul costo totale dell'acquisto, non separatamente per ogni singola unità di Salute.",
+    "source_thread": 3725310
+  },
+  {
+    "id": "heg-04",
+    "question": "L'influenza personale viene rimossa dal pool di tutti i giocatori alla fine di ogni round?",
+    "expected_answer": "No. L'influenza viene rimossa solo quando viene effettivamente usata. Se non viene usata, resta sulla plancia del giocatore per turni futuri e non viene rimossa automaticamente a fine round — lo stesso vale per le risorse acquistate da Classe Media e Classe Operaia non utilizzate.",
+    "source_thread": 3722547
+  },
+  {
+    "id": "heg-05",
+    "question": "Un'azienda colpita da sciopero (strike token) continua comunque a pagare le tasse come se fosse operativa?",
+    "expected_answer": "Sì. L'azienda continua a pagare le tasse finché ha lavoratori assegnati, indipendentemente dal fatto che siano in sciopero o meno — è il token di sciopero da solo a non rendere l'azienda non operativa (lo diventa solo se i lavoratori vengono rimossi).",
+    "source_thread": 3642504
+  },
+  {
+    "id": "heg-06",
+    "question": "Le transazioni sulle carte di commercio estero (foreign trade) si possono usare una sola volta, o Classe Capitalista e Classe Media possono ripetere la stessa transazione in turni diversi?",
+    "expected_answer": "Ogni azione è indipendente dalle altre: non conta cosa ha fatto un altro giocatore (o lo stesso giocatore) con azioni precedenti. Si può quindi scegliere più volte l'azione principale 'vendi al mercato estero' ed eseguire la stessa transazione della carta ogni volta, sia come Classe Media sia come Classe Capitalista, turno dopo turno, finché si hanno risorse da vendere — non c'è alcuna regola che imponga di segnare le transazioni già effettuate.",
+    "source_thread": 3637600
+  },
+  {
+    "id": "heg-07",
+    "question": "È possibile eseguire l'azione Dimostrazione (Demonstration) quando non ci sono slot lavoratore disponibili per la propria classe, cioè con zero slot ma almeno 2 lavoratori disoccupati? Quali sono le condizioni che fanno terminare una Dimostrazione?",
+    "expected_answer": "Sì: la condizione richiesta è che i lavoratori disoccupati superino di almeno 2 gli slot disponibili, quindi 0 slot disponibili e 2 lavoratori disoccupati (0+2=2) soddisfa la condizione — è proprio lo scopo dell'azione, fare pressione quando non ci sono abbastanza slot. Una Dimostrazione termina quando si verificano tutte e tre queste condizioni: 1) qualcuno costruisce un'azienda, 2) i lavoratori della classe in dimostrazione vengono assegnati a quell'azienda, 3) di conseguenza i lavoratori disoccupati di quella classe scendono sotto la soglia (slot disponibili + 2).",
+    "source_thread": 3633877
+  },
+  {
+    "id": "heg-08",
+    "question": "Per creare o mantenere un Sindacato (Trade Union) servono almeno 4 lavoratori nello stesso settore: questi 4 devono essere aggiuntivi rispetto a quello che si converte in membro del sindacato, o si può contare anche lui tra i 4?",
+    "expected_answer": "Servono 4 lavoratori aggiuntivi che lavorano in quel settore, oltre al lavoratore che si sposta per creare/mantenere il Sindacato — il Sindacato stesso non conta come azienda/settore ai fini di quel conteggio, quindi appena si riassegna il lavoratore qualificato al Sindacato, quel lavoratore smette di essere uno dei 4 richiesti.",
+    "source_thread": 3633682
+  },
+  {
+    "id": "heg-09",
+    "question": "Il mercato estero vende solo cibo e beni di lusso: come si può ottenere Salute dal mercato estero con una carta specifica (es. legata a un programma sanitario)?",
+    "expected_answer": "Le carte possono infrangere le regole normali del gioco: una carta di questo tipo infrange eccezionalmente la regola secondo cui non si può comprare Salute dal mercato estero, indicando il prezzo da pagare — esattamente come ogni altro acquisto dal mercato estero, si prendono i gettoni dalla riserva e si paga il prezzo indicato sulla carta.",
+    "source_thread": 3607610
+  },
+  {
+    "id": "heg-10",
+    "question": "Le aziende parzialmente coperte da lavoratori possono comunque generare tasse e prodotti? Vale lo stesso per le aziende dello Stato e della Classe Capitalista?",
+    "expected_answer": "Le aziende dello Stato e della Classe Capitalista non possono mai essere parzialmente coperte: se in un dato momento hanno meno lavoratori degli slot previsti, tutti i lavoratori rimanenti diventano disoccupati. Lo stesso vale per le aziende della Classe Media con due slot lavoratore MC. Solo le aziende MC con uno slot MC e uno slot opzionale per un lavoratore WC (indicato tra parentesi) possono restare operative con un solo lavoratore MC assegnato.",
+    "source_thread": 3585677
+  },
+  {
+    "id": "heg-11",
+    "question": "La carta Sussidio alle Importazioni (Import Subsidy) permette solo di comprare dal mercato estero, o anche di vendere le proprie risorse o comprare da altri giocatori?",
+    "expected_answer": "La carta permette solo di comprare dal Mercato Estero, niente altro — non si possono comprare beni da sé stessi o da altri giocatori con questa carta. In generale una carta permette solo esattamente ciò che dichiara esplicitamente, a meno che non specifichi diversamente.",
+    "source_thread": 3555634
+  },
+  {
+    "id": "heg-12",
+    "question": "Come può lo Stato procurarsi gettoni di Lusso e Cibo?",
+    "expected_answer": "Tramite la parola chiave 'Fornisci' (Provide), che permette di comprare fino al numero di beni/servizi necessari da qualunque fonte tranne quelle a cui si sta fornendo; comprando da altri giocatori (che possono anche essere costretti a venderli allo Stato); costruendo e gestendo un'azienda che produce quel bene; oppure comprando dal Mercato Estero — in quest'ultimo caso senza pagare le tariffe e solo per il quantitativo richiesto dalla carta (rulebook p.27).",
+    "source_thread": 3561438
+  },
+  {
+    "id": "heg-13",
+    "question": "Quando la Classe Operaia acquista Salute, quanti punti vittoria guadagna lo Stato per l'acquisto, indipendentemente da quante unità vengono comprate in una volta?",
+    "expected_answer": "Lo Stato guadagna sempre 1 Punto Vittoria per l'acquisto, indipendentemente da quante unità di Salute vengono comprate in quella singola azione.",
+    "source_thread": 3520725
+  },
+  {
+    "id": "heg-14",
+    "question": "In una partita a 2 giocatori, come vengono determinati gli stipendi delle aziende del settore pubblico, visto che durante il setup sono impostati al Livello 2?",
+    "expected_answer": "Nelle partite a 2 o 3 giocatori gli stipendi del settore pubblico sono sempre fissati al livello della politica fiscale del Salario Minimo (Politica 2) — quando lo Stato non è controllato da un giocatore, le Aziende Pubbliche vengono sempre adeguate al Salario Minimo consentito da questa politica (rulebook p.20, sezione 'Mercato del Lavoro').",
+    "source_thread": 3519330
+  },
+  {
+    "id": "heg-15",
+    "question": "Quando la Politica 1 si sposta verso destra e delle aziende pubbliche chiudono, lo Stato recupera il denaro speso per costruirle?",
+    "expected_answer": "Sì. Quando il Settore Pubblico si riduce (la Politica passa dalla sezione A alla B, o dalla B alla C), alcune Aziende Pubbliche diventano non disponibili e vengono girate a faccia in giù: lo Stato guadagna denaro pari al loro costo. Eventuali Lavoratori in quelle Aziende vengono immediatamente spostati nell'area dei Lavoratori Disoccupati, anche se erano impegnati (rulebook p.30, sezione 'Politica Fiscale').",
+    "source_thread": 3477871
+  }
+]

@@ -6,12 +6,15 @@
  * expected_answer, e stampa accuratezza % + log dei fallimenti.
  *
  * Uso:
- *   npx vitest run eval/runner.ts
+ *   npx vitest run eval/runner.ts                              # default: brass-birmingham
+ *   EVAL_FIXTURE=hegemony npx vitest run eval/runner.ts         # altra fixture nota
  *
  * Richiede in .env.local:
  *   GEMINI_API_KEY
  *   EVAL_BASE_URL         (es. http://localhost:3000, default)
- *   EVAL_GAME_ID          (uuid del gioco in Supabase, default = Brass Birmingham)
+ *   EVAL_FIXTURE          (nome file senza .json in eval/fixtures/, default brass-birmingham)
+ *   EVAL_GAME_ID          (uuid del gioco in Supabase — default noto per le fixture
+ *                          registrate in DEFAULT_GAME_IDS; obbligatorio per fixture nuove)
  */
 import 'dotenv/config';
 import { describe, it, expect } from "vitest";
@@ -22,13 +25,36 @@ import path from "node:path";
 // --- Config -----------------------------------------------------------
 
 const BASE_URL = process.env.EVAL_BASE_URL ?? "http://localhost:3000";
-const GAME_ID =
-    process.env.EVAL_GAME_ID ?? "87bb1782-dac5-4e5e-a916-9a82efa00868"; // Brass Birmingham
-const FIXTURE_PATH = path.join(__dirname, "fixtures", "brass-birmingham.json");
+const FIXTURE_NAME = process.env.EVAL_FIXTURE ?? "brass-birmingham";
+const FIXTURE_PATH = path.join(__dirname, "fixtures", `${FIXTURE_NAME}.json`);
 const JUDGE_MODEL = "gemini-3.1-flash-lite";
+
+// game_id di default per le fixture note (evita di dover passare sempre
+// EVAL_GAME_ID a mano) — per una fixture nuova non elencata qui, va passato
+// esplicitamente via env, altrimenti lo script si ferma con un errore chiaro.
+const DEFAULT_GAME_IDS: Record<string, string> = {
+    "brass-birmingham": "87bb1782-dac5-4e5e-a916-9a82efa00868",
+    hegemony: "d17ebf75-284a-4a4d-b3fa-0cc16287fce4",
+};
+
+function resolveGameId(): string {
+    if (process.env.EVAL_GAME_ID) return process.env.EVAL_GAME_ID;
+    const known = DEFAULT_GAME_IDS[FIXTURE_NAME];
+    if (known) return known;
+    throw new Error(
+        `Nessun game_id di default per la fixture "${FIXTURE_NAME}" — passa EVAL_GAME_ID esplicitamente.`
+    );
+}
+
+const GAME_ID = resolveGameId();
 
 // Soglia indicativa fissata in task.md (E3): 16/20 = 80%
 const ACCEPTABLE_THRESHOLD = 0.8;
+
+// Timeout per domanda: ~3 chiamate Gemini (embedding+generate dentro
+// /api/chat, più generate del judge) + pausa di 15s per il rate limit free
+// tier (15 richieste/minuto). Usato per calcolare il timeout totale del test.
+const MS_PER_QUESTION = 45_000;
 
 // --- Tipi ---------------------------------------------------------------
 
@@ -37,6 +63,7 @@ interface FixtureItem {
     question: string;
     expected_answer: string;
     source_page?: number;
+    source_thread?: number; // id thread BGG, per fixture forum-dipendenti (es. hegemony.json)
 }
 
 interface ChatApiResponse {
@@ -52,6 +79,8 @@ interface EvalResult {
     correct: boolean;
     judge_reasoning: string;
 }
+
+const FIXTURE: FixtureItem[] = JSON.parse(fs.readFileSync(FIXTURE_PATH, "utf-8"));
 
 // --- Judge (LLM-as-judge) -------------------------------------------------
 
@@ -125,13 +154,9 @@ async function runEval(): Promise<EvalResult[]> {
 
     const ai = new GoogleGenAI({ apiKey });
 
-    const fixture: FixtureItem[] = JSON.parse(
-        fs.readFileSync(FIXTURE_PATH, "utf-8"),
-    );
-
     const results: EvalResult[] = [];
 
-    for (const item of fixture) {
+    for (const item of FIXTURE) {
         console.log(`[${item.id}] domanda in corso...`);
         let actualAnswer: string;
         try {
@@ -182,7 +207,7 @@ function printReport(results: EvalResult[]): void {
     const total = results.length;
     const accuracy = total > 0 ? correctCount / total : 0;
 
-    console.log("\n=== EVAL REPORT — Brass Birmingham ===\n");
+    console.log(`\n=== EVAL REPORT — ${FIXTURE_NAME} ===\n`);
     console.log(`Accuratezza: ${correctCount}/${total} (${(accuracy * 100).toFixed(1)}%)`);
     console.log(
         `Soglia target: ${(ACCEPTABLE_THRESHOLD * 100).toFixed(0)}% → ${
@@ -207,7 +232,7 @@ function printReport(results: EvalResult[]): void {
 
 // --- Entry point vitest -------------------------------------------------
 
-describe("Eval RAG — Brass Birmingham baseline", () => {
+describe(`Eval RAG — ${FIXTURE_NAME}`, () => {
     it(
         "esegue la fixture e stampa il report di accuratezza",
         async () => {
@@ -218,13 +243,13 @@ describe("Eval RAG — Brass Birmingham baseline", () => {
 
             // Il test non fallisce sotto soglia: E3 richiede solo di DOCUMENTARE
             // la baseline, non di bloccare la CI. La soglia è un target, non un gate.
-            expect(results.length).toBe(20);
+            expect(results.length).toBe(FIXTURE.length);
             if (accuracy < ACCEPTABLE_THRESHOLD) {
                 console.warn(
                     `⚠️  Baseline sotto la soglia target (${(ACCEPTABLE_THRESHOLD * 100).toFixed(0)}%). Documenta comunque il risultato in task.md — questo NON blocca la Fase 2, che dipende solo dall'esistenza di una baseline (D15), non dal suo valore.`,
                 );
             }
         },
-        900_000, // timeout lungo: 20 domande, ciascuna con ~3 chiamate Gemini + pausa di 15s per rispettare il rate limit free tier (15 richieste/minuto)
+        FIXTURE.length * MS_PER_QUESTION,
     );
 });
