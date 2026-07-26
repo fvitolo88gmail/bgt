@@ -116,8 +116,8 @@ poi esistono solo qui, in forma condensata fin da subito.*
 
 ### D14 — Giochi fixture per eval
 **Contesto:** quali giochi usare come banco di prova per l'eval harness.
-**Scelta:** Brass Birmingham (MVP), Ark Nova (Fase 2).
-**Motivazione:** Brass = ground truth pulita da manuale, ideale per baseline; Ark Nova = molti edge case solo nel forum, misura il contributo Fase 2.
+**Scelta:** Brass Birmingham (MVP), Hegemony (Fase 2).
+**Motivazione:** Brass = ground truth pulita da manuale, ideale per baseline; Hegemony = molti edge case solo nel forum, misura il contributo Fase 2.
 → dettaglio completo in docs/archived/decision-log-archive.md
 
 ---

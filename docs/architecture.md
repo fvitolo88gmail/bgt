@@ -223,7 +223,7 @@ domanda utente + game_id + owner_token (da cookie/localStorage)
 │   │   ├── forum-discover.ts   # fase 1/3 — D27
 │   │   ├── forum-fetch.ts      # fase 2/3 — D27
 │   │   ├── forum-ingest.ts     # fase 3/3 — D27
-│   │   └── sync-forum.ts       # aggiornamento periodico, non ancora implementato (F4)
+│   │   └── sync-forum.ts       # aggiornamento periodico incrementale (F4)
 │   ├── manual/
 │   │   ├── extract-pdf.py
 │   │   ├── markdown-from-json.ts  # pipeline testuale, superata da manual-parser/ (D36)
@@ -249,7 +249,7 @@ domanda utente + game_id + owner_token (da cookie/localStorage)
 └── eval/                       # separato dal prodotto
     ├── fixtures/
     │   ├── brass-birmingham.json   # Q&A con ground truth
-    │   └── ark-nova.json
+    │   └── hegemony.json
     └── runner.test.ts          # esegue eval, stampa accuratezza
 ```
 
@@ -276,6 +276,6 @@ Lo schema è già pronto (campi bgg_* in chunks, tabella forum_threads). La Fase
 - Script `forum-ingest.ts` e `sync-forum.ts`
 - Retrieval su source=forum in aggiunta a source=manual
 - Label provenienza in UI (ufficiale vs community vs designer)
-- Eval fixture con domande forum-dipendenti (Ark Nova)
+- Eval fixture con domande forum-dipendenti (Hegemony)
 
 **Regola:** non iniziare Fase 2 prima che l'eval harness (task E1) giri e produca una baseline.

@@ -105,7 +105,7 @@ Nessuna autenticazione richiesta. Nessun full-text search disponibile.
 - Fixture: JSON array `[{ question, expected_answer, source_page? }]`
 - Runner: esegue ogni domanda contro il RAG, confronta risposta con expected
 - Output: percentuale di risposte corrette + log dei fallimenti
-- Giochi fixture: Brass Birmingham (MVP), Ark Nova (Fase 2)
+- Giochi fixture: Brass Birmingham (MVP), Hegemony (Fase 2)
 - Soglia minima accettabile: da definire dopo prima run baseline
 
 ---
