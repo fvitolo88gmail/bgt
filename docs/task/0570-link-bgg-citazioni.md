@@ -1,4 +1,4 @@
-# Epica (numerazione provvisoria 0570) — Link BGG nelle citazioni
+# Epica 0570 — Link BGG nelle citazioni
 
 **Stato:** ✅ implementato (D30) per il caso principale — parzialmente
 aperto per un caso secondario

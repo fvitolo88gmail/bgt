@@ -4,34 +4,33 @@ import { createServiceClient } from '../../lib/supabase';
 import { geminiClient } from '../../lib/gemini';
 
 /**
- * scripts/manual/ingest-pdf.ts (D19, aggiornato sessione Hegemony — fix 0560)
+ * scripts/manual/ingest-pdf.ts (D19, aggiornato fix 0560)
  *
  * Legge il Markdown strutturato prodotto dalla pipeline di ingest manuale
  * (revisionato a mano) e crea un chunk per ogni SOTTOSEZIONE (###), non più
  * un chunk per intera sezione (##) con fallback meccanico a 500 parole.
  *
- * Motivo del cambio (vedi docs/task/0560-ingest-manuale-migliorato.md e
- * sessione diagnostica Hegemony): trattare "###" come testo muto dentro
- * un chunk "##" unico causava la fusione di 5-8 azioni/argomenti eterogenei
- * in singoli chunk grandi (es. "Classe Media" spezzata meccanicamente in
- * "parte 1..8" da 500 parole, senza rispettare i confini delle singole
- * azioni). Risultato osservato: un'azione specifica (es. "Buy Goods &
- * Services") competeva per gli stessi slot di retrieval con altre 7 parti
- * della stessa sezione, e quale vincesse dipendeva da rumore nella query
- * più che dalla pertinenza reale.
+ * Motivo del cambio (vedi docs/task/0560-ingest-manuale-migliorato.md):
+ * trattare "###" come testo muto dentro un chunk "##" unico causava la
+ * fusione di più azioni/argomenti eterogenei in singoli chunk grandi
+ * (sezioni lunghe spezzate meccanicamente in "parte 1..N" da 500 parole,
+ * senza rispettare i confini delle singole sottosezioni). Risultato
+ * osservato: una sottosezione specifica competeva per gli stessi slot di
+ * retrieval con le altre parti della stessa sezione, e quale vincesse
+ * dipendeva da rumore nella query più che dalla pertinenza reale.
  *
  * Ogni "###" diventa ora un chunk a sé, ereditando la pagina dal "##"
  * padre più vicino. Il titolo del chunk combina sezione+sottosezione
- * ("Classe Media — Buy Goods & Services") per non perdere il contesto di
- * quale area di gioco appartiene. Il testo prima della prima "###" (se
- * presente) diventa un chunk "introduttivo" a sé, titolato solo con il
- * nome della sezione "##". Se una sottosezione supera CHUNK_MAX_WORDS,
- * viene comunque sub-divisa con overlap come fallback — ma ora è un
- * evento raro, non la norma.
+ * ("Sezione — Sottosezione") per non perdere il contesto di quale area
+ * di gioco appartiene. Il testo prima della prima "###" (se presente)
+ * diventa un chunk "introduttivo" a sé, titolato solo con il nome della
+ * sezione "##". Se una sottosezione supera CHUNK_MAX_WORDS, viene
+ * comunque sub-divisa con overlap come fallback — ma ora è un evento
+ * raro, non la norma.
  *
  * Uso:
  *   npx ts-node --project scripts/tsconfig.json scripts/ingest-pdf.ts \
- *     --md ingest/hegemony/manual.md --game-id {uuid}
+ *     --md ingest/{game-slug}/manual.md --game-id {uuid}
  */
 
 const CHUNK_MAX_WORDS = 500;
@@ -51,7 +50,7 @@ interface Chunk {
 
 /**
  * Estrae l'intervallo di pagine da un header tipo:
- * "## Azione - Vendita [p. 10]" oppure "## Setup [p. 4-5]"
+ * "## Nome Sezione [p. 10]" oppure "## Nome Sezione [p. 4-5]"
  */
 function parsePagesFromHeader(headerLine: string): number[] {
     const match = headerLine.match(/\[p\.\s*(\d+)(?:-(\d+))?\]/);
@@ -115,14 +114,33 @@ function splitIntoSections(markdown: string): Section[] {
             continue;
         }
 
-        if (/^###(?!#)\s/.test(trimmed)) {
+        // "###" o "####" aprono entrambi un nuovo chunk dentro la sezione
+        // corrente — la pipeline vision (D36) non è coerente su quale
+        // livello di header usare per le singole azioni, quindi li
+        // trattiamo allo stesso modo (D39, appiattito).
+        if (/^#{3,4}(?!#)\s/.test(trimmed)) {
             flushBlock();
-            blockTitle = cleanSubTitle(line);
+            blockTitle = trimmed.replace(/^#{3,4}\s*/, '').trim();
             blockContent = [];
             continue;
         }
 
-        // "####" e oltre, o testo normale: contenuto del blocco corrente
+        // Una riga che è INTERAMENTE un'etichetta in grassetto (es.
+        // "**Demonstration**") è trattata come lo stesso tipo di confine
+        // — pattern osservato quando la vision marca le singole azioni in
+        // grassetto invece che con un header Markdown vero (verificato:
+        // "Strike"/"Demonstration"/"Apply Political Pressure" fuse in un
+        // unico chunk, causa di un errore fattuale nella generazione).
+        const boldOnlyMatch = trimmed.match(/^\*\*([A-Za-z][a-zA-Z &]*)\*\*$/);
+        const boldTitle = boldOnlyMatch?.[1];
+        if (boldTitle) {
+            flushBlock();
+            blockTitle = boldTitle;
+            blockContent = [];
+            continue;
+        }
+
+        // "#####" e oltre, o testo normale: contenuto del blocco corrente
         blockContent.push(line);
     }
     flushBlock();

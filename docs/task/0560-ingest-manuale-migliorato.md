@@ -1,19 +1,42 @@
-# Epica (numerazione provvisoria 0560) — Miglioramento ingest manuale
+# Epica 0560 — Miglioramento ingest manuale
 
-**Stato:** nota aperta, da ragionare — non ancora un task con DoD definiti
+**Stato:** parzialmente superata dagli sviluppi successivi (D36-D40) — punto
+1 e punto 2 risolti (da un percorso in parte diverso da quello proposto qui),
+punto 3 ancora del tutto aperto. Aggiornato il 2026-07-26, vedi note per
+punto sotto ogni sezione.
 
-**Contesto:** durante la sessione del 2026-07-24/25 abbiamo scoperto che la
-pipeline automatica di porting PDF→Markdown (`markdown-from-json.ts`, D19-D20)
-aveva silenziosamente omesso 3 sezioni azione intere (Vendita, Ricognizione,
-Sviluppo) su un manuale di 12 pagine — la revisione manuale prevista da D19 non
-le ha intercettate. Il fix applicato in sessione (ricostruzione manuale del
-markdown + fix del parser `##`/`###` in `splitIntoSections`) ha risolto Brass
-Birmingham, ma solleva tre domande più ampie sulla pipeline stessa, valide per
-ogni futuro gioco ingested.
+**Contesto (originale, 2026-07-24/25):** durante la sessione abbiamo scoperto
+che la pipeline automatica di porting PDF→Markdown (`markdown-from-json.ts`,
+D19-D20) aveva silenziosamente omesso 3 sezioni azione intere (Vendita,
+Ricognizione, Sviluppo) su un manuale di 12 pagine — la revisione manuale
+prevista da D19 non le ha intercettate. Il fix applicato in sessione
+(ricostruzione manuale del markdown + fix del parser `##`/`###` in
+`splitIntoSections`) ha risolto Brass Birmingham, ma solleva tre domande più
+ampie sulla pipeline stessa, valide per ogni futuro gioco ingested.
+
+**Nota importante:** la pipeline `markdown-from-json.ts` discussa qui è stata
+nel frattempo sostituita da un sotto-sistema diverso, `scripts/manual/manual-parser/`
+(ingest via vision PDF, D36) — non più testo pre-estratto. Alcuni dei problemi
+sollevati sotto sono stati risolti come effetto collaterale del cambio di
+pipeline, non implementando le soluzioni proposte qui punto per punto.
 
 ---
 
-## 1. Come ottimizzare il porting PDF→MD? Il check manuale va reso obbligatorio?
+## 1. Come ottimizzare il porting PDF→MD? Il check manuale va reso obbligatorio? ✅ risolto (percorso diverso)
+
+**Aggiornamento 2026-07-26:** risolto, ma non tramite le direzioni proposte
+sotto (mai implementate). La pipeline vision (D36) elimina la causa radice —
+`checkPageCoverage` in `scripts/manual/manual-parser/outline.ts` verifica che
+l'unione dei range di pagina dell'outline copra ogni pagina del documento,
+segnalando esplicitamente quelle scoperte, invece di scoprire sezioni mancanti
+solo a campione. In più, `verify-completeness.ts` (D37, Fase 3) confronta
+l'intero testo grezzo con l'intero markdown finale e restituisce un elenco
+mirato di omissioni sospette (severità alta/bassa), rendendo trattabile la
+revisione umana finale invece di sostituirla. Verificato su Hegemony: 5 punti
+segnalati, di cui 2/3 "alta gravità" erano falsi positivi (contenuto presente
+altrove) — resta genuina solo 1 omissione minore. **Non ancora risolto:** il
+verificatore confronta in modo troppo locale (pagina-per-pagina) invece che a
+piena consapevolezza dell'intero markdown finale (nota aperta in D37).
 
 **Il problema di oggi non era mancanza di processo — il processo (D19) già
 prevedeva revisione a mano.** Il problema è che la revisione manuale è
@@ -50,7 +73,23 @@ implementativo, dato che finora è successo su 1 gioco su N ingested finora.
 
 ---
 
-## 2. Troppo pochi chunk (18 per Brass) — come aumentarli?
+## 2. Troppo pochi chunk (18 per Brass) — come aumentarli? ✅ risolto
+
+**Aggiornamento 2026-07-26:** implementata la "direzione promettente"
+descritta sotto — vedi D39. `splitIntoSections` in
+`scripts/manual/ingest-pdf.ts` tratta `###` come confine di chunk dentro la
+sezione `##` corrente, ereditandone la pagina dal `##` padre più vicino
+(titolo combinato "Sezione — Sottosezione"). Funziona bene per la
+maggioranza del documento.
+
+**Aggiornamento successivo (D40):** il gap lasciato aperto da D39 — la
+pipeline vision (D36) genera sezioni con convenzioni di header incoerenti
+tra chiamate isolate diverse (a volte `###`, a volte `####`, a volte solo
+testo in **grassetto** senza header Markdown) — è stato chiuso: `###` e
+`####` sono ora trattati come lo stesso livello di confine (appiattiti), e
+una riga interamente in grassetto (pattern `^\*\*[A-Za-z][a-zA-Z &]*\*\*$`)
+apre anch'essa un nuovo blocco. Il punto 2 di questa nota è considerato
+risolto.
 
 **Causa diretta, verificata oggi:** il fix del parser (`##` vs `###`) ha
 smesso di trattare le sottosezioni (`### Cementificazione`, `### Stendardi
@@ -83,7 +122,14 @@ D19-D20) forzerebbe più sub-divisioni anche dentro sezioni `##` singole, ma
 
 ---
 
-## 3. Small-to-big anche per il manuale, come già fatto per il forum (D28)?
+## 3. Small-to-big anche per il manuale, come già fatto per il forum (D28)? ⏳ ancora aperto, non implementato
+
+**Aggiornamento 2026-07-26:** nessuno sviluppo su questo punto — resta la
+proposta originale, non ancora una scelta implementata. Diventa più rilevante
+alla luce del punto 2: finché la vision (D36) non produce header coerenti,
+un chunk piccolo "vince" il retrieval in modo meno affidabile, il che rende
+ancora più interessante recuperare comunque il contesto dell'intera sezione
+`##` a runtime, indipendentemente da come la sottosezione è marcata.
 
 Idea: invece di scegliere fissamente la granularità del chunk embeddato,
 applicare lo stesso pattern già validato per il forum — un chunk piccolo e
@@ -122,17 +168,18 @@ sulle sezioni già piccole.
 
 ## Relazione con altri task aperti
 
-- Punto 2 è un prerequisito diretto per rendere pienamente efficace
-  l'Epica Q (0550, query enhancement) — un query enhancement eccellente non
-  può recuperare un chunk che semplicemente non esiste come unità distinta
-  (vedi bb-13, non risolto dall'enhancement per questo motivo esatto)
-- Punto 3, se implementato, renderebbe il punto 2 in parte superfluo (la
-  fusione a chunk grandi diventerebbe un vantaggio anziché un problema, dato
-  che il "grande" è recuperato solo a valle di un match preciso)
-- Nessuno di questi tre punti è bloccante per la chiusura di 0550 — sono
-  migliorie strutturali successive, da valutare con priorità dopo aver
-  misurato l'impatto di 0550 sull'eval (baseline 004)
-- **Evidenza aggiuntiva (baseline 004, 2026-07-25):** 3 fallimenti su 3
-  residui post-0550 (bb-13, bb-18, bb-20) sono tutti riconducibili al
-  punto 2 di questa nota (fusione chunk). Priorità alzata rispetto a
-  quando questa nota è stata aperta.
+- Punto 2 (risolto da D39 + D40) era un prerequisito diretto per rendere
+  pienamente efficace l'Epica Q (0550, query enhancement) — un query
+  enhancement eccellente non può recuperare un chunk che semplicemente non
+  esiste come unità distinta; ora che il parsing è robusto a `###`/`####`/
+  grassetto, questo limite dovrebbe essere rimosso
+- Punto 3 resta l'unico aperto in questa nota. Se implementato, renderebbe
+  il punto 2 sostanzialmente superfluo (la fusione a chunk grandi
+  diventerebbe un vantaggio anziché un problema, dato che il "grande" è
+  recuperato solo a valle di un match preciso) — ma con D39/D40 già in
+  produzione, non più bloccante nel breve termine
+- **Evidenza storica (baseline 004, 2026-07-25):** prima dei fix D39/D40, 3
+  fallimenti su 3 residui post-0550 (bb-13, bb-18, bb-20) erano tutti
+  riconducibili al punto 2 di questa nota (fusione chunk) — non ancora
+  rivalutato con un eval completo dopo il fix (da fare, per confermare il
+  miglioramento).

@@ -11,9 +11,12 @@
 | 0100 | `closed/0100-eval-harness.md` | Eval harness | ✅ chiusa |
 | 0200 | `closed/0200-ingest-pdf.md` | Ingest PDF | ✅ chiusa |
 | 0300 | `closed/0300-retrieval-risposta.md` | Retrieval e risposta | ✅ chiusa |
-| 0400 | `0400-fase3-citazioni-fallback-deploy-selezione-gioco.md` | Fase 3 — citazioni, fallback, deploy, selezione gioco | in corso |
+| 0400 | `closed/0400-fase3-citazioni-fallback-deploy-selezione-gioco.md` | Fase 3 — citazioni, fallback, deploy, selezione gioco | ✅ chiusa |
 | 0500 | `0500-forum-bgg.md` | Forum BGG | **priorità corrente** |
 | 0510 | `closed/0510-refactor-tech-debt.md` | Refactor tecnico (package, doc, decision-log) | ✅ chiusa |
+| 0550 | `0550-retrieval-query-enhancement.md` | Retrieval query enhancement | quasi chiusa (resta Q4) |
+| 0560 | `0560-ingest-manuale-migliorato.md` | Miglioramento ingest manuale | punto 1 ✅, punto 2 ✅ (D40), punto 3 aperto |
+| 0570 | `0570-link-bgg-citazioni.md` | Link BGG nelle citazioni | parziale (aperto caso link per-post) |
 | 0600 | `0600-fase3-continua.md` | Fase 3 (continua) — S3.2–S3.5, S3.7 | dopo 0500 |
 | 0700 | `0700-chat-multilingua.md` | Chat multilingua | dopo 0600 |
 | 0800 | `0800-ui-uplifting.md` | UI Uplifting | dopo 0700 |
@@ -26,11 +29,10 @@
 Epica **0500 — Forum BGG**: F1-F3 e F5 completati per Brass Birmingham (verificato in chat,
 retrieval multi-fonte funzionante). Restano F4 (sync incrementale), F6 (rifinitura UI), F7-F8
 (eval Ark Nova). Epica 0510 (refactor tecnico) chiusa — v. `closed/0510-refactor-tech-debt.md`.
+Epica 0550 (query enhancement) quasi chiusa, resta solo Q4 (misurazione costo/latenza).
 
 ## Note aperte
 
-- Epica 0400, task S3.1: non marcato ✅ ma le note di sessione lo indicano come completo —
-  discrepanza da confermare prima di chiudere l'epica (D22).
 - Baseline eval 003 (impatto D21) resta deferred — vedi `closed/0100-eval-harness.md` e
   `docs/baselines/`.
 - Upgrade Tier 1 Gemini (a pagamento): dati di prezzo raccolti (embedding
@@ -39,13 +41,14 @@ retrieval multi-fonte funzionante). Restano F4 (sync incrementale), F6 (rifinitu
     Potrebbe ridurre l'urgenza dell'Epica A (BYOK, D23) se il tetto RPD
     condiviso smette di essere un vincolo reale — da rivalutare quando si
     arriva a quell'epica, non prima.
-- Puntatore a `docs/task/0560-ingest-manuale-miglioramento.md` —
-    priorità alzata: la baseline 004 (2026-07-25) mostra che tutti e 3 i
-    fallimenti residui post-0550 sono riconducibili al problema di
-    granularità chunk descritto in quella nota.
+- Puntatore a `docs/task/0560-ingest-manuale-migliorato.md` — punto 1
+    (check completezza) risolto da D36/D37, punto 2 (granularità chunk)
+    risolto da D39+D40 (confine appiattito `###`/`####` + grassetto) — non
+    ancora rivalutato con un eval completo dopo il fix. Punto 3
+    (small-to-big manuale) resta aperto, priorità da confermare.
 - Puntatore a `docs/task/0900-riferimenti-visivi.md` — nice to have, in
   coda dopo 1100.
-- Puntatore a `docs/task/0570-bgg-link-citazioni.md` — fatto per il caso
+- Puntatore a `docs/task/0570-link-bgg-citazioni.md` — fatto per il caso
   principale, aperto il caso dei link per-post nei thread espansi.
 - Nota su D32 (prompt: non introdurre argomenti non richiesti): verificato
   su un caso concreto, da ri-controllare con un eval completo quando si

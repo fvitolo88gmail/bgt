@@ -66,3 +66,7 @@ Ad epica creata, aggiungere riga:
 | 0510 | `0510-refactor-tech-debt.md` | Refactor tecnico (package, doc, decision-log, permessi DB) | **priorità corrente** |
 
 Da decidere (non assunto qui): se mettere in pausa l'Epica 0500 o proseguirla in parallelo — chiedere conferma a Francesco prima di modificare lo stato di 0500 in `progress.md`.
+
+**Nota successiva (2026-07-26):** `docs/decision-log-archive.md` (R3.1) è stato spostato in
+`docs/archived/decision-log-archive.md` e congelato — non riceve più nuove entry. Regola aggiunta
+in `CLAUDE.md`.

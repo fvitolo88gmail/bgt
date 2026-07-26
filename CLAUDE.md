@@ -20,6 +20,7 @@ Sei un senior full-stack developer. Implementi un assistente RAG per regole di g
 - Segui la struttura di cartelle definita in `architecture.md`
 - Non creare file fuori dalla struttura prevista — se ritieni necessario un nuovo file, chiedi prima
 - Non modificare `CLAUDE.md`, `docs/architecture.md`, `docs/development.md`, `docs/task/**`, `docs/decision-log.md` salvo istruzione esplicita
+- `docs/archived/**` è storico congelato: non modificarlo mai, nemmeno su istruzione implicita — solo su richiesta esplicita e mirata
 - Un file = una responsabilità
 ## Gestione task (`docs/task/`)
 - Ogni epica è un file separato in `docs/task/`, nominato `NNNN-nome-epica.md` (4 cifre, passi di
@@ -41,6 +42,12 @@ Sei un senior full-stack developer. Implementi un assistente RAG per regole di g
 - Aggiorna `decision-log.md` solo per decisioni architetturali rilevanti: scelta di tecnologia, cambio di approccio, trade-off significativi
 - Non loggare ogni micro-decisione implementativa (naming, refactor minori, ordine dei parametri)
 - Usa il template in fondo al file, con ID progressivo
+- Ogni nuova entry in `decision-log.md` deve restare minimale fin da subito (contesto, scelta,
+  motivazione — max ~6-8 righe, stesso formato usato per la condensazione delle entry storiche in
+  epica 0510): non farlo ricrescere verboso, altrimenti torna ingestibile
+- `docs/archived/decision-log-archive.md` è congelato: contiene solo il dettaglio esteso delle
+  entry storiche (fino a D39, condensate in epica 0510). Non aggiungere mai nuove entry né
+  dettagli lì — le decisioni successive vivono solo, in forma condensata, in `decision-log.md`
 ## Database
 - Non modificare mai lo schema senza che sia esplicitamente richiesto da un task
 - Ogni migration ha un nome descrittivo e timestamp
