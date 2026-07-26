@@ -1,4 +1,4 @@
-// scripts/forum-discover.ts
+// scripts/forum/forum-discover.ts
 //
 // Fase 1/3 dell'ingest forum (D27): risolve il forum "Rules" del gioco e la
 // lista dei thread con reply_count > 0 (D10). Nessun fetch dei post qui —
@@ -7,12 +7,12 @@
 // Artefatti in ingest/{game-slug}/forum/discover.json (alberatura D28).
 //
 // Uso:
-//   npx ts-node --project scripts/tsconfig.json scripts/forum-discover.ts \
+//   npx ts-node --project scripts/tsconfig.json scripts/forum/forum-discover.ts \
 //     --bgg-id 224517 --game-slug brass
 
 import 'dotenv/config';
 import { mkdir, writeFile } from 'node:fs/promises';
-import { getThing, getForumList, getForumThreads } from '../lib/bgg';
+import { getThing, getForumList, getForumThreads } from '../../lib/bgg';
 
 interface DiscoverOutput {
     bggId: number;

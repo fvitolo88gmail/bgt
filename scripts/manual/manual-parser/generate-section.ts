@@ -1,4 +1,4 @@
-import { generateFromPdfBase64 } from '../../lib/gemini';
+import { generateFromPdfBase64 } from '../../../lib/gemini';
 import { extractPdfPagesAsBase64, logicalRangeToPhysicalPages } from './pdf-utils';
 import type { ExtractedPage, SectionOutline } from './types';
 

@@ -25,7 +25,6 @@ export async function POST(req: NextRequest) {
         }
 
         const context = buildContext(promptChunks);
-        console.log('Prompt:', context);
         const prompt = buildPrompt(question, context);
         const answer = await geminiClient.generate(prompt);
 

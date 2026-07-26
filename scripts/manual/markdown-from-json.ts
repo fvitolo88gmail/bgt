@@ -1,9 +1,9 @@
 import 'dotenv/config';
 import fs from 'fs';
-import { geminiClient } from '../lib/gemini';
+import { geminiClient } from '../../lib/gemini';
 
 /**
- * scripts/markdown-from-json.ts
+ * scripts/manual/markdown-from-json.ts
  *
  * Step di ingest (D19): trasforma il JSON grezzo prodotto da extract-pdf.py
  * in un Markdown pulito, strutturato per sezioni semantiche (## header),

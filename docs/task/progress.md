@@ -13,6 +13,7 @@
 | 0300 | `closed/0300-retrieval-risposta.md` | Retrieval e risposta | ✅ chiusa |
 | 0400 | `0400-fase3-citazioni-fallback-deploy-selezione-gioco.md` | Fase 3 — citazioni, fallback, deploy, selezione gioco | in corso |
 | 0500 | `0500-forum-bgg.md` | Forum BGG | **priorità corrente** |
+| 0510 | `closed/0510-refactor-tech-debt.md` | Refactor tecnico (package, doc, decision-log) | ✅ chiusa |
 | 0600 | `0600-fase3-continua.md` | Fase 3 (continua) — S3.2–S3.5, S3.7 | dopo 0500 |
 | 0700 | `0700-chat-multilingua.md` | Chat multilingua | dopo 0600 |
 | 0800 | `0800-ui-uplifting.md` | UI Uplifting | dopo 0700 |
@@ -22,9 +23,9 @@
 
 ## Priorità corrente
 
-Epica **0500 — Forum BGG**: F1-F3 e F5 completati per Brass Birmingham
-(verificato in chat, retrieval multi-fonte funzionante). Restano F4
-(sync incrementale), F6 (rifinitura UI), F7-F8 (eval Ark Nova).
+Epica **0500 — Forum BGG**: F1-F3 e F5 completati per Brass Birmingham (verificato in chat,
+retrieval multi-fonte funzionante). Restano F4 (sync incrementale), F6 (rifinitura UI), F7-F8
+(eval Ark Nova). Epica 0510 (refactor tecnico) chiusa — v. `closed/0510-refactor-tech-debt.md`.
 
 ## Note aperte
 

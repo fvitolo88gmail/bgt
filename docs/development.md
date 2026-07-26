@@ -130,12 +130,12 @@ npm run dev
 
 # esegui ingest PDF (richiede Python + pdfplumber + .venv attivo)
 source .venv/bin/activate
-npx ts-node --project scripts/tsconfig.json scripts/ingest-pdf.ts --json manuals/brass.json --game-id {uuid}
+npx ts-node --project scripts/tsconfig.json scripts/manual/ingest-pdf.ts --json manuals/brass.json --game-id {uuid}
 # oppure con npm script:
 npm run ingest:pdf -- --json manuals/brass.json --game-id {uuid}
 
 # esegui eval
-npx vitest run eval/runner.ts
+npx vitest run eval/runner.test.ts
 ```
 
 ---

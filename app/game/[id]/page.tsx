@@ -2,30 +2,8 @@
 
 import { use } from 'react';
 import { useState } from 'react';
-import ReactMarkdown from 'react-markdown';
-
-interface Source {
-    source: 'manual' | 'forum';
-    page: number | null;
-    section: string | null;
-    threadSubject: string | null;
-    isDesignerResponse: boolean | null;
-    similarity: number;
-    bggUrl: string | null;
-}
-
-interface ChatMessage {
-    role: 'user' | 'assistant';
-    content: string;
-    sources?: Source[];
-}
-
-function sourceLabel(s: Source): string {
-    if (s.source === 'forum') {
-        return s.threadSubject ? `Forum — ${s.threadSubject}` : 'Forum';
-    }
-    return s.section ?? (s.page != null ? `Pagina ${s.page}` : 'Manuale');
-}
+import { MessageBubble } from '@/components/chat/MessageBubble';
+import { ChatMessage, Source } from '@/components/chat/types';
 
 export default function GamePage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
@@ -48,7 +26,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                 body: JSON.stringify({ question, gameId: id }),
             });
 
-            const data = await res.json() as { answer: string; sources: Source[] };
+            const data = (await res.json()) as { answer: string; sources: Source[] };
 
             setMessages((prev) => [
                 ...prev,
@@ -78,64 +56,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                 )}
 
                 {messages.map((msg, i) => (
-                    <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-prose rounded-lg px-4 py-2 ${
-                            msg.role === 'user'
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-100 text-gray-900'
-                        }`}>
-                            {msg.role === 'assistant' ? (
-                                <div className="text-sm [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-2 [&_strong]:font-semibold [&_a]:text-blue-600 [&_a]:underline [&_a]:font-medium hover:[&_a]:text-blue-800">
-                                    <ReactMarkdown
-                                        components={{
-                                            a: ({ ...props }) => (
-                                                <a {...props} target="_blank" rel="noopener noreferrer" />
-                                            ),
-                                        }}
-                                    >
-                                        {msg.content}
-                                    </ReactMarkdown>
-                                </div>
-                            ) : (
-                                <p className="text-sm">{msg.content}</p>
-                            )}
-
-                            {msg.sources && msg.sources.length > 0 && (
-                                <div className="mt-2 pt-2 border-t border-gray-300">
-                                    <p className="text-xs text-gray-500 font-medium mb-1">Fonti:</p>
-                                    <ul className="space-y-0.5">
-                                        {[...msg.sources]
-                                            .sort((a, b) => b.similarity - a.similarity)
-                                            .map((s, j) => (
-                                                <li key={j} className="text-xs text-gray-500">
-                                                    {s.bggUrl ? (
-                                                        <a
-                                                            href={s.bggUrl}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="font-medium text-blue-600 underline hover:text-blue-800"
-                                                        >
-                                                            {sourceLabel(s)}
-                                                        </a>
-                                                    ) : (
-                                                        <span className="font-medium text-gray-600">
-                                                            {sourceLabel(s)}
-                                                        </span>
-                                                    )}
-                                                    {s.isDesignerResponse && (
-                                                        <span className="text-amber-600 font-medium"> · risposta del designer</span>
-                                                    )}
-                                                    <span className="text-gray-400">
-                                                        {' '}
-                                                        · rilevanza {Math.round(s.similarity * 100)}%
-                                                    </span>
-                                                </li>
-                                            ))}
-                                    </ul>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                    <MessageBubble key={i} message={msg} />
                 ))}
 
                 {loading && (

@@ -1,4 +1,4 @@
-import { geminiClient } from '../../lib/gemini';
+import { geminiClient } from '../../../lib/gemini';
 import type { ExtractedPage, SectionOutline } from './types';
 
 const OUTLINE_PROMPT = `Sei un assistente che analizza la struttura di un manuale di regole di un gioco da tavolo, estratto via OCR da un PDF (testo disordinato, colonne mischiate).

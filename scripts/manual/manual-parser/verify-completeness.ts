@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import fs from 'fs';
-import { geminiClient } from '../../lib/gemini';
+import { geminiClient } from '../../../lib/gemini';
 
 /**
  * scripts/verify-markdown-completeness.ts

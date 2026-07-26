@@ -101,8 +101,10 @@ python scripts/extract-pdf.py manuals/nome-gioco.pdf manuals/nome-gioco.json
 (Argomenti posizionali, non flag: `<pdf_path> <output_json>`.)
 
 Lo script rileva automaticamente pagine "spread" a doppia pagina fisica
-(D19/D20) e colonne multiple, e stampa a fine esecuzione il numero di
-pagine logiche estratte.
+(D19/D20), colonne multiple (rilevamento a quorum riga-per-riga, D33), e
+stampa a fine esecuzione il numero di pagine logiche estratte. Ogni pagina
+nel JSON include anche `physicalPage` (indice 0-based nel PDF originale),
+necessario allo step 3 (vision) per estrarre le pagine fisiche corrette.
 
 **Controlli prima di proseguire:**
 - Il conteggio di pagine logiche dovrebbe essere vicino al numero di
@@ -113,39 +115,66 @@ pagine logiche estratte.
 
 ---
 
-## 3. Trasformazione JSON → Markdown (pulizia strutturale via Gemini)
+## 3. Ingest manuale via vision (D36) — `scripts/manual-parser/`
+
+Sostituisce la vecchia pipeline testuale (`markdown-from-json.ts`, ancora
+presente nel repo ma superata). Genera il Markdown finale leggendo
+direttamente le pagine PDF reali (vision), non il testo pre-estratto —
+risolve alla radice i problemi di colonne/icone che l'estrazione testuale
+non può ricostruire in modo affidabile.
+
+**3a. Generazione (Fase 1 outline testuale + Fase 2 vision per-sezione):**
 
 ```bash
-npx ts-node --project scripts/tsconfig.json scripts/markdown-from-json.ts \
+npx ts-node --project scripts/tsconfig.json scripts/manual-parser/ingest-manual.ts \
   --json manuals/nome-gioco.json \
+  --pdf manuals/nome-gioco.pdf \
   --out manuals/nome-gioco.md
 ```
 
-Processo in due fasi (D19): prima identifica i confini di sezione
-sull'intero documento, poi genera il markdown sezione per sezione, con
-istruzione esplicita di non riassumere/interpretare il contenuto delle
-regole.
+Stampa in console l'elenco delle sezioni identificate (Fase 1) e un
+controllo di copertura pagine (segnala esplicitamente eventuali pagine
+non coperte da nessuna sezione — verificane la causa: intenzionale, es.
+indice/crediti, o bug reale). Al termine mostra il rapporto parole
+markdown/testo-grezzo (un valore basso può segnalare contenuto perso).
 
-**Se colpisci un rate limit Gemini** durante questo step, nel file
-`scripts/markdown-from-json.ts` aumenta la pausa tra le chiamate di Fase 2:
+**3b. Verifica completezza (Fase 3, obbligatoria prima della revisione manuale):**
 
-```ts
-// pausa per evitare rate limit Gemini
-await new Promise((res) => setTimeout(res, 5000)); // invece di 300
+```bash
+npx ts-node --project scripts/tsconfig.json scripts/manual-parser/verify-completeness.ts \
+  --json manuals/nome-gioco.json \
+  --md manuals/nome-gioco.md
 ```
 
-**Controlli prima di proseguire (obbligatori, D19):**
-- Leggi l'output console: rapporto parole markdown/parole grezzo (un
-  valore sotto il 50% viene segnalato in automatico, ma va comunque
-  verificato — può essere normale rimozione di rumore/crediti, o un
-  segnale di contenuto perso).
-- Leggi i warning di deduplicazione sezioni (outline sovrapposti o
-  contenuto quasi identico) — la deduplicazione automatica non è
-  infallibile, controlla i falsi positivi/negativi.
-- **Revisiona `nome-gioco.md` a mano contro il PDF originale.** Cerca in
-  particolare i commenti `<!-- OCR illeggibile, verificare manualmente -->`
-  e verifica che nessuna regola sia stata compressa perdendo dettagli
-  (numeri, elenchi di opzioni/bonus, eccezioni).
+Confronta l'intero testo grezzo con l'intero markdown finale e restituisce
+una lista mirata di omissioni sospette (severità alta/bassa) — usala per
+guidare la revisione manuale, non sostituirla. Nota: può segnalare falsi
+positivi quando un'informazione è presente altrove nel documento, in una
+sezione diversa da quella di riferimento incrociato nel grezzo — verifica
+sempre con una ricerca testuale prima di considerarla un'omissione reale.
+
+**3c. Correzioni mirate (se 3a/3b rivelano problemi isolati a poche sezioni):**
+
+```bash
+npx ts-node --project scripts/tsconfig.json scripts/manual-parser/regenerate-section.ts \
+  --json manuals/nome-gioco.json --pdf manuals/nome-gioco.pdf \
+  --title "Nome Sezione" --start N --end N > /tmp/fix.md
+```
+
+Rigenera una sola sezione senza rifare l'intera Fase 1+2 — stampa il
+markdown su stdout, da incollare a mano nel punto giusto del file finale
+(mantieni tu il controllo su cosa entra nel documento).
+
+**Controlli prima di proseguire (obbligatori):**
+- Copertura pagine ✅ (3a) e nessuna omissione "alta gravità" non
+  investigata (3b).
+- **Revisiona comunque `nome-gioco.md` a mano contro il PDF originale** —
+  3b non sostituisce la revisione umana, la rende solo più mirata.
+- Nota aperta (D39): sezioni con azioni marcate in modo incoerente dalla
+  vision (a volte `###`, a volte `####`, a volte solo **grassetto** senza
+  header) possono ancora finire nel fallback meccanico a 500 parole in
+  `ingest-pdf.ts` — verifica a campione che i chunk risultanti abbiano
+  titoli specifici (`Sezione — Sottosezione`), non generici `(parte N)`.
 
 ---
 

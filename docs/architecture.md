@@ -179,12 +179,15 @@ domanda utente + game_id + owner_token (da cookie/localStorage)
 ```
 /
 ├── CLAUDE.md
-├── architecture.md
-├── development.md
-├── task/
-│   ├── progress.md
-│   ├── NNNN-nome-epica.md      # un file per epica attiva/futura (4 cifre, step 100)
-│   └── closed/                 # epiche completate
+├── docs/
+│   ├── architecture.md
+│   ├── development.md
+│   ├── decision-log.md
+│   ├── baselines/
+│   └── task/
+│       ├── progress.md
+│       ├── NNNN-nome-epica.md  # un file per epica attiva/futura (4 cifre, step 100)
+│       └── closed/             # epiche completate
 ├── .env.local
 │
 ├── app/                        # Next.js app router
@@ -192,12 +195,14 @@ domanda utente + game_id + owner_token (da cookie/localStorage)
 │   ├── game/[id]/
 │   │   └── page.tsx            # chat UI
 │   └── api/
-│       ├── search-game/        # ricerca gioco su BGG
-│       │   └── route.ts
-│       ├── chat/               # query RAG
-│       │   └── route.ts
-│       └── game-status/        # manual_ready / forum_ready
+│       └── chat/               # query RAG
 │           └── route.ts
+│
+├── components/
+│   └── chat/                   # componenti UI estratti da app/game/[id]/page.tsx (R1.3)
+│       ├── MessageBubble.tsx
+│       ├── SourcesList.tsx
+│       └── types.ts
 │
 ├── lib/
 │   ├── supabase.ts             # client Supabase
@@ -212,12 +217,31 @@ domanda utente + game_id + owner_token (da cookie/localStorage)
 │       ├── manuals/            # json/md intermedi del PDF
 │       └── forum/              # discover.json, posts.json
 │
-├── scripts/                    # ingest — mai su Vercel
-│   ├── ingest-pdf.ts
-│   ├── forum-discover.ts       # fase 1/3 — D27
-│   ├── forum-fetch.ts          # fase 2/3 — D27
-│   ├── forum-ingest.ts         # fase 3/3 — D27
-│   └── sync-forum.ts           # aggiornamento periodico, non ancora implementato (F4)
+├── scripts/                    # ingest — mai su Vercel, raggruppati per dominio (R1.1)
+│   ├── tsconfig.json
+│   ├── forum/
+│   │   ├── forum-discover.ts   # fase 1/3 — D27
+│   │   ├── forum-fetch.ts      # fase 2/3 — D27
+│   │   ├── forum-ingest.ts     # fase 3/3 — D27
+│   │   └── sync-forum.ts       # aggiornamento periodico, non ancora implementato (F4)
+│   ├── manual/
+│   │   ├── extract-pdf.py
+│   │   ├── markdown-from-json.ts  # pipeline testuale, superata da manual-parser/ (D36)
+│   │   └── manual-parser/         # pipeline vision (D36) — v. docs/ingest-pdf.md
+│   │       ├── ingest-manual.ts
+│   │       ├── outline.ts
+│   │       ├── generate-section.ts
+│   │       ├── regenerate-section.ts
+│   │       ├── verify-completeness.ts
+│   │       ├── pdf-utils.ts
+│   │       └── types.ts
+│   └── diagnostics/
+│       ├── diagnose-retrieval.ts
+│       ├── diagnose-full-context.ts
+│       ├── diagnose-columns.py
+│       ├── diagnose-graphics.py
+│       ├── matrix-column-preview.py
+│       └── test-gemini-available.ts
 │
 ├── supabase/
 │   └── migrations/             # schema SQL versionato
@@ -226,7 +250,7 @@ domanda utente + game_id + owner_token (da cookie/localStorage)
     ├── fixtures/
     │   ├── brass-birmingham.json   # Q&A con ground truth
     │   └── ark-nova.json
-    └── runner.ts               # esegue eval, stampa accuratezza
+    └── runner.test.ts          # esegue eval, stampa accuratezza
 ```
 
 ---

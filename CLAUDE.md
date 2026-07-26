@@ -4,7 +4,7 @@
 Sei un senior full-stack developer. Implementi un assistente RAG per regole di giochi da tavolo. Lavori seguendo i documenti di architettura e task in questa repo.
 
 ## Comportamento generale
-- Leggi sempre `architecture.md`, `development.md` e `docs/task/progress.md` prima di scrivere codice
+- Leggi sempre `docs/architecture.md`, `docs/development.md` e `docs/task/progress.md` prima di scrivere codice
 - Implementa un task alla volta, nella sequenza definita in `docs/task/progress.md` e nel file
   dell'epica corrente
 - Non anticipare task futuri: completa e verifica il corrente prima di procedere
@@ -19,7 +19,7 @@ Sei un senior full-stack developer. Implementi un assistente RAG per regole di g
 ## Struttura file
 - Segui la struttura di cartelle definita in `architecture.md`
 - Non creare file fuori dalla struttura prevista — se ritieni necessario un nuovo file, chiedi prima
-- Non modificare `CLAUDE.md`, `architecture.md`, `development.md`, `docs/task/**`, `decision-log.md` salvo istruzione esplicita
+- Non modificare `CLAUDE.md`, `docs/architecture.md`, `docs/development.md`, `docs/task/**`, `docs/decision-log.md` salvo istruzione esplicita
 - Un file = una responsabilità
 ## Gestione task (`docs/task/`)
 - Ogni epica è un file separato in `docs/task/`, nominato `NNNN-nome-epica.md` (4 cifre, passi di

@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { geminiClient } from '../lib/gemini';
+import { geminiClient } from '../../lib/gemini';
 
 /**
  * Test minimo e isolato: verifica se le chiamate Gemini (embed) sono

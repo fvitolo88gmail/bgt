@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "ingest:pdf": "ts-node --project scripts/tsconfig.json scripts/ingest-pdf.ts"
+    "ingest:pdf": "ts-node --project scripts/tsconfig.json scripts/manual/ingest-pdf.ts"
   },
   "dependencies": {
     "@google/genai": "^2.10.0",

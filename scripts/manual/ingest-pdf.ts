@@ -1,10 +1,10 @@
 import 'dotenv/config';
 import fs from 'fs';
-import { createServiceClient } from '../lib/supabase';
-import { geminiClient } from '../lib/gemini';
+import { createServiceClient } from '../../lib/supabase';
+import { geminiClient } from '../../lib/gemini';
 
 /**
- * scripts/ingest-pdf.ts (D19, aggiornato sessione Hegemony — fix 0560)
+ * scripts/manual/ingest-pdf.ts (D19, aggiornato sessione Hegemony — fix 0560)
  *
  * Legge il Markdown strutturato prodotto dalla pipeline di ingest manuale
  * (revisionato a mano) e crea un chunk per ogni SOTTOSEZIONE (###), non più

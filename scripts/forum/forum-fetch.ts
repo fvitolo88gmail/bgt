@@ -1,4 +1,4 @@
-// scripts/forum-fetch.ts
+// scripts/forum/forum-fetch.ts
 //
 // Fase 2/3 dell'ingest forum (D27): scarica i post di ogni thread trovato
 // da forum-discover.ts, li pulisce (lib/bgg-clean.ts). NESSUN filtro di
@@ -13,16 +13,16 @@
 // Legge/scrive in ingest/{game-slug}/forum/ (alberatura D28).
 //
 // Uso:
-//   npx ts-node --project scripts/tsconfig.json scripts/forum-fetch.ts \
+//   npx ts-node --project scripts/tsconfig.json scripts/forum/forum-fetch.ts \
 //     --game-slug brass
-//   npx ts-node --project scripts/tsconfig.json scripts/forum-fetch.ts \
+//   npx ts-node --project scripts/tsconfig.json scripts/forum/forum-fetch.ts \
 //     --game-slug brass --refetch 3724051,3429143
 
 import 'dotenv/config';
 import { mkdir, readFile, writeFile, rename } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { getThread } from '../lib/bgg';
-import { cleanForumBody } from '../lib/bgg-clean';
+import { getThread } from '../../lib/bgg';
+import { cleanForumBody } from '../../lib/bgg-clean';
 
 interface DiscoverInput {
     bggId: number;

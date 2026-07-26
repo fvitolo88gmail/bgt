@@ -1,4 +1,4 @@
-// scripts/forum-ingest.ts
+// scripts/forum/forum-ingest.ts
 //
 // Fase 3/3 dell'ingest forum (D27): storage grezzo + embedding radice.
 // Approccio small-to-big (sessione ingest forum): ogni post viene salvato
@@ -15,14 +15,14 @@
 // Legge da ingest/{game-slug}/forum/posts.json (alberatura D28).
 //
 // Uso:
-//   npx ts-node --project scripts/tsconfig.json scripts/forum-ingest.ts \
+//   npx ts-node --project scripts/tsconfig.json scripts/forum/forum-ingest.ts \
 //     --game-slug brass --game-id {uuid}
 
 import 'dotenv/config';
 import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { createServiceClient } from '../lib/supabase';
-import { geminiClient } from '../lib/gemini';
+import { createServiceClient } from '../../lib/supabase';
+import { geminiClient } from '../../lib/gemini';
 
 const EMBED_PAUSE_MS = 800; // ~75 req/min, sotto il tetto reale di 100/min (verificato via dashboard)
 
