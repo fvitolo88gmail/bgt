@@ -1,8 +1,9 @@
 # Epica Q (0550) — Retrieval query enhancement
 
-**Stato:** quasi chiusa — Q2/Q3 completati, Q1 soddisfatta informalmente, Q4
-parziale (v. dettaglio in fondo al file). Proposta in sessione 2026-07-23,
-dopo osservazione diretta del problema su Brass Birmingham.
+**Stato:** ✅ chiusa (2026-07-27) — Q2/Q3 completati, Q1 soddisfatta
+informalmente, Q4 skipped su decisione esplicita (v. D42 in
+decision-log.md). Proposta in sessione 2026-07-23, dopo osservazione
+diretta del problema su Brass Birmingham.
 
 ## Contesto
 
@@ -61,7 +62,7 @@ prima di implementare.
 | Q1 🟡 | Raccogliere 5-10 domande "di interazione" reali (concetti che si toccano nel gioco ma non sono mai discussi insieme esplicitamente nel manuale) come mini-fixture di regressione, PRIMA di scegliere quale opzione implementare | soddisfatta informalmente da test manuali mirati (`scripts/test-decomposition.ts`) + fixture eval generale, non da una fixture dedicata a sé |
 | Q2 ✅ | Decidere tra opzione 1 (decomposizione) e 2 (HyDE), o entrambe in sequenza — con quale criterio: costo per query (1 chiamata LLM aggiuntiva in entrambi i casi), complessità di merge dei risultati (più alta per la 1, che produce N ricerche invece di 1) | decisione loggata in decision-log.md — risolto: non OR ma combinazione, vedi D31 |
 | Q3 ✅ | Implementare l'opzione scelta in `lib/retrieval.ts`, senza rompere il comportamento esistente per query semplici (probabile: attivare il meccanismo solo sopra una soglia di lunghezza/complessità della domanda, o sempre — da decidere in Q2) | `generateEnhancedQueries` in `lib/retrieval.ts`, baseline 70% → 85% (docs/baselines/004-20260725.md) |
-| Q4 🟡 | Misurare il costo reale in latenza (chiamata LLM extra prima del retrieval, percepibile dall'utente) e quota (1 chiamata generazione in più per domanda, oltre a quella finale) | noto l'impatto qualitativo (1 generate + N embed aggiuntivi per domanda) ma non misurato con numeri precisi di latenza reale in produzione — da completare se diventa rilevante |
+| Q4 ⏭️ skipped | Misurare il costo reale in latenza (chiamata LLM extra prima del retrieval, percepibile dall'utente) e quota (1 chiamata generazione in più per domanda, oltre a quella finale) | non necessaria — decisione esplicita di non farla, v. D42 in decision-log.md |
 
 ## Note
 

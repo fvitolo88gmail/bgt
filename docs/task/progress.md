@@ -14,7 +14,7 @@
 | 0400 | `closed/0400-fase3-citazioni-fallback-deploy-selezione-gioco.md` | Fase 3 — citazioni, fallback, deploy, selezione gioco | ✅ chiusa |
 | 0500 | `closed/0500-forum-bgg.md` | Forum BGG | ✅ chiusa |
 | 0510 | `closed/0510-refactor-tech-debt.md` | Refactor tecnico (package, doc, decision-log) | ✅ chiusa |
-| 0550 | `0550-retrieval-query-enhancement.md` | Retrieval query enhancement | quasi chiusa (resta Q4) |
+| 0550 | `closed/0550-retrieval-query-enhancement.md` | Retrieval query enhancement | ✅ chiusa |
 | 0560 | `0560-ingest-manuale-migliorato.md` | Miglioramento ingest manuale | punto 1 ✅, punto 2 ✅ (D40), punto 3 aperto |
 | 0570 | `0570-link-bgg-citazioni.md` | Link BGG nelle citazioni | parziale (aperto caso link per-post) |
 | 0600 | `0600-fase3-continua.md` | Fase 3 (continua) — S3.2–S3.5, S3.7 | dopo 0500 (S3.4 anticipata, D41) |
@@ -35,9 +35,13 @@ documentato come limite noto di retrieval (non un bug), non risolto in questa ep
 `/game/[id]`. Resto di 0600 (S3.2, S3.3, S3.5, S3.7) resta da fare. V. `0600-fase3-continua.md`
 e decision-log.
 
+Epica **0550 — Retrieval query enhancement** chiusa (sessione 2026-07-27) — Q4 (misurazione
+latenza/costo) skipped su decisione esplicita, v. D42. File spostato in
+`closed/0550-retrieval-query-enhancement.md`.
+
 Nessuna epica è marcata come priorità corrente al momento — più epiche parziali candidate
-(0550 resta solo Q4, 0560 resta punto 3, 0570 resta il caso link per-post, 0600 il resto
-dopo S3.4) oltre al re-ingest di Brass Birmingham. Da Francesco: quale si affronta ora.
+(0560 resta punto 3, 0570 resta il caso link per-post, 0600 il resto dopo S3.4) oltre al
+re-ingest di Brass Birmingham. Da Francesco: quale si affronta ora.
 
 ## Note aperte
 

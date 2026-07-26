@@ -349,6 +349,16 @@ poi esistono solo qui, in forma condensata fin da subito.*
 **Motivazione:** bisogno pratico immediato di navigare tra i giochi già ingested (Brass, Hegemony), a costo implementativo minimo; non giustifica anticipare l'intera epica 0600.
 → dettaglio in `0600-fase3-continua.md` (S3.4 marcato ✅, variante dropdown) e `progress.md`.
 
+### D42 — Epica Q (0550): Q4 (misurazione latenza/costo) skipped, epica chiusa
+**Contesto:** Q1-Q3 completati e verificati (D31, baseline 70%→85%); restava solo Q4, misurazione
+numerica di latenza/quota della chiamata LLM extra di `generateEnhancedQueries` — mai risultata
+rilevante in pratica.
+**Scelta:** Q4 skipped, epica 0550 chiusa così com'è; file spostato in
+`docs/task/closed/0550-retrieval-query-enhancement.md`.
+**Motivazione:** l'impatto qualitativo (1 generate + N embed extra per domanda) è già noto e
+accettato; una misurazione precisa non è mai stata bloccante né richiesta, non giustifica
+tenere l'epica aperta.
+
 ## Template per sessioni future
 
 ```
