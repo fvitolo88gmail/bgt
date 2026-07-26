@@ -31,7 +31,7 @@ const HTML_ENTITIES: Record<string, string> = {
     '&nbsp;': ' ',
 };
 
-function decodeHtmlEntities(text: string): string {
+export function decodeHtmlEntities(text: string): string {
     return text.replace(/&lt;|&gt;|&amp;|&quot;|&#039;|&apos;|&nbsp;/g, (match) => HTML_ENTITIES[match] ?? match);
 }
 

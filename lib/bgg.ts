@@ -13,6 +13,7 @@
  */
 
 import { XMLParser } from 'fast-xml-parser';
+import { decodeHtmlEntities } from './bgg-clean';
 
 const bggToken = process.env.BGG_TOKEN;
 if (!bggToken) throw new Error('Missing BGG_TOKEN');
@@ -299,7 +300,11 @@ export async function getForumThreads(
             const numArticles = toNumber(thread.numarticles, 0);
             return {
                 threadId,
-                subject: thread.subject,
+                // BGG restituisce il subject con entità HTML non decodificate
+                // (es. "one&#039;s" invece di "one's") — decodificato qui,
+                // unico punto di ingresso per discover/sync, così tutti i
+                // consumatori a valle ricevono testo già pulito.
+                subject: decodeHtmlEntities(thread.subject),
                 // numarticles conta anche il post iniziale del thread.
                 replyCount: Math.max(0, numArticles - 1),
                 postDate: thread.postdate ?? '',
@@ -344,7 +349,7 @@ export async function getThread(threadId: number): Promise<BggThreadDetails> {
         })
         .filter((post): post is BggPost => post !== null);
 
-    return { threadId, subject: thread.subject ?? '', posts };
+    return { threadId, subject: decodeHtmlEntities(thread.subject ?? ''), posts };
 }
 
 /**

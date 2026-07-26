@@ -1,6 +1,7 @@
 # Epica F — Forum BGG
 
-**Stato:** in corso — F1-F5 completati (F4 verificato anche su Hegemony); F6 (parziale), F7, F8 restano
+**Stato:** in corso — F1-F6 completati; F7 pronta (fixture creata, runner parametrizzato),
+F8 in attesa di esecuzione in locale (rete non raggiungibile da questo ambiente)
 
 ## Task
 
@@ -11,9 +12,9 @@
 | F3 | ✅ Pipeline 3 fasi (discover/fetch/ingest, D27), storage "small-to-big" (D28) | 675 radici in `chunks`, 4964 post in `forum_posts` per Brass Birmingham |
 | F4 | ✅ Script `scripts/forum/sync-forum.ts`: aggiornamento incrementale | confronta `reply_count` live BGG vs `forum_threads` (stato ultimo ingest); thread nuovi aggiunti a `discover.json`, thread aggiornati rifetchati via `fetchForumPosts(gameSlug, refetchIds)`, poi `ingestForumPosts` idempotente. `forum-fetch.ts`/`forum-ingest.ts` refactorizzati per esporre le fasi come funzioni riusabili. Aggiunto `lib/games.ts::verifyGameIdentity` (con test, `lib/games.test.ts`) contro mismatch slug/game-id. Verificato end-to-end su Hegemony (sessione 2026-07-26): 1 thread aggiornato rilevato e re-ingestato correttamente, 2 post nuovi salvati, 0 errori |
 | F5 | ✅ Espansione runtime `lib/retrieval.ts` (`matchChunksForPrompt`): ricostruzione thread intero da `forum_posts` quando una radice vince il retrieval | verificato manualmente su Brass Birmingham, contesto espanso arriva correttamente al prompt |
-| F6 | 🟡 Label provenienza in UI: badge "risposta del designer" + etichetta "Forum — {subject}" fatti in `app/game/[id]/page.tsx`; stile visivo differenziato manuale/community/designer non ancora rifinito | parziale |
-| F7 | Fixture `eval/fixtures/hegemony.json`: 15 Q&A forum-dipendenti | non iniziato |
-| F8 | Eval su Hegemony, confronto con baseline MVP | non iniziato |
+| F6 | ✅ Label provenienza in UI: `components/chat/SourcesList.tsx` — badge colorato per fonte (`Manuale` grigio, `Community` blu, `Designer` ambra) al posto del testo inline "· risposta del designer" | verificato con `tsc`/eslint; badge coerenti su manuale/forum-community/forum-designer |
+| F7 | ✅ Fixture `eval/fixtures/hegemony.json`: 15 Q&A forum-dipendenti | domande/risposte estratte da 15 thread reali in `ingest/hegemony/forum/posts.json` (id thread tracciato in `source_thread` per verificabilità), nessuna fonte manuale (Hegemony non ha manuale ingested — coerente con D14, "molti edge case solo nel forum"). `eval/runner.test.ts` generalizzato (`EVAL_FIXTURE`, `DEFAULT_GAME_IDS`) per poter eseguire su fixture diverse da Brass senza duplicare il runner |
+| F8 | 🟡 Eval su Hegemony, confronto con baseline MVP | fixture e runner pronti; esecuzione richiede rete verso Gemini + server locale (`npm run dev`), non disponibile in questo ambiente — da eseguire con Francesco in locale: `EVAL_FIXTURE=hegemony npx vitest run eval/runner.test.ts` |
 - ✅ `forum_posts.is_designer_response` — verificato in sessione
   2026-07-25: migration applicata, backfill presente, flag calcolato sia
   su ogni post sia sulla radice, `ForumPostRow`/`expandForumThread` lo
@@ -56,7 +57,12 @@
   fuorviante — il valore effettivo per il controllo viene da
   `discover.json`). Rimosso dalla CLI.
 
-## Da fare, non ancora applicato (vedi artifact sessione)
+## Risolto in sessione 2026-07-27 (chiusura epica)
 
-- Decodifica entità HTML su `thread.subject` (mai passato da
-  `decodeHtmlEntities`, visibile es. `Overbuilding one&#039;s industy`)
+- Decodifica entità HTML su `thread.subject` (era visibile es.
+  `Overbuilding one&#039;s industy`): `decodeHtmlEntities` esportata da
+  `lib/bgg-clean.ts` e applicata (1) in `lib/bgg.ts` — `getForumThreads`/
+  `getThread` — per i nuovi ingest/sync, e (2) difensivamente in
+  `lib/retrieval.ts` (`matchChunks`) e `components/chat/types.ts`
+  (`sourceLabel`) per i dati già in DB, senza richiedere un backfill.
+  Test aggiunti in `lib/bgg-clean.test.ts`.

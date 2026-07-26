@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { cleanForumBody } from './bgg-clean';
+import { cleanForumBody, decodeHtmlEntities } from './bgg-clean';
 
 describe('cleanForumBody', () => {
     it('rimuove un blocco CDATA di solo embed immagine', () => {
@@ -42,5 +42,22 @@ describe('cleanForumBody', () => {
         const { bodyClean, quotedAuthor } = cleanForumBody('New player here, question about setup.');
         expect(quotedAuthor).toBeNull();
         expect(bodyClean).toBe('New player here, question about setup.');
+    });
+});
+
+describe('decodeHtmlEntities', () => {
+    it('decodifica le entità HTML usate nei subject/post grezzi di BGG', () => {
+        expect(decodeHtmlEntities('Overbuilding one&#039;s industy')).toBe(
+            "Overbuilding one's industy"
+        );
+        expect(decodeHtmlEntities('Rules &amp; clarifications &lt;important&gt;')).toBe(
+            'Rules & clarifications <important>'
+        );
+    });
+
+    it('lascia invariato il testo senza entità', () => {
+        expect(decodeHtmlEntities('Plain question, no entities here')).toBe(
+            'Plain question, no entities here'
+        );
     });
 });

@@ -3,6 +3,7 @@
 import {supabase} from './supabase';
 import {geminiClient} from './gemini';
 import {buildBggThreadUrl} from './bgg';
+import {decodeHtmlEntities} from './bgg-clean';
 
 export interface ChunkMatch {
     id: string;
@@ -53,7 +54,12 @@ export async function matchChunks(
             bggThreadId,
             bggArticleId,
             bggUrl: bggThreadId != null ? buildBggThreadUrl(bggThreadId, bggArticleId) : null,
-            threadSubject: row.thread_subject as string | null,
+            // Decodifica difensiva: i thread ingested prima del fix in
+            // lib/bgg.ts hanno subject con entità HTML grezze (es. "one&#039;s")
+            // già in chunks.thread_subject — corretto qui una volta per tutte
+            // le fonti a valle (contesto LLM, sourceLabel, citazioni UI), senza
+            // richiedere un backfill sul DB.
+            threadSubject: row.thread_subject ? decodeHtmlEntities(row.thread_subject as string) : null,
             authorUsername: row.author_username as string | null,
             isDesignerResponse: row.is_designer_response as boolean | null,
             postDate: row.post_date as string | null,
