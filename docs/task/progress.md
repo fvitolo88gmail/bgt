@@ -26,13 +26,18 @@
 
 ## Priorità corrente
 
-Epica **0500 — Forum BGG**: F1-F3 e F5 completati per Brass Birmingham (verificato in chat,
-retrieval multi-fonte funzionante). Restano F4 (sync incrementale), F6 (rifinitura UI), F7-F8
-(eval Ark Nova). Epica 0510 (refactor tecnico) chiusa — v. `closed/0510-refactor-tech-debt.md`.
+Epica **0500 — Forum BGG**: F1-F5 completati (F4 verificato end-to-end su Hegemony,
+sessione 2026-07-26 — v. `0500-forum-bgg.md` per i bug trovati e corretti nel processo).
+Restano F6 (rifinitura UI), F7-F8 (eval Hegemony). Brass Birmingham va re-ingestato da
+capo (manuale + forum): `games.bgg_id` risultava errato (28720, id di Brass: Lancashire,
+invece di 224517). Epica 0510 (refactor tecnico) chiusa — v.
+`closed/0510-refactor-tech-debt.md`.
 Epica 0550 (query enhancement) quasi chiusa, resta solo Q4 (misurazione costo/latenza).
 
 ## Note aperte
 
+- Brass Birmingham da re-ingestare da capo (manuale + forum) dopo la correzione di
+  `games.bgg_id` — v. `0500-forum-bgg.md`, sezione bug F4. Non ancora pianificato come task.
 - Baseline eval 003 (impatto D21) resta deferred — vedi `closed/0100-eval-harness.md` e
   `docs/baselines/`.
 - Upgrade Tier 1 Gemini (a pagamento): dati di prezzo raccolti (embedding

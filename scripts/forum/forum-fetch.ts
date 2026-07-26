@@ -96,8 +96,16 @@ async function writeOutputAtomic(outPath: string, output: FetchOutput): Promise<
     await rename(tmpPath, outPath);
 }
 
-async function main(): Promise<void> {
-    const { gameSlug, refetchIds } = parseArgs();
+/**
+ * Fase 2/3: scarica i post pending (non ancora in posts.json) per un gioco,
+ * più eventuali thread in `refetchIds` (rimossi e riscaricati da zero).
+ * Estratta come funzione esportata così `sync-forum.ts` (F4) può richiamarla
+ * senza duplicare la logica di fetch/resume.
+ */
+export async function fetchForumPosts(
+    gameSlug: string,
+    refetchIds: Set<number> = new Set()
+): Promise<void> {
     const dir = `ingest/${gameSlug}/forum`;
     const inPath = `${dir}/discover.json`;
     const outPath = `${dir}/posts.json`;
@@ -170,7 +178,14 @@ async function main(): Promise<void> {
     }
 }
 
-main().catch((error) => {
-    console.error('[fetch] fallito:', error);
-    process.exitCode = 1;
-});
+async function main(): Promise<void> {
+    const { gameSlug, refetchIds } = parseArgs();
+    await fetchForumPosts(gameSlug, refetchIds);
+}
+
+if (require.main === module) {
+    main().catch((error) => {
+        console.error('[fetch] fallito:', error);
+        process.exitCode = 1;
+    });
+}

@@ -23,6 +23,7 @@ import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { createServiceClient } from '../../lib/supabase';
 import { geminiClient } from '../../lib/gemini';
+import { verifyGameIdentity } from '../../lib/games';
 
 const EMBED_PAUSE_MS = 800; // ~75 req/min, sotto il tetto reale di 100/min (verificato via dashboard)
 
@@ -63,6 +64,52 @@ function parseArgs(): { gameSlug: string; gameId: string } {
     return { gameSlug, gameId };
 }
 
+const SELECT_PAGE_SIZE = 1000; // limite di default PostgREST per richiesta senza .range()
+
+/**
+ * Legge tutti gli `bgg_article_id` già presenti in `table` per un gioco
+ * (opzionalmente filtrati su `source`), paginando esplicitamente.
+ *
+ * Senza paginazione, una singola `.select()` si ferma al limite di default
+ * di PostgREST (SELECT_PAGE_SIZE righe): su un gioco con più post di quel
+ * limite, il set di "già presenti" risultava incompleto — righe realmente
+ * già in DB venivano considerate nuove, il successivo insert falliva con
+ * "duplicate key" (osservato su Hegemony, ~841 thread, sync F4).
+ */
+async function fetchExistingArticleIds(
+    supabase: ReturnType<typeof createServiceClient>,
+    table: 'forum_posts' | 'chunks',
+    gameId: string,
+    source?: 'forum'
+): Promise<Set<number>> {
+    const ids = new Set<number>();
+    let from = 0;
+
+    while (true) {
+        let query = supabase
+            .from(table)
+            .select('bgg_article_id')
+            .eq('game_id', gameId)
+            .range(from, from + SELECT_PAGE_SIZE - 1);
+        if (source) query = query.eq('source', source);
+
+        const { data, error } = await query;
+        if (error) {
+            throw new Error(`Errore leggendo ${table} esistenti: ${error.message}`);
+        }
+
+        for (const row of data ?? []) {
+            ids.add(row.bgg_article_id as number);
+        }
+
+        if (!data || data.length < SELECT_PAGE_SIZE) break;
+        from += SELECT_PAGE_SIZE;
+        console.log(`[ingest]   ${table}: letti ${ids.size} id finora...`);
+    }
+
+    return ids;
+}
+
 function isDesignerResponse(authorUsername: string, designers: string[]): boolean {
     const normalizedAuthor = authorUsername.trim().toLowerCase();
     return designers.some((name) => name.trim().toLowerCase() === normalizedAuthor);
@@ -89,8 +136,13 @@ async function embedWithRetry(content: string, maxRetries = 3): Promise<number[]
     }
 }
 
-async function main(): Promise<void> {
-    const { gameSlug, gameId } = parseArgs();
+/**
+ * Fase 3/3: storage grezzo + embedding radice, a partire da posts.json.
+ * Idempotente su entrambe le tabelle (v. commento in testa al file).
+ * Estratta come funzione esportata così `sync-forum.ts` (F4) può richiamarla
+ * dopo un fetch incrementale senza duplicare la logica di storage/embedding.
+ */
+export async function ingestForumPosts(gameSlug: string, gameId: string): Promise<void> {
     const inPath = `ingest/${gameSlug}/forum/posts.json`;
 
     if (!existsSync(inPath)) {
@@ -99,6 +151,11 @@ async function main(): Promise<void> {
 
     const input = JSON.parse(await readFile(inPath, 'utf-8')) as FetchInput;
     const supabase = createServiceClient();
+
+    // --game-slug e --game-id sono flag indipendenti: verifica che puntino
+    // allo stesso gioco PRIMA di scrivere, altrimenti si rischia di taggare
+    // il forum di un gioco con il game_id di un altro (corruzione silenziosa).
+    await verifyGameIdentity(supabase, gameId, input.bggId);
 
     console.log(
         `[ingest] gioco: ${input.gameName} (bggId=${input.bggId}), designer accreditati: ${input.designers.join(', ') || 'nessuno'}`
@@ -120,16 +177,16 @@ async function main(): Promise<void> {
     else console.log(`[ingest] forum_threads aggiornato (${threadRows.length} thread)`);
 
     // --- forum_posts: TUTTI i post, nessun embedding, solo storage grezzo ---
-    const { data: existingRawRows } = await supabase
-        .from('forum_posts')
-        .select('bgg_article_id')
-        .eq('game_id', gameId);
-    const alreadyStoredRaw = new Set((existingRawRows ?? []).map((r) => r.bgg_article_id as number));
+    const alreadyStoredRaw = await fetchExistingArticleIds(supabase, 'forum_posts', gameId);
+    console.log(`[ingest] ${alreadyStoredRaw.size} post già presenti in forum_posts, ${input.threads.length} thread da scansionare`);
 
     let rawSaved = 0;
     let rawErrori = 0;
 
-    for (const thread of input.threads) {
+    for (const [threadIndex, thread] of input.threads.entries()) {
+        if (threadIndex > 0 && threadIndex % 200 === 0) {
+            console.log(`[ingest]   forum_posts: ${threadIndex}/${input.threads.length} thread scansionati (${rawSaved} post salvati finora)`);
+        }
         const rows = thread.posts
             .filter((p) => !alreadyStoredRaw.has(p.postId))
             .map((p) => ({
@@ -156,19 +213,7 @@ async function main(): Promise<void> {
     console.log(`[ingest] forum_posts: ${rawSaved} post salvati, ${rawErrori} errori`);
 
     // --- chunks: SOLO la radice di ogni thread, embeddata e cercabile ---
-    const { data: existingChunkRows, error: existingError } = await supabase
-        .from('chunks')
-        .select('bgg_article_id')
-        .eq('game_id', gameId)
-        .eq('source', 'forum');
-
-    if (existingError) {
-        throw new Error(`Errore leggendo chunk esistenti: ${existingError.message}`);
-    }
-
-    const alreadyIngested = new Set(
-        (existingChunkRows ?? []).map((row) => row.bgg_article_id as number)
-    );
+    const alreadyIngested = await fetchExistingArticleIds(supabase, 'chunks', gameId, 'forum');
     console.log(`[ingest] ${alreadyIngested.size} radici già presenti in chunks, verranno saltate`);
 
     const modelVersion = process.env.EMBEDDING_MODEL ?? 'gemini-embedding-001';
@@ -231,7 +276,14 @@ async function main(): Promise<void> {
     }
 }
 
-main().catch((error) => {
-    console.error('[ingest] fallito:', error);
-    process.exitCode = 1;
-});
+async function main(): Promise<void> {
+    const { gameSlug, gameId } = parseArgs();
+    await ingestForumPosts(gameSlug, gameId);
+}
+
+if (require.main === module) {
+    main().catch((error) => {
+        console.error('[ingest] fallito:', error);
+        process.exitCode = 1;
+    });
+}
