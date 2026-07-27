@@ -20,7 +20,7 @@
 //
 // Uso:
 //   npx ts-node --project scripts/tsconfig.json scripts/forum/sync-forum.ts \
-//     --game-slug brass --game-id {uuid}
+//     --game-slug <slug> --game-id {uuid}
 //
 // Non serve passare --bgg-id: viene letto da discover.json (legato allo
 // slug) e verificato contro games.bgg_id da verifyGameIdentity.

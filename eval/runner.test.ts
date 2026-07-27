@@ -6,13 +6,12 @@
  * expected_answer, e stampa accuratezza % + log dei fallimenti.
  *
  * Uso:
- *   npx vitest run eval/runner.ts                              # default: brass-birmingham
- *   EVAL_FIXTURE=hegemony npx vitest run eval/runner.ts         # altra fixture nota
+ *   EVAL_FIXTURE=<nome> npx vitest run eval/runner.ts
  *
  * Richiede in .env.local:
  *   GEMINI_API_KEY
  *   EVAL_BASE_URL         (es. http://localhost:3000, default)
- *   EVAL_FIXTURE          (nome file senza .json in eval/fixtures/, default brass-birmingham)
+ *   EVAL_FIXTURE          (nome file senza .json in eval/fixtures/, obbligatorio)
  *   EVAL_GAME_ID          (uuid del gioco in Supabase — default noto per le fixture
  *                          registrate in DEFAULT_GAME_IDS; obbligatorio per fixture nuove)
  */
@@ -25,7 +24,11 @@ import path from "node:path";
 // --- Config -----------------------------------------------------------
 
 const BASE_URL = process.env.EVAL_BASE_URL ?? "http://localhost:3000";
-const FIXTURE_NAME = process.env.EVAL_FIXTURE ?? "brass-birmingham";
+
+if (!process.env.EVAL_FIXTURE) {
+    throw new Error("EVAL_FIXTURE non impostata — indica esplicitamente quale fixture eseguire.");
+}
+const FIXTURE_NAME = process.env.EVAL_FIXTURE;
 const FIXTURE_PATH = path.join(__dirname, "fixtures", `${FIXTURE_NAME}.json`);
 const JUDGE_MODEL = "gemini-3.1-flash-lite";
 
@@ -33,7 +36,6 @@ const JUDGE_MODEL = "gemini-3.1-flash-lite";
 // EVAL_GAME_ID a mano) — per una fixture nuova non elencata qui, va passato
 // esplicitamente via env, altrimenti lo script si ferma con un errore chiaro.
 const DEFAULT_GAME_IDS: Record<string, string> = {
-    "brass-birmingham": "87bb1782-dac5-4e5e-a916-9a82efa00868",
     hegemony: "d17ebf75-284a-4a4d-b3fa-0cc16287fce4",
 };
 

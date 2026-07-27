@@ -2,7 +2,7 @@ import pdfplumber
 import sys
 
 """
-Uso: python3 scripts/diagnose-spread-hypothesis.py manuals/brass.pdf 10
+Uso: python3 scripts/diagnose-spread-hypothesis.py manuals/<slug>.pdf <numero_pagina>
 Verifica l'ipotesi: la pagina N (pari) contiene lo spread intero,
 splittabile a metà larghezza reale (max_x1 / 2) in sinistra+destra,
 poi sotto-clusterizzata per gap orizzontali dentro ciascuna metà.

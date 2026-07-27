@@ -8,7 +8,7 @@
 //
 // Uso:
 //   npx ts-node --project scripts/tsconfig.json scripts/forum/forum-discover.ts \
-//     --bgg-id 224517 --game-slug brass
+//     --bgg-id <id> --game-slug <slug>
 
 import 'dotenv/config';
 import { mkdir, writeFile } from 'node:fs/promises';

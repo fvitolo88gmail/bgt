@@ -14,9 +14,9 @@
 //
 // Uso:
 //   npx ts-node --project scripts/tsconfig.json scripts/forum/forum-fetch.ts \
-//     --game-slug brass
+//     --game-slug <slug>
 //   npx ts-node --project scripts/tsconfig.json scripts/forum/forum-fetch.ts \
-//     --game-slug brass --refetch 3724051,3429143
+//     --game-slug <slug> --refetch <threadId1>,<threadId2>
 
 import 'dotenv/config';
 import { mkdir, readFile, writeFile, rename } from 'node:fs/promises';

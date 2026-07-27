@@ -16,7 +16,7 @@
 //
 // Uso:
 //   npx ts-node --project scripts/tsconfig.json scripts/forum/forum-ingest.ts \
-//     --game-slug brass --game-id {uuid}
+//     --game-slug <slug> --game-id {uuid}
 
 import 'dotenv/config';
 import { readFile } from 'node:fs/promises';

@@ -25,7 +25,7 @@ import { geminiClient } from '../../lib/gemini';
  *
  * Uso:
  *   npx ts-node --project scripts/tsconfig.json scripts/markdown-from-json.ts \
- *     --json manuals/brass.json --out manuals/brass.md
+ *     --json manuals/<slug>.json --out manuals/<slug>.md
  */
 
 interface ExtractedPage {

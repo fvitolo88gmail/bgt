@@ -2,7 +2,7 @@ import pdfplumber
 import sys
 
 """
-Uso: python3 scripts/diagnose-graphics.py manuals/brass.pdf 10
+Uso: python3 scripts/diagnose-graphics.py manuals/<slug>.pdf <numero_pagina>
 Verifica se la pagina ha linee/rettangoli grafici (page.lines, page.rects,
 page.edges) che potrebbero delimitare i box delle sezioni, come segnale
 più affidabile dei soli gap di spazio bianco.

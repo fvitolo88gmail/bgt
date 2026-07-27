@@ -45,9 +45,10 @@ re-ingest di Brass Birmingham. Da Francesco: quale si affronta ora.
 
 ## Note aperte
 
-- Brass Birmingham da re-ingestare da capo (manuale + forum) dopo la correzione di
-  `games.bgg_id` — v. `closed/0500-forum-bgg.md`, sezione bug F4. Non ancora pianificato
-  come task.
+- Brass Birmingham rimosso dal DB (manuale + forum) in attesa di un re-ingest migliorato
+  dopo la correzione di `games.bgg_id` — v. `closed/0500-forum-bgg.md`, sezione bug F4.
+  Non ancora pianificato come task; script/fixture di default che puntavano a questo
+  gioco sono stati rimossi nel frattempo (v. decision-log).
 - Limite di retrieval emerso dall'eval Hegemony (`heg-09`, v.
   `closed/0500-forum-bgg.md`): quando due thread genuini coprono lo stesso argomento con
   angolazioni diverse (regola generale vs eccezione di una carta specifica), il retrieval

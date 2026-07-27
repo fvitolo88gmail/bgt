@@ -12,10 +12,8 @@ import { createServiceClient } from '../../lib/supabase';
  *
  * Uso:
  *   npx ts-node --project scripts/tsconfig.json scripts/diagnose-retrieval.ts \
- *     "Cos'è l'azione di Costruzione?" [--game-id <uuid>] [--source manual|forum]
+ *     "<domanda>" --game-id <uuid> [--source manual|forum]
  */
-
-const DEFAULT_GAME_ID = '87bb1782-dac5-4e5e-a916-9a82efa00868'; // Brass Birmingham
 
 function getFlag(args: string[], name: string): string | undefined {
     const index = args.indexOf(name);
@@ -25,11 +23,11 @@ function getFlag(args: string[], name: string): string | undefined {
 async function main() {
     const args = process.argv.slice(2);
     const query = args[0];
-    const gameId = getFlag(args, '--game-id') ?? DEFAULT_GAME_ID;
+    const gameId = getFlag(args, '--game-id');
     const source = getFlag(args, '--source'); // opzionale: 'manual' | 'forum'
 
-    if (!query) {
-        console.error('Usage: npx ts-node ... scripts/diagnose-retrieval.ts "<domanda>" [--game-id <uuid>] [--source manual|forum]');
+    if (!query || !gameId) {
+        console.error('Usage: npx ts-node ... scripts/diagnose-retrieval.ts "<domanda>" --game-id <uuid> [--source manual|forum]');
         process.exit(1);
     }
 

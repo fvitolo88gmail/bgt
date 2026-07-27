@@ -29,11 +29,11 @@ describe('cleanForumBody', () => {
             "&lt;font color=#2121A4&gt;&lt;div class='quote'&gt;&lt;div class='quotetitle'&gt;&lt;p&gt;&lt;b&gt;Hamko wrote:&lt;/b&gt;&lt;/p&gt;&lt;/div&gt;" +
             "&lt;div class='quotebody'&gt;Totally agree.&lt;/div&gt;&lt;/div&gt;&lt;/font&gt;" +
             "&lt;/div&gt;&lt;/div&gt;&lt;/font&gt;&lt;br/&gt;" +
-            "Don't forget to remind the person that gifted you Brass that they are a thief.";
+            "Don't forget to remind the person that gifted you this game that they are a thief.";
 
         const { bodyClean, quotedAuthor } = cleanForumBody(raw);
         expect(quotedAuthor).toBe('Froggy_Steve');
-        expect(bodyClean).toBe("Don't forget to remind the person that gifted you Brass that they are a thief.");
+        expect(bodyClean).toBe("Don't forget to remind the person that gifted you this game that they are a thief.");
         expect(bodyClean).not.toContain('Hamko');
         expect(bodyClean).not.toContain('Totally agree');
     });
