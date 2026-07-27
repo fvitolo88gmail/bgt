@@ -2,11 +2,20 @@
 
 import { use } from 'react';
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { MessageBubble } from '@/components/chat/MessageBubble';
 import { ChatMessage, Source } from '@/components/chat/types';
 
 export default function GamePage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
+    const searchParams = useSearchParams();
+    // Epica 0900 (Chat con contesto) — C5: modalità scelta in /home, passata
+    // via query param. Default "qa" se assente o valore non riconosciuto.
+    const mode = searchParams.get('mode') === 'conversation' ? 'conversation' : 'qa';
+    // D45: un id di sessione nuovo a ogni apertura/refresh della pagina —
+    // niente continuità tra aperture diverse della stessa chat per ora
+    // (v. decision-log.md).
+    const [sessionId] = useState(() => crypto.randomUUID());
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
@@ -23,7 +32,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
             const res = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ question, gameId: id }),
+                body: JSON.stringify({ question, gameId: id, mode, sessionId }),
             });
 
             const data = (await res.json()) as { answer: string; sources: Source[] };
@@ -48,7 +57,10 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
 
     return (
         <main className="max-w-2xl mx-auto p-4 flex flex-col h-screen">
-            <h1 className="text-xl font-bold mb-4">Assistente Regole</h1>
+            <h1 className="text-xl font-bold mb-1">Assistente Regole</h1>
+            <p className="text-xs text-gray-400 mb-4">
+                Modalità: {mode === 'conversation' ? 'conversazione (con storico)' : 'domande (senza storico)'}
+            </p>
 
             <div className="flex-1 overflow-y-auto space-y-4 mb-4">
                 {messages.length === 0 && (
