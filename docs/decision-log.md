@@ -359,6 +359,24 @@ rilevante in pratica.
 accettato; una misurazione precisa non è mai stata bloccante né richiesta, non giustifica
 tenere l'epica aperta.
 
+### D43 — Epica 0900 (Chat con contesto) anticipata prima di 0800; owner_token fuori scope, modalità scelta in `/home`
+**Contesto:** Francesco vuole procedere su 0900 saltando 0800 (ancora da fare); inoltre C2 presupponeva owner_token, mai realmente implementato in app/API (`lib/owner-token.ts` vuoto), e C5 prevedeva un toggle in chat.
+**Scelta:** 0900 promossa a priorità corrente, 0800 rimandata dopo; sessione chiavata solo su `game_id` (owner_token nullable ma non popolato); modalità domande/conversazione scelta in `/home` alla selezione del gioco (default domande), non un toggle nella chat.
+**Motivazione:** riflette decisioni esplicite di Francesco; evita di implementare owner_token "di straforo" dentro un'epica che non lo richiede esplicitamente.
+**Nota aperta:** owner_token resta da implementare quando/se necessario — divergenza nota da D16/architecture.md.
+
+### D44 — Epica 0900: riscrittura query per retrieval + prompt dedicato in modalità conversazione
+**Contesto:** verifica manuale di C3 su Hegemony ha mostrato che un follow-up ("dimmi di più su questo thread") recuperava fonti estranee (retrieval sulla domanda grezza, senza history) e che il prompt Q&A (FATTO DIRETTO/DEDUZIONE + citazioni ripetute per intero) dava un effetto meccanico su una conversazione.
+**Scelta:** `lib/query-contextualization.ts` — solo in `conversation`, riscrive la domanda in forma standalone con la history prima del retrieval (fail-soft, stesso pattern di D31), usata solo per il retrieval; `lib/prompt.ts` guadagna `buildConversationPrompt` (alleggerito, usa la history per risolvere riferimenti impliciti), mentre `buildPrompt`/modalità `qa` restano invariati.
+**Motivazione:** isola il fix alla sola modalità conversazione, senza rischiare regressioni su `qa` (comportamento consolidato); coerente con l'approccio già validato per il query enhancement.
+**Costo:** +1 chiamata Gemini per turno in `conversation` (oltre a quella già presente per l'enhancement in `matchChunksForPrompt`) — accettato, coerente con la nota UI su C5 sul maggior consumo di questa modalità.
+
+### D45 — Epica 0900: sessione generata dal client a ogni apertura di `/game/[id]`, non più una per game_id
+**Contesto:** Francesco ha segnalato un bug: con la sessione chiavata solo su `game_id` (D43), ogni apertura della chat per lo stesso gioco riusava la stessa sessione/history invece di partirne una nuova — non il comportamento voluto.
+**Scelta:** `sessionId` generato client-side (`crypto.randomUUID()`) al mount di `GamePage`, nuovo a ogni apertura/refresh; il server (`getOrCreateSession`) registra l'id ricevuto con un upsert idempotente invece di cercarlo per `game_id`. Rimosso l'indice unique `chat_sessions(game_id)` (non più valido: più sessioni per lo stesso gioco sono ora normali).
+**Motivazione:** riflette la scelta esplicita di Francesco per questa fase (nessun utente reale, refresh = nuova conversazione); owner_token resta fuori scope come da D43.
+**Nota aperta:** quando le conversazioni andranno persistite per un utente reale (multi-tab, riprendere una chat), servirà un meccanismo di persistenza client (es. sessionStorage) — esplicitamente rimandato da Francesco a quel momento.
+
 ## Template per sessioni future
 
 ```

@@ -20,7 +20,7 @@
 | 0600 | `0600-fase3-continua.md` | Fase 3 (continua) — S3.2–S3.5, S3.7 | dopo 0500 (S3.4 anticipata, D41) |
 | 0700 | `0700-chat-multilingua.md` | Chat multilingua | dopo 0600 |
 | 0800 | `0800-ui-uplifting.md` | UI Uplifting | dopo 0700 |
-| 0900 | `0900-chat-con-contesto.md` | Chat con contesto | dopo 0800 |
+| 0900 | `0900-chat-con-contesto.md` | Chat con contesto | in corso (priorità corrente) — C1 |
 | 1000 | `1000-ai-provider-adapters.md` | AI Provider Adapters | dopo 0900 |
 | 1100 | `1100-teach-me-the-game.md` | Teach me the game | ultima |
 
@@ -39,9 +39,12 @@ Epica **0550 — Retrieval query enhancement** chiusa (sessione 2026-07-27) — 
 latenza/costo) skipped su decisione esplicita, v. D42. File spostato in
 `closed/0550-retrieval-query-enhancement.md`.
 
-Nessuna epica è marcata come priorità corrente al momento — più epiche parziali candidate
-(0560 resta punto 3, 0570 resta il caso link per-post, 0600 il resto dopo S3.4) oltre al
-re-ingest di Brass Birmingham. Da Francesco: quale si affronta ora.
+Priorità corrente: **0900 — Chat con contesto**, avviata su richiesta esplicita di Francesco
+(sessione 2026-07-27), saltando l'ordine "dopo 0800" — 0800 resta da fare, ripreso dopo 0900.
+Note di scope decise con Francesco per questa epica (owner_token non implementato, modalità
+domande/conversazione scelta in `/home`) in testa a `0900-chat-con-contesto.md`.
+Restano comunque candidate per dopo: 0560 punto 3, 0570 caso link per-post, 0600 resto dopo
+S3.4, oltre al re-ingest di Brass Birmingham.
 
 ## Note aperte
 
