@@ -5,6 +5,9 @@ import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { MessageBubble } from '@/components/chat/MessageBubble';
 import { ChatMessage, Source } from '@/components/chat/types';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Card } from '@/components/ui/Card';
 
 export default function GamePage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
@@ -56,15 +59,15 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
     }
 
     return (
-        <main className="max-w-2xl mx-auto p-4 flex flex-col h-screen">
-            <h1 className="text-xl font-bold mb-1">Assistente Regole</h1>
-            <p className="text-xs text-gray-400 mb-4">
+        <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col overflow-hidden p-4">
+            <h1 className="mb-1 font-serif text-xl font-bold text-ink">Assistente Regole</h1>
+            <p className="mb-4 text-xs text-ink-faint">
                 Modalità: {mode === 'conversation' ? 'conversazione (con storico)' : 'domande (senza storico)'}
             </p>
 
-            <div className="flex-1 overflow-y-auto space-y-4 mb-4">
+            <div className="mb-4 flex-1 space-y-4 overflow-y-auto">
                 {messages.length === 0 && (
-                    <p className="text-gray-400 text-sm">Fai una domanda sulle regole del gioco.</p>
+                    <p className="text-sm text-ink-faint">Fai una domanda sulle regole del gioco.</p>
                 )}
 
                 {messages.map((msg, i) => (
@@ -73,30 +76,25 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
 
                 {loading && (
                     <div className="flex justify-start">
-                        <div className="bg-gray-100 rounded-lg px-4 py-2">
-                            <p className="text-sm text-gray-400">Sto cercando...</p>
-                        </div>
+                        <Card className="px-4 py-2">
+                            <p className="text-sm text-ink-faint">Sto cercando...</p>
+                        </Card>
                     </div>
                 )}
             </div>
 
             <div className="flex gap-2">
-                <input
+                <Input
                     type="text"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
                     placeholder="Fai una domanda sulle regole..."
-                    className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-                <button
-                    onClick={handleSubmit}
-                    disabled={loading}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm disabled:opacity-50 hover:bg-blue-700"
-                >
+                <Button onClick={handleSubmit} disabled={loading}>
                     Invia
-                </button>
+                </Button>
             </div>
-        </main>
+        </div>
     );
 }

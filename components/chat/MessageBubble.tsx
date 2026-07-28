@@ -1,6 +1,7 @@
 import ReactMarkdown from 'react-markdown';
 import { ChatMessage } from './types';
 import { SourcesList } from './SourcesList';
+import { Card } from '@/components/ui/Card';
 
 interface MessageBubbleProps {
     message: ChatMessage;
@@ -11,13 +12,13 @@ export function MessageBubble({ message }: MessageBubbleProps) {
 
     return (
         <div className={`flex ${!isAssistant ? 'justify-end' : 'justify-start'}`}>
-            <div
-                className={`max-w-prose rounded-lg px-4 py-2 ${
-                    !isAssistant ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-900'
+            <Card
+                className={`max-w-prose px-4 py-2 ${
+                    !isAssistant ? 'border-transparent bg-primary text-white' : 'text-ink'
                 }`}
             >
                 {isAssistant ? (
-                    <div className="text-sm [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-2 [&_strong]:font-semibold [&_a]:text-blue-600 [&_a]:underline [&_a]:font-medium hover:[&_a]:text-blue-800">
+                    <div className="text-sm [&_p]:mb-2 [&_ul]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_strong]:font-semibold [&_a]:font-medium [&_a]:text-primary [&_a]:underline hover:[&_a]:text-primary-hover">
                         <ReactMarkdown
                             components={{
                                 a: ({ ...props }) => (
@@ -33,7 +34,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
                 )}
 
                 {message.sources && <SourcesList sources={message.sources} />}
-            </div>
+            </Card>
         </div>
     );
 }

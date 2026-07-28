@@ -678,6 +678,26 @@ versione più dettagliata e resta l'unica riferimento per questo lavoro.
 
 ---
 
+### D64 — DESIGN-00001: palette "Ludico Vivace" adottata, success/warning derivati (non nel design originale)
+**Contesto:** Claude Design ha consegnato 3 palette alternative (v. `docs/epics/todo/DESIGN/
+reference/BGT Design System - Standalone.html`) costruendo tutte le schermate su "C · Ludico
+Vivace" (prugna + lime, font Sora); il file definiva primary/ink/superfici/danger/accent
+manuale-community-designer ma non stati semantici "successo"/"warning" richiesti dal DoD.
+**Scelta:** adottata "Ludico Vivace" come tema unico, formalizzato in `app/theme.css` (CSS custom
+properties + mapping `@theme inline` per Tailwind v4) e importato in `app/globals.css`. `success`/
+`warning` derivati mantenendo la stessa curva L/C di `--danger` (~56-70% L, ~0.16-0.18 C),
+spostati su hue verde (145) e ambra (80). Font caricati via `next/font` (Sora, IBM Plex Mono) in
+`app/layout.tsx` al posto dei Geist di boilerplate.
+**Motivazione:** riusa la scelta già validata su tutte le schermate invece di aprire una nuova
+esplorazione; i due colori mancanti non erano una scelta di design (nessuna alternativa proposta
+da confrontare), solo un gap di copertura — derivarli per continuità visiva è la strada più
+diretta rispetto a un giro di follow-up con Claude Design per due soli valori.
+**Nota aperta:** spacing scale non ridefinito — si usa la scala di default Tailwind (il design non
+introduce una scala custom); dark mode (presente nel file di reference) non ancora portato nei
+token, fuori scope per questo task.
+
+---
+
 ### D[N] — Titolo decisione
 **Contesto:** perché si è posta la questione
 **Opzioni:** opzione A · opzione B · opzione C

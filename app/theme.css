@@ -1,0 +1,98 @@
+/*
+ * Design tokens — palette "Ludico Vivace" (v. docs/epics/todo/DESIGN/reference/
+ * "BGT Design System - Standalone.html", sezione Fondamenta).
+ * Unica fonte di colori/font/spacing per l'app: nessun valore va hardcoded altrove.
+ */
+
+:root {
+  /* Superfici */
+  --paper: oklch(97% 0.006 90);
+  --paper-2: oklch(93.5% 0.012 320);
+  --card: oklch(99% 0.004 90);
+
+  /* Testo */
+  --ink: oklch(22% 0.035 320);
+  --ink-soft: oklch(42% 0.03 320);
+  --ink-faint: oklch(58% 0.02 320);
+
+  /* Bordi */
+  --line: oklch(85% 0.02 320);
+  --line-soft: oklch(90% 0.015 320);
+
+  /* Primario (prugna) */
+  --primary: oklch(32% 0.09 320);
+  --primary-hover: oklch(26% 0.09 320);
+  --primary-soft: oklch(92% 0.03 320);
+
+  /* Provenienza fonti in chat: manuale / community (forum) / designer */
+  --accent-manual-soft: oklch(91% 0.008 320);
+  --accent-community: oklch(58% 0.1 250);
+  --accent-community-soft: oklch(93% 0.025 250);
+  --accent-designer: oklch(65% 0.15 45);
+  --accent-designer-soft: oklch(93% 0.05 45);
+
+  /* Mascotte */
+  --owl-body: oklch(58% 0.14 320);
+
+  /* Stati semantici */
+  --danger: oklch(56% 0.18 25);
+  --danger-soft: oklch(93% 0.05 25);
+  /* success e warning non erano nel design originale: derivati qui mantenendo
+     la stessa curva L/C di --danger, spostati sulle hue verde/ambra. */
+  --success: oklch(56% 0.16 145);
+  --success-soft: oklch(93% 0.05 145);
+  --warning: oklch(70% 0.16 80);
+  --warning-soft: oklch(93% 0.06 80);
+
+  /* Tipografia — Sora per titoli e UI, IBM Plex Mono per elementi tecnici (label, meta).
+     Caricamento reale via next/font in app/layout.tsx: qui si mappa solo la variabile. */
+  --font-serif: var(--font-sora), sans-serif;
+  --font-sans: var(--font-sora), sans-serif;
+  --font-mono: var(--font-ibm-plex-mono), monospace;
+
+  /* Spacing/radius: si usa la scala di default di Tailwind (multipli di 0.25rem)
+     invece di ridefinirla — il design non introduce uno spacing scale custom. */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-card: var(--card);
+
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-soft: var(--primary-soft);
+
+  --color-accent-manual-soft: var(--accent-manual-soft);
+  --color-accent-community: var(--accent-community);
+  --color-accent-community-soft: var(--accent-community-soft);
+  --color-accent-designer: var(--accent-designer);
+  --color-accent-designer-soft: var(--accent-designer-soft);
+
+  --color-owl-body: var(--owl-body);
+
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+
+  --font-serif: var(--font-serif);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+}

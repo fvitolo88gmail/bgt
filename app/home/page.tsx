@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { GameSelectForm } from '@/components/home/GameSelectForm';
 import { GameOption } from '@/components/home/types';
+import { Card } from '@/components/ui/Card';
 
 // Solo giochi con almeno una fonte pronta (manuale o forum) — evita di
 // portare l'utente su una chat senza contenuto ingested.
@@ -18,16 +19,16 @@ export default async function HomePage() {
     const games: GameOption[] = data ?? [];
 
     return (
-        <main className="max-w-md mx-auto p-4 flex flex-col h-screen justify-center gap-6">
-            <h1 className="text-xl font-bold text-center">Assistente Regole</h1>
+        <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-6 p-4">
+            <h1 className="text-center font-serif text-xl font-bold text-ink">Assistente Regole</h1>
 
             {games.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center">
+                <Card className="p-4 text-center text-sm text-ink-soft">
                     Nessun gioco disponibile al momento.
-                </p>
+                </Card>
             ) : (
                 <GameSelectForm games={games} />
             )}
-        </main>
+        </div>
     );
 }

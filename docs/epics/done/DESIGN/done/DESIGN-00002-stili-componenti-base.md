@@ -1,6 +1,6 @@
 # DESIGN-00002 — Generalizzazione stili/CSS componenti base
 
-**Stato:** todo
+**Stato:** done
 
 **Blocca:** DESIGN-00001
 

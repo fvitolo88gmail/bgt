@@ -13,7 +13,7 @@ todo/progress/done).*
 | BILLING | `todo/BILLING/` | da iniziare |
 | TEACH | `todo/TEACH/` | da iniziare |
 | VISUAL | `todo/VISUAL/` | nice to have, in coda |
-| DESIGN | `todo/DESIGN/` | da iniziare |
+| DESIGN | `done/DESIGN/` | completata (v. D64) |
 | CHAT-LISTING | `todo/CHAT-LISTING/` | da iniziare |
 | ADMIN-CONSOLE | `todo/ADMIN-CONSOLE/` | da iniziare |
 | GAME-REQUEST | `todo/GAME-REQUEST/` | da iniziare, priorità molto bassa |
@@ -59,6 +59,12 @@ generalizzazione componenti UI base — copre `POC-00015`, ora deprecata come su
 (sidebar conversazioni + limite risposte configurabile — dipende dal modello dati di
 `POC-00016`) e `ADMIN-CONSOLE` (gestione stato giochi, wizard ingest, UI diagnostica — dipende
 da `AUTH-00001`, sovrappone `BILLING-00002`). Tutte da iniziare, nessuna priorità assegnata.
+
+**Epica DESIGN completata (sessione 2026-07-29):** tema/palette "Ludico Vivace" formalizzato in
+`app/theme.css` (DESIGN-00001, D64), componenti base in `components/ui/` (Button, Input, Select,
+Badge, Card, Header, Footer, Modal, OwlMark — DESIGN-00002), applicati a tutte le pagine esistenti
+(home, chat, citazioni — DESIGN-00003). `Modal` pronto ma non ancora agganciato a nessuna
+schermata; nessuna pagina login/admin esiste ancora nel codice (solo nel mockup di riferimento).
 
 ## Note aperte
 

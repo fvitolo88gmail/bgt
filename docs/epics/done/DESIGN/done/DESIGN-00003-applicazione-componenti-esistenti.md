@@ -1,6 +1,6 @@
 # DESIGN-00003 — Applicazione del nuovo design ai componenti esistenti
 
-**Stato:** todo
+**Stato:** done
 
 **Blocca:** DESIGN-00002
 
