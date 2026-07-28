@@ -380,6 +380,119 @@ tenere l'epica aperta.
 ## Template per sessioni future
 
 ```
+### D46 — Aperta Epica 0551: query enhancement HyDE non chiude il gap cross-lingua
+**Contesto:** diagnosi manuale (script `diagnose-retrieval.ts`/`diagnose-full-context.ts`/nuovo
+`diagnose-query-enhancement.ts`) su un caso Hegemony con risposta fattualmente errata: il chunk
+manuale corretto non arriva mai al contesto, nemmeno alzando `topK` (5→8) e `MIN_MANUAL_CHUNKS`
+(2→4, mitigazione temporanea già applicata in `lib/retrieval.ts`/`route.ts`).
+**Scelta:** causa radice isolata in `QUERY_ENHANCEMENT_PROMPT` (Epica 0550): non specifica la
+lingua di output dei paragrafi HyDE, che risultano generati in italiano (lingua della query)
+contro un manuale in inglese — il gap cross-lingua che la tecnica doveva chiudere resta aperto.
+Aperta Epica 0551 per il fix (lingua HyDE parametrica su `games.manual_language`, nuovo campo,
+la lingua del manuale varia per gioco) + ri-validazione dei parametri di recall alzati oggi.
+**Motivazione:** evitare l'ennesima patch puntuale (soglie/conteggi) su un sintomo quando la
+causa probabile è strutturale e generalizzabile a ogni gioco con manuale non in italiano.
+Non in scope: granularità chunking (resta in 0560 punto 2/3), reranking, ricerca ibrida —
+discussi ma non scelti.
+
+---
+
+### D47 — Epica 0551 anticipata, interrompe 0900
+**Contesto:** 0551 (D46) appena aperta come bug di retrieval con causa radice già isolata;
+priorità corrente era 0900 (Chat con contesto, C1 avviato).
+**Scelta:** interrompere 0900, dare priorità a 0551. 0900 riprende dopo la chiusura di 0551.
+**Motivazione:** richiesta esplicita di Francesco — un bug di correttezza fattuale nelle
+risposte pesa più della prossima feature, e la causa è già diagnosticata (basso costo di
+chiusura rispetto a lasciarlo aperto).
+
+---
+
+### D48 — Chiusa 0551 (parziale): fix lingua HyDE corretto ma non risolutivo, causa dominante è il chunking
+**Contesto:** dopo D46/D47, implementati L1 (`games.manual_language`) e L2 (prompt HyDE
+parametrico). Verificato con `diagnose-query-enhancement.ts`: paragrafi ora in inglese.
+**Scelta:** ri-testato il caso originale con `diagnose-full-context.ts` — il chunk "Free
+Actions"/"Basic Actions" continua a NON entrare nel contesto anche a gap linguistico chiuso
+(EN vs EN). Chiusa 0551 con L1-L2 fatti (restano in produzione, fix valido in sé) e L3-L4
+chiusi come non risolutivi. Priorità sposta su 0560 punto 3 (small-to-big manuale).
+**Motivazione:** isolare correttamente causa necessaria (lingua, risolta) da causa sufficiente
+(chunking, ancora aperta) invece di continuare a testare varianti sullo stesso fix già esaurito.
+
+---
+
+### D49 — Aperta Epica 0561: reranking + ricerca ibrida, dopo 0560 punto 3
+**Contesto:** due limiti strutturali emersi durante 0551 (D46-D48) ma non affrontati lì per non
+mischiare concern: selezione finale solo su coseno grezzo (niente reranking); solo ricerca
+semantica, niente lessicale (caso concreto: "Manifestazione" non recupera "Demonstration").
+**Scelta:** aperta 0561 (R1 reranking LLM, R2 full-text Postgres, R3 traduzione query grezza via
+`manual_language`, R4 verifica). Ordine: dopo 0560 punto 3 (chunking), non prima — un reranking
+su chunk ancora diluiti avrebbe meno segnale su cui lavorare.
+**Motivazione:** evitare di continuare a tarare euristiche a soglia (pattern già fragile, v.
+D48) quando la soluzione strutturale (reranking + ibrido) è nota e generalizzabile.
+
+---
+
+### D50 — 0560 punto 3: chunking fine-grained su bullet-titolo, non small-to-big
+**Contesto:** causa dominante isolata in D48 (chunk "Free/Basic Actions" diluito da azioni
+eterogenee non separate). La proposta originale del task (storage parallelo
+`manual_sections`/`expandManualSection()`, analogo al forum) era sul tavolo da tempo, mai
+implementata.
+**Scelta:** invece di small-to-big, esteso `splitIntoSections` (`ingest-pdf.ts`) a riconoscere
+bullet-titolo (`*   **Nome Azione**`, senza testo aggiuntivo in riga) come confine di chunk —
+stessa logica di D40 (etichetta in grassetto), un livello più in profondità. Verificato con
+nuovo script dry-run (`diagnose-chunking-dry-run.ts`, solo parsing, no Gemini/DB): "Buy Goods &
+Services"/"Use Healthcare" ora chunk distinti, zero chunk "(parte N)" residui su Hegemony.
+**Motivazione:** a differenza di un thread forum (unità coerente), una sezione action-list è
+eterogenea — espandere al genitore a runtime avrebbe spostato la diluizione dal retrieval alla
+generazione invece di risolverla. Il fix diretto (bullet come confine) è più semplice, non
+richiede nuovo storage, ed è generalizzabile a ogni manuale con questo pattern di lista azioni.
+Resta da fare: re-ingest di Hegemony + riverifica end-to-end sul caso originale (D46).
+
+---
+
+### D51 — Chiusa 0560: alzato MIN_MANUAL_CHUNKS a 6 / topK a 10, verificato end-to-end
+**Contesto:** dopo il re-chunking (D50) e re-ingest di Hegemony, "Buy Goods & Services" salito a
+72.7% (4° tra i chunk manuale, `diagnose-retrieval.ts --source manual`) ma ancora appena fuori
+dalla riserva di 4 — affollata da 5 chunk "Cover Needs" quasi-duplicati (uno per ruolo).
+**Scelta:** alzato `MIN_MANUAL_CHUNKS` 4→6 e `topK` 5→10 (`lib/retrieval.ts`, `route.ts`,
+`diagnose-full-context.ts`). Verificato: "Classe Media — Buy Goods & Services" ora nel contesto
+finale sul caso originale. Chiusa 0560 (punto 3), spostato file in `closed/`.
+**Motivazione:** margine ormai stretto (72.7 vs 74.5%) dopo il fix di chunking — aggiustamento
+fine su un segnale che funziona quasi, non più una toppa su un segnale strutturalmente debole
+come l'alzata precedente (D46-D48). Priorità torna a 0900; 0561 (reranking) resta in coda per
+affrontare la ridondanza "Cover Needs" osservata, più robustamente di un ulteriore alzamento.
+
+---
+
+### D52 — 0561 priorità assoluta: regressione su domanda con premessa errata dopo D51
+**Contesto:** "Come guadagna Legittimità la Classe Media?" (corretta a inizio sessione, gestita
+come PREMESSA ERRATA) è tornata a rispondere in modo sbagliato dopo l'alzata di
+`MIN_MANUAL_CHUNKS` a 6 (D51). Verificato con `diagnose-full-context.ts`: le 4 fonti corrette
+("Lo Stato — ...") sono nel contesto, insieme a 2 chunk "Middle Class" fuori tema (rumore da
+riserva a soglia fissa) che probabilmente inducono priming errato verso l'attribuzione sbagliata.
+**Scelta:** priorità assoluta a 0561 (reranking + ricerca ibrida), su decisione esplicita di
+Francesco — sopra 0900 e ogni altro lavoro, finché la correttezza su domande ambigue/con
+premessa errata non è affidabile. Non ulteriori tuning di `MIN_MANUAL_CHUNKS`/`topK` (pattern
+già mostrato fragile in D46-D51).
+**Motivazione:** la correttezza fattuale delle risposte è il valore centrale del prodotto — un
+regresso su un caso già risolto, causato da un fix per un altro caso, conferma che serve un
+meccanismo strutturale (reranking) invece di continuare a tarare soglie a mano.
+
+---
+
+### D53 — R1 (reranking) implementato e verificato su regressione D52
+**Contesto:** priorità assoluta su 0561 (D52) dopo regressione sul caso Legittimità/Classe Media.
+**Scelta:** implementato `lib/reranking.ts` (nuovo file, singola responsabilità): reranking LLM
+sulla domanda originale (non arricchita) su un pool di max 30 candidati (`RERANK_POOL_CAP`),
+fail-soft con fallback a `selectWithReservedBudget` se fallisce. Integrato in
+`matchChunksForPrompt` (`lib/retrieval.ts`). Verificato su più run con `diagnose-full-context.ts`:
+caso Legittimità risolto consistentemente (chunk "Middle Class" fuori tema esclusi); caso "Buy
+Goods & Services" presente 2/3 run (varianza nota, non un fallimento del reranking).
+**Motivazione:** un giudizio di pertinenza reale, mirato alla domanda specifica, distingue "stesso
+soggetto nominato" da "risponde davvero alla domanda" meglio di qualunque soglia di similarità —
+conferma la direzione scelta in D49 rispetto a continuare a tarare `MIN_MANUAL_CHUNKS`/`topK`.
+
+---
+
 ### D[N] — Titolo decisione
 **Contesto:** perché si è posta la questione
 **Opzioni:** opzione A · opzione B · opzione C

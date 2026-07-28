@@ -15,7 +15,9 @@
 | 0500 | `closed/0500-forum-bgg.md` | Forum BGG | ✅ chiusa |
 | 0510 | `closed/0510-refactor-tech-debt.md` | Refactor tecnico (package, doc, decision-log) | ✅ chiusa |
 | 0550 | `closed/0550-retrieval-query-enhancement.md` | Retrieval query enhancement | ✅ chiusa |
-| 0560 | `0560-ingest-manuale-migliorato.md` | Miglioramento ingest manuale | punto 1 ✅, punto 2 ✅ (D40), punto 3 aperto |
+| 0551 | `closed/0551-retrieval-lingua-hyde.md` | Retrieval: lingua HyDE e recall manuale | ✅ chiusa (parziale — fix lingua ok, causa dominante era il chunking, v. 0560) |
+| 0560 | `closed/0560-ingest-manuale-migliorato.md` | Miglioramento ingest manuale | ✅ chiusa (punto 1 ✅, punto 2 ✅ D40, punto 3 ✅ D50/D51) |
+| 0561 | `0561-reranking-ricerca-ibrida.md` | Reranking e ricerca ibrida lessicale+semantica | in corso (priorità assoluta, v. D52) |
 | 0570 | `0570-link-bgg-citazioni.md` | Link BGG nelle citazioni | parziale (aperto caso link per-post) |
 | 0600 | `0600-fase3-continua.md` | Fase 3 (continua) — S3.2–S3.5, S3.7 | dopo 0500 (S3.4 anticipata, D41) |
 | 0700 | `0700-chat-multilingua.md` | Chat multilingua | dopo 0600 |
@@ -39,10 +41,26 @@ Epica **0550 — Retrieval query enhancement** chiusa (sessione 2026-07-27) — 
 latenza/costo) skipped su decisione esplicita, v. D42. File spostato in
 `closed/0550-retrieval-query-enhancement.md`.
 
-Priorità corrente: **0900 — Chat con contesto**, avviata su richiesta esplicita di Francesco
-(sessione 2026-07-27), saltando l'ordine "dopo 0800" — 0800 resta da fare, ripreso dopo 0900.
-Note di scope decise con Francesco per questa epica (owner_token non implementato, modalità
-domande/conversazione scelta in `/home`) in testa a `0900-chat-con-contesto.md`.
+Epica **0551 — Retrieval: lingua HyDE e recall manuale** chiusa (sessione 2026-07-27/28) —
+v. `closed/0551-retrieval-lingua-hyde.md`. Fix lingua (L1+L2) verificato e in produzione; L3/L4
+chiusi come non risolutivi — la causa dominante del caso che aveva aperto l'epica è la
+granularità del chunking, non la lingua.
+
+Epica **0560 — Miglioramento ingest manuale** chiusa (sessione 2026-07-28) — v.
+`closed/0560-ingest-manuale-migliorato.md`. Punto 3 risolto con chunking fine-grained su
+bullet-titolo (D50) + aggiustamento `MIN_MANUAL_CHUNKS`/`topK` (D51), verificato end-to-end sul
+caso originale (D46): "Classe Media — Buy Goods & Services" ora nel contesto finale.
+
+Priorità corrente: **0561 — Reranking e ricerca ibrida** (v. D49, D52) — interrompe di nuovo 0900.
+Decisione esplicita di Francesco (sessione 2026-07-28): la capacità dell'agente di rispondere
+correttamente a domande ambigue/con premessa errata è priorità assoluta, sopra ogni altro lavoro,
+finché non è risolta in modo affidabile. Innescata da una regressione osservata: "Come guadagna
+Legittimità la Classe Media?" (già corretta a inizio sessione) ha ricominciato ad attribuire
+erroneamente alla Classe Media un meccanismo dello Stato, dopo l'alzata di `MIN_MANUAL_CHUNKS`
+a 6 (D51) — verificato con `diagnose-full-context.ts`: le fonti corrette (4 chunk "Lo Stato")
+sono nel contesto, ma insieme a 2 chunk "Middle Class" irrilevanti alla domanda (rumore da
+riserva a soglia fissa, non da mancanza di informazione) che probabilmente inducono priming
+scorretto. **0900 — Chat con contesto** resta in pausa.
 Restano comunque candidate per dopo: 0560 punto 3, 0570 caso link per-post, 0600 resto dopo
 S3.4, oltre al re-ingest di Brass Birmingham.
 
