@@ -53,10 +53,17 @@ const GAME_ID = resolveGameId();
 // Soglia indicativa: 16/20 = 80%
 const ACCEPTABLE_THRESHOLD = 0.8;
 
-// Timeout per domanda: ~3 chiamate Gemini (embedding+generate dentro
-// /api/chat, più generate del judge) + pausa di 15s per il rate limit free
-// tier (15 richieste/minuto). Usato per calcolare il timeout totale del test.
-const MS_PER_QUESTION = 45_000;
+// Timeout per domanda. /api/chat fa oggi fino a ~7 chiamate Gemini per
+// domanda (embed per query originale+HyDE, generate per query enhancement,
+// generate per reranking, generate per la risposta), più il generate del
+// judge: fino a 8 chiamate totali. Il timeout include margine per eventuali
+// retry su 429/503 (lib/gemini.ts).
+const MS_PER_QUESTION = 90_000;
+
+// Pausa tra una domanda e l'altra per restare sotto il limite free tier di
+// Gemini (15 richieste/minuto): con ~8 chiamate per domanda, 30s di pausa
+// tiene la media a ~12 richieste/minuto, con margine di sicurezza.
+const PAUSE_BETWEEN_QUESTIONS_MS = 30_000;
 
 // --- Tipi ---------------------------------------------------------------
 
@@ -208,12 +215,7 @@ async function runEval(): Promise<EvalResult[]> {
         fs.mkdirSync(path.dirname(partialPath), { recursive: true });
         fs.writeFileSync(partialPath, JSON.stringify(results, null, 2), "utf-8");
 
-        // Pausa tra domande per restare sotto il limite di 15 richieste/minuto
-        // del piano free Gemini (gemini-3.1-flash-lite). Ogni iterazione
-        // consuma circa 3 chiamate Gemini nel complesso (embedding + generate
-        // dentro /api/chat, più generate del judge), quindi una pausa di
-        // ~15s tiene il ritmo a un margine di sicurezza sotto soglia.
-        await new Promise((res) => setTimeout(res, 15_000));
+        await new Promise((res) => setTimeout(res, PAUSE_BETWEEN_QUESTIONS_MS));
     }
 
     return results;

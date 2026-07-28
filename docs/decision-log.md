@@ -511,6 +511,25 @@ riprovare un fix in questa direzione (non ancora scritta/testata).
 
 ---
 
+### D55 — Eval in timeout: dedup embed manuale/forum + ricalibrata pausa/timeout
+**Contesto:** l'eval andava sistematicamente in timeout. Diagnosticato: il volume di chiamate
+Gemini per domanda era cresciuto (HyDE + reranking, D53) fino a ~12 (di cui 8 embed, perché
+`matchChunksForPrompt` chiamava `matchChunks` due volte — manuale e forum — per ogni query,
+ciascuna con un embed proprio sullo stesso testo), mentre pausa/timeout dell'eval erano ancora
+tarati sulla stima originale di ~3 chiamate/domanda (piano free, 15 richieste/minuto).
+**Scelta:** `lib/retrieval.ts` — estratta `queryChunksByEmbedding` (solo RPC); `matchChunksForPrompt`
+calcola un embedding per query e lo riusa per manuale+forum (~8 chiamate/domanda nel caso
+peggiore, non più ~12). `eval/runner.test.ts` — pausa tra domande 15s→30s, timeout per domanda
+45s→90s.
+**Verifica:** run completa su `hegemony-ambiguous`, nessun timeout, 18/20 (90%) — v.
+`docs/baselines/005-20260728-hegemony-ambiguous-gemini-3-1-flash-lite.json`. I 2 fallimenti sono
+casi già noti (heg-amb-01 Legittimità/Classe Media, heg-amb-08 Prosperità dello Stato).
+**Motivazione:** la causa reale non era la pausa in sé ma il volume di chiamate non più allineato
+alle stime originarie — fix strutturale (dedup) più efficace di un ulteriore allungamento cieco
+della pausa.
+
+---
+
 ### D[N] — Titolo decisione
 **Contesto:** perché si è posta la questione
 **Opzioni:** opzione A · opzione B · opzione C

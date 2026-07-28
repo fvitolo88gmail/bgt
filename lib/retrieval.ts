@@ -23,14 +23,12 @@ export interface ChunkMatch {
     similarity: number;
 }
 
-export async function matchChunks(
-    query: string,
+async function queryChunksByEmbedding(
+    embedding: number[],
     gameId: string,
-    topK: number = 5,
+    topK: number,
     filterSource?: 'manual' | 'forum',
 ): Promise<ChunkMatch[]> {
-    const embedding = await geminiClient.embed(query);
-
     const {data, error} = await supabase.rpc('match_chunks', {
         query_embedding: embedding,
         match_game_id: gameId,
@@ -65,6 +63,22 @@ export async function matchChunks(
             similarity: row.similarity as number,
         };
     });
+}
+
+/**
+ * Esportata anche per uso standalone (es. scripts/test-decomposition.ts):
+ * embed della query seguito dalla ricerca. matchChunksForPrompt usa invece
+ * queryChunksByEmbedding direttamente, per riusare lo stesso embedding tra
+ * la ricerca manuale e quella forum sulla stessa query.
+ */
+export async function matchChunks(
+    query: string,
+    gameId: string,
+    topK: number = 5,
+    filterSource?: 'manual' | 'forum',
+): Promise<ChunkMatch[]> {
+    const embedding = await geminiClient.embed(query);
+    return queryChunksByEmbedding(embedding, gameId, topK, filterSource);
 }
 
 // Query enhancement: decomposizione + HyDE in un solo step. La
@@ -296,19 +310,36 @@ export async function matchChunksForPrompt(
     // selezione finale possa intervenire.
     const RAW_CANDIDATES_PER_SOURCE = 8;
 
-    const settled = await Promise.allSettled(
-        searchQueries.flatMap((q) => [
-            matchChunks(q, gameId, RAW_CANDIDATES_PER_SOURCE, 'manual'),
-            matchChunks(q, gameId, RAW_CANDIDATES_PER_SOURCE, 'forum'),
-        ]),
+    // Un solo embed per query, riusato per la ricerca manuale e quella
+    // forum: prima venivano fatte due chiamate embed identiche (una per
+    // matchChunks 'manual', una per 'forum'), raddoppiando inutilmente le
+    // chiamate Gemini per domanda.
+    const embeddingResults = await Promise.allSettled(
+        searchQueries.map((q) => geminiClient.embed(q)),
+    );
+
+    const rpcSettled = await Promise.allSettled(
+        embeddingResults.flatMap((result) => {
+            if (result.status !== 'fulfilled') return [];
+            const embedding = result.value;
+            return [
+                queryChunksByEmbedding(embedding, gameId, RAW_CANDIDATES_PER_SOURCE, 'manual'),
+                queryChunksByEmbedding(embedding, gameId, RAW_CANDIDATES_PER_SOURCE, 'forum'),
+            ];
+        }),
     );
 
     const matchLists: ChunkMatch[][] = [];
-    settled.forEach((result, i) => {
+    embeddingResults.forEach((result, i) => {
+        if (result.status !== 'fulfilled') {
+            console.error(`[retrieval] embed fallito per la query arricchita #${i}:`, result.reason);
+        }
+    });
+    rpcSettled.forEach((result) => {
         if (result.status === 'fulfilled') {
             matchLists.push(result.value);
         } else {
-            console.error(`[retrieval] retrieval fallito per la query arricchita #${i}:`, result.reason);
+            console.error('[retrieval] ricerca fallita per una fonte:', result.reason);
         }
     });
 

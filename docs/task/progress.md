@@ -64,6 +64,13 @@ scorretto. **0900 — Chat con contesto** resta in pausa.
 Restano comunque candidate per dopo: 0560 punto 3, 0570 caso link per-post, 0600 resto dopo
 S3.4, oltre al re-ingest di Brass Birmingham.
 
+**Baseline 005 (2026-07-28, post-D53/D55):** eval `hegemony-ambiguous` 18/20 (90%), sopra
+soglia — v. `docs/baselines/005-20260728-hegemony-ambiguous-gemini-3-1-flash-lite.json`. Eval
+non va più in timeout (D55). 2 fallimenti residui, entrambi noti: heg-amb-01 (Legittimità
+Classe Media — risposta ambigua invece di correggere con sicurezza) e heg-amb-08 (Prosperità
+dello Stato — "non trovato" invece di correggere, v. D54, non un'allucinazione ma subottimale).
+Non ancora affrontati in questa sessione.
+
 ## Note aperte
 
 - Brass Birmingham rimosso dal DB (manuale + forum) in attesa di un re-ingest migliorato

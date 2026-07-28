@@ -47,3 +47,4 @@ next-env.d.ts
 /manuals
 /ingest
 /scripts/test-decomposition.ts
+/eval/results
