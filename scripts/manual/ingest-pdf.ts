@@ -80,11 +80,12 @@ function cleanSubTitle(headerLine: string): string {
 
 /**
  * Due livelli di confine: "##" apre una nuova sezione top-level (pagina),
- * "###" apre un nuovo chunk DENTRO la sezione corrente, ereditandone la
- * pagina. Header più profondi ("####" e oltre) restano contenuto normale
- * del chunk corrente — non aprono un ulteriore livello di split.
+ * "###"/"####"/etichetta in grassetto aprono un nuovo chunk DENTRO la
+ * sezione corrente, ereditandone la pagina. Header più profondi restano
+ * contenuto normale del chunk corrente — non aprono un ulteriore livello
+ * di split.
  */
-function splitIntoSections(markdown: string): Section[] {
+export function splitIntoSections(markdown: string): Section[] {
     const lines = markdown.split('\n');
     const sections: Section[] = [];
 
@@ -136,6 +137,31 @@ function splitIntoSections(markdown: string): Section[] {
         if (boldTitle) {
             flushBlock();
             blockTitle = boldTitle;
+            blockContent = [];
+            continue;
+        }
+
+        // Elenco puntato "*   **Titolo Azione**" (con o senza ":" finale,
+        // senza altro testo sulla stessa riga) — confine di chunk (Epica
+        // 0560 punto 3, D50). Pattern molto comune per elenchi di azioni
+        // nei manuali di giochi da tavolo ("Basic Actions"/"Free Actions"
+        // e simili), MAI specifico a un singolo gioco. Prima di questo
+        // fix, ogni bullet di questo tipo restava testo muto dentro il
+        // chunk della sezione/sottosezione corrente — su una sezione con
+        // molte azioni eterogenee (es. "Basic Actions": Propose Bill,
+        // Build Company, Buy Goods & Services...) l'embedding del chunk
+        // risultava diluito, facendo perdere sistematicamente il
+        // retrieval sull'azione specifica cercata anche quando il
+        // contenuto era corretto (v. D46-D48, caso Hegemony "beni di
+        // magazzino/Classe Media"). Non tocca bullet con testo aggiuntivo
+        // sulla stessa riga (es. "* **Industria**: Indicato dal colore.")
+        // — quelli restano contenuto normale del blocco corrente, sono
+        // già brevi e non affetti dal problema.
+        const bulletTitleMatch = trimmed.match(/^\*\s+\*\*([A-Za-z][a-zA-Z0-9 &/'’,()-]*)\*\*:?\s*$/);
+        const bulletTitle = bulletTitleMatch?.[1];
+        if (bulletTitle) {
+            flushBlock();
+            blockTitle = bulletTitle;
             blockContent = [];
             continue;
         }
@@ -298,7 +324,15 @@ async function main() {
     console.log(`\nCompletato: ${saved} salvati, ${skipped} già presenti (saltati), ${errors} errori`);
 }
 
-main().catch((err) => {
-    console.error('Errore fatale:', err);
-    process.exit(1);
-});
+// Guardia di esecuzione: questo modulo viene anche importato (non solo
+// eseguito da CLI) da scripts/diagnostics/diagnose-chunking-dry-run.ts per
+// riusare splitIntoSections in un dry-run senza embedding/DB — senza questa
+// guardia, main() (che si aspetta --md/--game-id da CLI) veniva invocato
+// anche al semplice import, sovrascrivendo l'output del dry-run con
+// l'errore "Argomenti mancanti".
+if (require.main === module) {
+    main().catch((err) => {
+        console.error('Errore fatale:', err);
+        process.exit(1);
+    });
+}

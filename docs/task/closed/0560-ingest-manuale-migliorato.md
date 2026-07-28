@@ -122,47 +122,60 @@ D19-D20) forzerebbe più sub-divisioni anche dentro sezioni `##` singole, ma
 
 ---
 
-## 3. Small-to-big anche per il manuale, come già fatto per il forum (D28)? ⏳ ancora aperto, non implementato
+## 3. Small-to-big anche per il manuale, come già fatto per il forum (D28)? ✅ risolto (percorso diverso da quello proposto)
 
-**Aggiornamento 2026-07-26:** nessuno sviluppo su questo punto — resta la
-proposta originale, non ancora una scelta implementata. Diventa più rilevante
-alla luce del punto 2: finché la vision (D36) non produce header coerenti,
-un chunk piccolo "vince" il retrieval in modo meno affidabile, il che rende
-ancora più interessante recuperare comunque il contesto dell'intera sezione
-`##` a runtime, indipendentemente da come la sottosezione è marcata.
+**Aggiornamento 2026-07-28 (D50):** risolto, ma NON con lo storage parallelo
+`manual_sections`/`expandManualSection()` proposto sotto (mai implementato).
+Durante la diagnosi di 0551 (D46-D48) è emerso un problema concreto e più
+specifico di quanto ipotizzato qui: sezioni come "Basic Actions"/"Free
+Actions" della Classe Media (Hegemony) elencano azioni eterogenee con bullet
+propri (`*   **Buy Goods & Services**`, `*   **Use Healthcare**`...) che
+`splitIntoSections` (`ingest-pdf.ts`) non riconosceva come confine di
+chunk — restavano testo muto dentro il blocco della sottosezione `###`/`####`
+corrente, diluendo l'embedding esattamente come il problema già risolto da
+D39/D40 un livello più in alto.
 
-Idea: invece di scegliere fissamente la granularità del chunk embeddato,
-applicare lo stesso pattern già validato per il forum — un chunk piccolo e
-mirato (es. a livello di paragrafo o `###`) viene embeddato e usato per il
-retrieval, ma quando vince, il sistema espande a runtime recuperando l'intero
-contesto del genitore (la sezione `##` completa, o anche l'intero capitolo)
-da uno storage non-embeddato — esattamente come `forum_posts`/
-`expandForumThread` fanno oggi per i thread.
+**Causa diretta, generalizzata (non specifica a Hegemony):** `splitIntoSections`
+riconosceva come confine solo header Markdown (`###`/`####`) ed etichette
+INTERAMENTE in grassetto senza bullet (`**Titolo**`). Non riconosceva il
+pattern, molto comune nei manuali di giochi da tavolo per liste di azioni,
+`*   **Titolo Azione**` (bullet + titolo in grassetto, nessun altro testo
+sulla riga, descrizione nei paragrafi seguenti).
 
-**Perché è interessante:** risolverebbe simultaneamente i punti 2 e 3 sopra
-— chunk piccoli e precisi per la ricerca (buon segnale embedding, niente
-dilution), ma risposta finale comunque generata con il contesto completo del
-paragrafo/sezione, non un frammento isolato che potrebbe mancare di
-riferimenti impliciti a ciò che lo circonda.
+**Fix applicato:** nuovo pattern di confine in `splitIntoSections` per bullet
+di questo tipo (regex `^\*\s+\*\*([A-Za-z][a-zA-Z0-9 &/'’,()-]*)\*\*:?\s*$`),
+trattato esattamente come l'etichetta in grassetto già gestita da D40 — stessa
+logica, un livello di annidamento più profondo. Non tocca i bullet con testo
+aggiuntivo sulla stessa riga (es. glossario "* **Industria**: Indicato dal
+colore.").
 
-**Cosa servirebbe, in bozza (da approfondire, non ancora una scelta):**
-- Uno storage parallelo a `chunks` per il manuale, analogo a `forum_posts`:
-  es. `manual_sections` con l'intero testo della sezione `##` per gioco,
-  non embeddato
-- Ogni chunk piccolo (embeddato, in `chunks`) porterebbe un riferimento al
-  genitore (es. `parent_section_id` o semplicemente `section`+`page` già
-  esistenti come chiave di join, se sufficientemente univoci)
-- Una funzione `expandManualSection()` analoga a `expandForumThread()`,
-  richiamata da `matchChunksForPrompt` quando un chunk `source='manual'`
-  vince il retrieval
+**Perché questo invece del small-to-big proposto originariamente:** verificato
+che espandere al "genitore" (l'intera sezione `##`/sottosezione `###`) qui
+sarebbe stato controproducente — a differenza di un thread forum (unità
+topicamente coerente, tutti i post sulla stessa domanda), una sezione come
+"Basic Actions" è un contenitore eterogeneo (Propose Bill, Build Company, Buy
+Goods & Services...). Espandere a quel "genitore" avrebbe semplicemente
+spostato la diluizione dalla fase di retrieval a quella di generazione
+(prompt gonfiato di azioni irrilevanti). Il chunking fine-grained come unità
+finale (senza storage parallelo né espansione a runtime) risolve la causa
+diretta senza questa complessità aggiuntiva.
 
-**Domanda aperta da risolvere prima di implementare:** qual è la giusta
-unità "piccola" per il manuale? Il forum ha un'unità naturale (il post);
-il manuale non ha un equivalente altrettanto netto — `###` è un candidato
-ragionevole ma non tutte le sezioni hanno sottosezioni con questo livello di
-granularità (alcune sono già brevi e piatte, come `Vincere la Partita`).
-Andrebbe verificato che il pattern non introduca overhead senza beneficio
-sulle sezioni già piccole.
+**Verificato con dry-run** (`scripts/diagnostics/diagnose-chunking-dry-run.ts`,
+nuovo — parsing puro, nessuna chiamata Gemini/DB) su Hegemony: "Classe Media
+— Buy Goods & Services" (437 parole) e "Classe Media — Use Healthcare" (69
+parole) ora chunk distinti; **zero chunk "(parte N)"** residui su tutto il
+manuale (prima ce n'erano diversi); "Strike"/"Demonstration" (già corretti da
+D40) restano corretti, nessuna regressione visibile su 226 sezioni totali.
+**Chiuso definitivamente (2026-07-28, D51):** re-ingest di Hegemony eseguito.
+Verificato con `diagnose-retrieval.ts --source manual`: "Classe Media — Buy
+Goods & Services" salito da ~69% (fuori top-10 misto) a 72.7% (4° tra i soli
+chunk manuale) grazie al solo re-chunking. Restava appena fuori dalla riserva
+di 4 (affollata da chunk "Cover Needs" quasi-duplicati per ruolo) — alzata
+`MIN_MANUAL_CHUNKS` a 6 e `topK` a 10 (D51, aggiustamento fine su un segnale
+ormai vicino, non più una toppa su un segnale strutturalmente troppo debole
+come l'alzata precedente). Verificato con `diagnose-full-context.ts` sul
+caso originale: "Classe Media — Buy Goods & Services" ora nel contesto
+finale. Caso chiuso end-to-end.
 
 ---
 
