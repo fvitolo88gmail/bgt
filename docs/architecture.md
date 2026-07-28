@@ -184,10 +184,12 @@ domanda utente + game_id + owner_token (da cookie/localStorage)
 │   ├── development.md
 │   ├── decision-log.md
 │   ├── baselines/
-│   └── task/
+│   └── epics/
 │       ├── progress.md
-│       ├── NNNN-nome-epica.md  # un file per epica attiva/futura (4 cifre, step 100)
-│       └── closed/             # epiche completate
+│       └── todo/ | progress/ | done/   # SOLO cartelle di stato a questo livello
+│           └── <EPICA>/                # dir epica, posizionata nella cartella del suo stato
+│               ├── <EPICA>.md          # indice epica (contesto, decisioni, note aperte)
+│               └── todo/ | progress/ | done/   # un file per task (<EPICA>-NNNNN.md)
 ├── .env.local
 │
 ├── app/                        # Next.js app router

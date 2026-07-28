@@ -530,6 +530,27 @@ della pausa.
 
 ---
 
+### D56 — Riorganizzazione gestione task/epiche: nomi parlanti, cartelle todo/progress/done, epiche parallele
+**Contesto:** la convenzione precedente (epiche numerate `NNNN-nome-epica.md`, ordine sequenziale
+globale, ID task per-epica come "R1", "S3.2", "C1", "A1") generava ambiguità tra ID short-form di
+epiche diverse e non rappresentava che le epiche procedono ormai in parallelo, non in sequenza.
+Occasione: aggiunta di due nuove epiche (AUTH, BILLING) su richiesta di Francesco.
+**Scelta:** epiche nominate con un nome parlante (mai un prefisso numerico). `docs/epics/`
+contiene solo le tre cartelle di stato `todo/`, `progress/`, `done/`; ogni epica è una directory
+`<EPICA>/` posizionata dentro la cartella dello stato corrente (es. `docs/epics/progress/POC/`),
+con un file indice `<EPICA>.md` e tre sottocartelle `todo/`, `progress/`, `done/` per i singoli
+task, ID `<EPICA>-NNNNN` (5 cifre). Le 10 epiche numeriche chiuse/aperte precedenti (0000–0900)
+sono confluite come singoli
+task (POC-00001..00016) di una nuova epica `POC`, lasciati nel formato narrativo originale.
+L'epica "AI Provider Adapters" (ex 1000) è diventata un singolo task di `BILLING` (BILLING-00008),
+non un'epica a sé — è una leva di costo/monetizzazione. `TEACH` (ex 1100) e `VISUAL` (ex 1200)
+restano epiche a sé stanti.
+**Motivazione:** elimina l'ambiguità tra ID di epiche diverse, riflette che il lavoro procede in
+parallelo, e rende esplicito nella struttura delle cartelle lo stato di ogni epica/task senza
+dover aprire ogni file per saperlo.
+
+---
+
 ### D[N] — Titolo decisione
 **Contesto:** perché si è posta la questione
 **Opzioni:** opzione A · opzione B · opzione C
