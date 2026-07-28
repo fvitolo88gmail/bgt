@@ -176,12 +176,20 @@ async function runEval(): Promise<EvalResult[]> {
             continue;
         }
 
-        const judgement = await judgeAnswer(
-            ai,
-            item.question,
-            item.expected_answer,
-            actualAnswer,
-        );
+        let judgement: { correct: boolean; reasoning: string };
+        try {
+            judgement = await judgeAnswer(
+                ai,
+                item.question,
+                item.expected_answer,
+                actualAnswer,
+            );
+        } catch (err) {
+            judgement = {
+                correct: false,
+                reasoning: `[ERRORE CHIAMATA JUDGE: ${(err as Error).message}] — nessuna valutazione affidabile possibile.`,
+            };
+        }
         console.log(`[${item.id}] ${judgement.correct ? "✅" : "❌"}`);
 
         results.push({
@@ -192,6 +200,15 @@ async function runEval(): Promise<EvalResult[]> {
             correct: judgement.correct,
             judge_reasoning: judgement.reasoning,
         });
+
+        // Scrittura incrementale (D-nuovo, sessione 2026-07-27): se il
+        // processo crasha su una domanda successiva (rete, quota), i
+        // risultati fin qui restano su disco invece di essere persi
+        // insieme al processo in memoria — stesso principio di
+        // resilienza già applicato a forum-ingest.ts/ingest-pdf.ts.
+        const partialPath = path.join(__dirname, "results", `${FIXTURE_NAME}-partial.json`);
+        fs.mkdirSync(path.dirname(partialPath), { recursive: true });
+        fs.writeFileSync(partialPath, JSON.stringify(results, null, 2), "utf-8");
 
         // Pausa tra domande per restare sotto il limite di 15 richieste/minuto
         // del piano free Gemini (gemini-3.1-flash-lite). Ogni iterazione

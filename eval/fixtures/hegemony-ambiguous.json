@@ -1,0 +1,102 @@
+[
+    {
+        "id": "heg-amb-01",
+        "question": "Come guadagna Legittimità la Classe Media?",
+        "expected_answer": "La Classe Media non ha una propria meccanica di Legittimità. La Legittimità è una meccanica esclusiva dello Stato: sono i 3 tracciati sulla plancia dello Stato che misurano quanto ciascuna Classe percepisce lo Stato come legittimo. Le azioni della Classe Media possono influenzare la Legittimità DELLO STATO (in positivo o negativo), ma la Classe Media non guadagna né possiede alcuna Legittimità propria."
+    },
+    {
+        "id": "heg-amb-02",
+        "question": "Qual è il Capitale della Classe Lavoratrice e come lo aumento?",
+        "expected_answer": "La Classe Lavoratrice non ha un'area Capitale. Il Capitale (Capital) è una meccanica esclusiva della Classe Capitalista: è l'area della plancia dove il denaro già tassato viene trasferito dalle Entrate (Revenue) durante la Fase di Punteggio. La Classe Lavoratrice ha solo l'area Income dove tiene il proprio denaro."
+    },
+    {
+        "id": "heg-amb-03",
+        "question": "Come faccio a fondare un Trade Union con la Classe Media?",
+        "expected_answer": "La Classe Media non può fondare Trade Unions. Le Trade Unions sono una meccanica esclusiva della Classe Lavoratrice: può assegnare Lavoratori qualificati alle Trade Unions sulla propria plancia, con il requisito di avere almeno 4 altri Lavoratori impiegati in Aziende di quell'industria."
+    },
+    {
+        "id": "heg-amb-04",
+        "question": "Come si fa lo sciopero?",
+        "expected_answer": "Lo Sciopero (Strike) è un'Azione Base della Classe Lavoratrice: si piazza un segnalino Sciopero su fino a 2 Aziende dove lavorano i propri Lavoratori. Non si possono scegliere Aziende con Lavoratori impegnati (committed) né Aziende con Salari di Livello 3; le Aziende Pubbliche solo se lo Stato è controllato da un giocatore. Ogni Azienda può avere massimo 1 segnalino. All'inizio della Fase di Produzione, i segnalini su Aziende con Salario L3 vengono scartati; per ogni Azienda operativa che ha ancora il segnalino, la produzione viene saltata (niente risorse, niente Salario), la Classe Lavoratrice guadagna 1 Influenza, e i segnalini vengono scartati. Da non confondere con la Manifestazione (Demonstration), che è un'azione diversa con requisiti diversi."
+    },
+    {
+        "id": "heg-amb-05",
+        "question": "Che differenza c'è tra Sciopero e Manifestazione?",
+        "expected_answer": "Sono due Azioni Base distinte della Classe Lavoratrice. Sciopero (Strike): piazza segnalini su Aziende dove lavorano i tuoi Lavoratori per bloccarne la produzione (l'Azienda in sciopero non produce e non paga Salari; la Classe Lavoratrice guadagna 1 Influenza per Azienda). Manifestazione (Demonstration): richiede che i Lavoratori disoccupati superino di almeno 2 gli slot disponibili per la propria Classe; piazza il segnalino Demonstration nell'area Lavoratori Disoccupati; se resta fino alla Fase di Produzione, la Classe Lavoratrice guadagna 1 Influenza e gli altri giocatori perdono VP pari ai Lavoratori disoccupati più le Trade Unions."
+    },
+    {
+        "id": "heg-amb-06",
+        "question": "La Classe Media può usare i beni nei suoi magazzini per soddisfare i bisogni della popolazione?",
+        "expected_answer": "Non direttamente. I beni nei Magazzini (Storage) e quelli nell'area Goods & Services sono in due aree distinte. Per usare i propri beni prodotti (es. fornire Salute alla popolazione), la Classe Media deve prima 'comprarli da sé stessa' con l'azione Buy Goods & Services: nessun denaro viene scambiato, si trasferiscono semplicemente gli oggetti dallo Storage all'area Goods & Services (limite: fino alla propria Popolazione per azione; comprando da sé si può comprare da al massimo un'altra fonte nella stessa azione). Eccezione: per Cover Needs (cibo), può usare il Cibo presente sia nello Storage sia nell'area Goods & Services."
+    },
+    {
+        "id": "heg-amb-07",
+        "question": "Chi può usare l'azione Extra Shift?",
+        "expected_answer": "Extra Shift è un'Azione Base della Classe Media: sceglie una propria Azienda con Lavoratori di Classe Media non impegnati, li impegna tutti e produce i beni/servizi. Se l'Azienda ha un dipendente di Classe Lavoratrice, deve pagarne il Salario (se non può, non può scegliere quell'Azienda). Esiste anche una carta Azione chiamata Extra Shift con effetto simile; la risposta corretta dovrebbe distinguere l'azione base della Classe Media dall'eventuale carta."
+    },
+    {
+        "id": "heg-amb-08",
+        "question": "Come funziona la Prosperità dello Stato?",
+        "expected_answer": "Lo Stato non ha Prosperità. La Prosperità (Prosperity) è una meccanica della Classe Lavoratrice e della Classe Media: ciascuna ha un proprio tracciato sulla propria plancia (con progressioni diverse tra le due classi), che aumenta fornendo Salute, Istruzione o Lusso alla propria popolazione e dà VP. Lo Stato usa invece la Legittimità come meccanica di punteggio caratteristica."
+    },
+    {
+        "id": "heg-amb-09",
+        "question": "Dove tiene i soldi la Classe Capitalista e cosa succede quando paga qualcosa?",
+        "expected_answer": "La Classe Capitalista ha due aree distinte: Entrate (Revenue), dove va il denaro guadagnato non ancora tassato, e Capitale (Capital), il denaro già tassato in passato. Salvo indicazioni contrarie, guadagni e spese passano dalle Entrate; se le Entrate non bastano, si copre la differenza dal Capitale (e viceversa per costi esplicitamente dal Capitale). Se non basta nulla, si deve contrarre un Prestito (50 al Capitale). Questa distinzione Revenue/Capital è esclusiva della Classe Capitalista; le altre classi hanno una sola area denaro."
+    },
+    {
+        "id": "heg-amb-10",
+        "question": "L'Influenza dello Stato può essere comprata dagli altri giocatori?",
+        "expected_answer": "Dipende da quale Influenza: lo Stato ha due tipi distinti. L'Influenza Media (prodotta dalle sue Aziende, conservata nell'area Servizi Pubblici del tabellone) può essere acquistata da Classe Lavoratrice e Classe Media. L'Influenza Personale (guadagnata tramite altri effetti, conservata sulla plancia giocatore dello Stato) non può mai essere venduta o acquistata. La distinzione è importante: quando un effetto chiede allo Stato di spendere Influenza, salvo indicazione contraria si riferisce solo a quella Personale."
+    },
+    {
+        "id": "heg-amb-11",
+        "question": "Posso proporre due leggi sulla stessa politica nello stesso round?",
+        "expected_answer": "No. Non è consentito Proporre una Legge per una Politica che ha già il segnalino di un giocatore su di essa — quindi due proposte sulla stessa Politica non possono coesistere. Inoltre, con carte che permettono di proporre due Leggi (es. Need for Change / Push Political Agenda), la seconda Legge deve essere per forza su una Politica diversa dalla prima."
+    },
+    {
+        "id": "heg-amb-12",
+        "question": "Chi paga la Tassa sull'Occupazione (Employment Tax)?",
+        "expected_answer": "La pagano la Classe Capitalista e la Classe Media (i ruoli che possiedono Aziende), non la Classe Lavoratrice. Per entrambe è il prodotto tra il numero delle proprie Aziende operative e il Moltiplicatore Fiscale. La Classe Lavoratrice paga invece solo l'Imposta sul Reddito (Income Tax), basata sulla combinazione delle Politiche 2 e 3."
+    },
+    {
+        "id": "heg-amb-13",
+        "question": "Come aumenta la Popolazione dello Stato?",
+        "expected_answer": "Lo Stato non ha Popolazione. Il tracciato Popolazione (Population) esiste solo per Classe Lavoratrice e Classe Media, e corrisponde al numero di Lavoratori di quella classe in gioco. Lo Stato non ha Lavoratori propri né un tracciato Popolazione; le sue meccaniche caratteristiche sono i tracciati di Legittimità."
+    },
+    {
+        "id": "heg-amb-14",
+        "question": "Posso prendere un prestito per costruire un'azienda?",
+        "expected_answer": "No. I Prestiti non si prendono a piacere: si è obbligati a prenderne uno solo quando si deve pagare un costo obbligatorio (tasse, Salari, Cover Needs, effetti di altri giocatori) e non si ha abbastanza denaro. Prendere un Prestito per finanziare spese opzionali — come costruire un'Azienda, giocare una carta con un costo, o comprare risorse diverse dal Cibo — non è consentito."
+    },
+    {
+        "id": "heg-amb-15",
+        "question": "Il gettone Macchinario rende automatizzata la mia azienda?",
+        "expected_answer": "No. Un'Azienda con un gettone Macchinario NON è considerata automatizzata: il gettone aumenta solo la produzione del valore indicato, ma l'Azienda continua a richiedere Lavoratori — se resta senza, diventa non operativa e non produce. Le Aziende Automatizzate sono invece carte specifiche con un grande simbolo Macchinario stampato e nessuno slot Lavoratore: quelle producono sempre, senza Lavoratori e senza pagare Salari."
+    },
+    {
+        "id": "heg-amb-16",
+        "question": "Quando vendo Salute agli altri giocatori come Stato, dove va il denaro?",
+        "expected_answer": "Il denaro ricevuto dallo Stato per la vendita di servizi va nel Tesoro dello Stato (State Treasury) sul tabellone principale, non su un'area della plancia giocatore. Peculiarità dello Stato: a seconda delle Politiche 4 e 5, il prezzo può scendere fino a diventare gratuito — in quel caso non c'è denaro, ma lo Stato guadagna Legittimità (1 ogni 3 risorse cedute gratis alla stessa Classe) o 1 VP per vendita a prezzo 5."
+    },
+    {
+        "id": "heg-amb-17",
+        "question": "Cosa succede ai lavoratori se vendo la mia azienda come Classe Media?",
+        "expected_answer": "Tutti i Lavoratori dell'Azienda venduta vanno immediatamente nell'area Lavoratori Disoccupati, e il venditore guadagna denaro pari al costo dell'Azienda. Non si può però vendere un'Azienda che ha Lavoratori impegnati (committed) — con l'unica eccezione delle Aziende Pubbliche vendute per un cambio di Politica Fiscale."
+    },
+    {
+        "id": "heg-amb-18",
+        "question": "La Classe Lavoratrice paga la Tassa sull'Occupazione?",
+        "expected_answer": "No. La Classe Lavoratrice paga solo l'Imposta sul Reddito (Income Tax), determinata dalla combinazione tra Mercato del Lavoro (Politica 2) e Tassazione (Politica 3). La Tassa sull'Occupazione (Employment Tax) riguarda solo chi possiede Aziende, cioè Classe Capitalista e Classe Media."
+    },
+    {
+        "id": "heg-amb-19",
+        "question": "Posso usare l'Influenza Media dello Stato per votare alle elezioni?",
+        "expected_answer": "No. Durante le elezioni lo Stato può influenzare l'esito spendendo solo la propria Influenza Personale, non l'Influenza Media. I due tipi non sono mai interscambiabili: l'azione Campagna (Campaign) permette di convertire fino a 3 Influenza Media in Personale, ma è una conversione tramite azione dedicata, non un uso diretto."
+    },
+    {
+        "id": "heg-amb-20",
+        "question": "Lo Stato ha cubi Voto nel sacchetto?",
+        "expected_answer": "No. Lo Stato non ha cubi Voto propri nel sacchetto — i cubi appartengono solo alle 3 Classi (Lavoratrice, Media, Capitalista). Lo Stato influenza le elezioni esclusivamente spendendo Influenza Personale, e guadagna Influenza nella fase 'Riempire il Sacchetto' in base al proprio punteggio di Legittimità più basso."
+    }
+]
