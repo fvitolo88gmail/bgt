@@ -32,11 +32,12 @@ delle decisioni prese durante l'implementazione:
 | POC-00009 | Retrieval: lingua HyDE e recall manuale | ✅ done |
 | POC-00010 | Miglioramento ingest manuale | ✅ done |
 | POC-00011 | Reranking e ricerca ibrida lessicale+semantica | in corso (priorità assoluta, v. D52) |
-| POC-00012 | Link BGG nelle citazioni | in corso (caso principale ✅, caso per-post aperto) |
-| POC-00013 | Fase 3 (continua): S3.2–S3.5, S3.7 | todo (S3.4 variante minima già ✅) |
-| POC-00014 | Chat multilingua | todo |
-| POC-00015 | UI Uplifting | todo |
-| POC-00016 | Chat con contesto (server-side) | in corso, in pausa (C1-C3 ✅, C4-C5 todo) |
+| POC-00012 | Link BGG nelle citazioni | ✅ done |
+| POC-00013 | Fase 3 (continua): S3.2–S3.5, S3.7 | ✅ done (S3.2 de facto, S3.3/S3.5/S3.7 riassegnati ad ADMIN-CONSOLE/GAME-REQUEST, v. D60) |
+| POC-00014 | Chat multilingua | ✅ done nella sostanza — residuo BUG-001 (traduzione incoerente etichette sezione) accantonato |
+| POC-00015 | UI Uplifting | ❌ superseded da `DESIGN` (v. D63) |
+| POC-00016 | Chat con contesto (server-side) | ✅ done (C1-C3; C4-C5 assorbiti da `CHAT-LISTING`, v. D59) |
+| POC-00017 | Restyling delle risposte (tono, ripetitività, citazioni utente) | ✅ done |
 
 ## Note aperte
 

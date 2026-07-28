@@ -215,7 +215,11 @@ domanda utente + game_id + owner_token (da cookie/localStorage)
 │   ├── supabase.ts             # client Supabase
 │   ├── gemini.ts               # client Gemini (embeddings + chat)
 │   ├── retrieval.ts            # match_chunks
-│   ├── prompt.ts               # prompt grounded
+│   ├── prompt/                 # prompt grounded, split per specializzazione (D61)
+│   │   ├── index.ts            # barrel — punto d'ingresso per i consumer (@/lib/prompt)
+│   │   ├── shared.ts           # regole condivise (lingua, citazioni, anti-premessa-errata) + buildContext
+│   │   ├── qa.ts                # specializzazione "qa" — buildPrompt
+│   │   └── conversation.ts     # specializzazione "conversation" — buildConversationPrompt, storico
 │   ├── owner-token.ts          # generazione/lettura owner_token client-side (D16)
 │   └── bgg.ts                  # client BGG XML API2
 │

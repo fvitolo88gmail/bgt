@@ -8,6 +8,9 @@ Configurare un limite al numero di risposte (turni) che è possibile inviare, pe
 consumo di quota/costo Gemini. Da chiarire l'ambito esatto del limite (per conversazione, per
 utente, o globale/periodo — v. nota aperta in `CHAT-LISTING.md`) prima di implementare.
 
+**Nota (v. D59):** assorbe C4 di `POC-00016` (cap esplicito su turni/token in history, mai
+implementato lì) — stesso obiettivo, ma qui con scope configurabile invece di un valore fisso.
+
 ## DoD
 
 Limite configurabile (non hardcoded — valore in configurazione); superato il limite, l'utente

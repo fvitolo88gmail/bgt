@@ -1,6 +1,12 @@
 # POC-00016 — Chat con contesto (server-side)
 
-**Stato:** in corso — dopo `0800-ui-uplifting.md`
+**Stato:** ✅ done (C1-C3) — C4 e C5 non implementati qui, assorbiti da `CHAT-LISTING` (v. D59):
+con l'arrivo di conversazioni multiple per gioco/utente, un cap fisso sui turni e una scelta
+modalità globale in `/home` legata a un'unica sessione per gioco sarebbero stati da rifare. C4 →
+`CHAT-LISTING-00004` (limite configurabile, stesso obiettivo ma scope più ampio); C5 → nota in
+`CHAT-LISTING-00002`/`-00003` (la scelta modalità va decisa per conversazione, non più
+globalmente). Il modello dati e l'API di questa epica (chat_sessions/chat_messages, modalità
+`conversation` in `/api/chat`) restano la base su cui `CHAT-LISTING` costruisce — non obsoleti.
 
 ## Note di scope (decise con Francesco, 2026-07-27)
 
@@ -42,5 +48,5 @@ Fix (deciso con Francesco, non tocca la modalità `qa`):
   FATTO DIRETTO/DEDUZIONE e usa esplicitamente lo storico per risolvere riferimenti impliciti
   invece di chiedere una disambiguazione generica. `buildPrompt` (usato in `qa`) resta
   invariato.
-| C4 | Cap esplicito su numero di turni/token inclusi in history (solo rilevante in `conversation`, per contenere consumo quota Gemini) | oltre il cap, i turni più vecchi vengono troncati, nessun errore di quota in test manuale |
-| C5 | In `/home`, scelta modalità (domande/conversazione, default domande) contestuale alla selezione del gioco, con nota sul maggior consumo in conversazione; la scelta determina il `mode` passato a `/game/[id]` e da lì ad ogni chiamata `/api/chat` | selezione funzionante da `/home`, comportamento diverso qa/conversation verificabile in `/game/[id]` |
+| C4 | ~~Cap esplicito su numero di turni/token inclusi in history~~ — assorbito da `CHAT-LISTING-00004` | — |
+| C5 | ~~In `/home`, scelta modalità contestuale alla selezione del gioco~~ — assorbito da `CHAT-LISTING-00002`/`-00003` | — |

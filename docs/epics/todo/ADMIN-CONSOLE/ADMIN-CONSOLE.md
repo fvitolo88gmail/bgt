@@ -22,8 +22,13 @@ Vedi directory `ADMIN-CONSOLE/` per i task singoli.
 | ADMIN-CONSOLE-00001 | Gestione stato giochi | todo |
 | ADMIN-CONSOLE-00002 | Wizard di ingest con stato di avanzamento | todo |
 | ADMIN-CONSOLE-00003 | UI per invocare script di diagnostica | todo |
+| ADMIN-CONSOLE-00004 | API di ricerca gioco (BGG), ex-S3.3 di `POC-00013` | todo |
+| ADMIN-CONSOLE-00005 | API stato gioco, ex-S3.5 di `POC-00013` | todo |
 
 ## Note aperte
 
 - Riconciliare con `BILLING-00002` (pannello costi) quando si inizia questa epica: valutare se
   farlo confluire qui come sezione della console invece di restare separato.
+- ADMIN-CONSOLE-00004/00005 (ex-S3.3/S3.5 di `POC-00013`, v. D60) — reindirizzate qui perché il
+  loro unico consumatore reale è la console admin (wizard di ricerca/ingest, gestione stato), non
+  più giustificate come feature utente-facing con solo 2 giochi ingested.

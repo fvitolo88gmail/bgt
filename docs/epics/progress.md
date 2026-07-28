@@ -8,7 +8,7 @@ todo/progress/done).*
 
 | Epica | Directory | Stato |
 |---|---|---|
-| POC | `progress/POC/` | in corso (nucleo POC-00001..00010 chiuso, POC-00011..00016 in corso/todo) |
+| POC | `progress/POC/` | in corso (solo POC-00011 ancora aperto, in pausa; tutto il resto chiuso o deprecato) |
 | AUTH | `todo/AUTH/` | da iniziare |
 | BILLING | `todo/BILLING/` | da iniziare |
 | TEACH | `todo/TEACH/` | da iniziare |
@@ -16,19 +16,30 @@ todo/progress/done).*
 | DESIGN | `todo/DESIGN/` | da iniziare |
 | CHAT-LISTING | `todo/CHAT-LISTING/` | da iniziare |
 | ADMIN-CONSOLE | `todo/ADMIN-CONSOLE/` | da iniziare |
+| GAME-REQUEST | `todo/GAME-REQUEST/` | da iniziare, priorità molto bassa |
 
 ## Priorità corrente
 
-**POC-00011 — Reranking e ricerca ibrida** (v. D49, D52) resta priorità assoluta, sopra ogni
-altro lavoro, finché non risolta in modo affidabile. Innescata da una regressione osservata:
-"Come guadagna Legittimità la Classe Media?" (già corretta) ha ricominciato ad attribuire
-erroneamente alla Classe Media un meccanismo dello Stato, dopo l'alzata di `MIN_MANUAL_CHUNKS`
-a 6 (D51). Il primo sotto-step ha già risolto la regressione principale (D52/D53); restano da
-fare full-text search e traduzione query — v. `progress/POC/progress/POC-00011-reranking-ricerca-ibrida.md` per il
-dettaglio dei sotto-step.
+**POC-00014 — Chat multilingua** chiusa nella sostanza (v. D61): il corpo della risposta segue
+correttamente la lingua della domanda, refactor `lib/prompt.ts` → `lib/prompt/` (shared + due
+specializzazioni qa/conversation). Residuo aperto: **BUG-001** — traduzione incoerente delle
+etichette di sezione manuale tra parentesi quadre nelle citazioni, quando la risposta non è in
+italiano (v. `docs/bugs/BUG-001-traduzione-parziale-etichette-sezione.md`), accantonato dopo 4
+tentativi di fix via prompt — probabile limite del modello, non di istruzioni mancanti. Esecuzione
+di L3 (`eval/fixtures/hegemony-ambiguous-en.json`) ancora da fare in locale (sandbox non riesce a
+tenere in vita `next dev`).
 
-**POC-00016 — Chat con contesto** resta in pausa (C1-C3 fatti, C4-C5 da fare) finché POC-00011
-non è chiuso.
+**POC-00017 — Restyling delle risposte** chiusa (v. D57, D58): eval `hegemony-ambiguous` dopo il
+fix 18/20 (90%), in linea con baseline 005 — v. `progress/POC/done/POC-00017-restyling-risposte.md`.
+
+**POC-00011 — Reranking e ricerca ibrida** (v. D49, D52) resta in pausa, non priorità assoluta
+(v. D57) — resta comunque da chiudere (R2 full-text search, R3 traduzione query) quando si
+riprende. Il primo sotto-step ha già risolto la regressione principale osservata ("Come guadagna
+Legittimità la Classe Media?", D52/D53) — v.
+`progress/POC/progress/POC-00011-reranking-ricerca-ibrida.md` per il dettaglio dei sotto-step.
+
+**POC-00016 — Chat con contesto** chiusa (C1-C3 ✅; C4-C5 mai implementati lì, assorbiti da
+`CHAT-LISTING-00004` e da una nota in `CHAT-LISTING-00002`/`-00003` — v. D59).
 
 **Baseline 005 (2026-07-28, post-D53/D55):** eval `hegemony-ambiguous` 18/20 (90%), sopra
 soglia — v. `docs/baselines/005-20260728-hegemony-ambiguous-gemini-3-1-flash-lite.json`. Eval
@@ -43,7 +54,8 @@ Adapters" ridotta a un singolo task BILLING-00008). Entrambe da iniziare, nessun
 assegnata ancora rispetto a POC-00011/POC-00016.
 
 **Nuove epiche (sessione 2026-07-28, seconda tranche):** aggiunte `DESIGN` (tema, palette,
-generalizzazione componenti UI base — sovrappone `POC-00015`, da riconciliare), `CHAT-LISTING`
+generalizzazione componenti UI base — copre `POC-00015`, ora deprecata come superseded, v. D63),
+`CHAT-LISTING`
 (sidebar conversazioni + limite risposte configurabile — dipende dal modello dati di
 `POC-00016`) e `ADMIN-CONSOLE` (gestione stato giochi, wizard ingest, UI diagnostica — dipende
 da `AUTH-00001`, sovrappone `BILLING-00002`). Tutte da iniziare, nessuna priorità assegnata.
@@ -64,11 +76,11 @@ da `AUTH-00001`, sovrappone `BILLING-00002`). Tutte da iniziare, nessuna priorit
   generazione $0.25/$1.50 per 1M input/output), deciso di rimandare finché non si valida
   l'ingest su un secondo gioco oltre Brass. Potrebbe ridurre l'urgenza di BILLING-00007 (BYOK)
   se il tetto RPD condiviso smette di essere un vincolo reale.
-- Puntatore a `progress/POC/todo/POC-00013-fase3-continua.md` (Fase 3 continua) — S3.4 anticipata in versione
-  minima (D41), resto della sequenza (S3.2, S3.3, S3.5, S3.7) da fare.
+- POC-00013 (Fase 3 continua) chiusa — v. `progress/POC/done/POC-00013-fase3-continua.md` e D60
+  (S3.2 de facto, S3.3/S3.5 riassegnati ad `ADMIN-CONSOLE-00004`/`-00005`, S3.7 a
+  `GAME-REQUEST-00001`).
 - Puntatore a `todo/VISUAL/todo/VISUAL-00001-scoping-approccio.md` — nice to have, in coda dopo TEACH.
-- Puntatore a `progress/POC/progress/POC-00012-link-bgg-citazioni.md` (Link BGG citazioni) — fatto per il caso
-  principale, aperto il caso dei link per-post nei thread espansi.
+- POC-00012 (Link BGG citazioni) chiusa — v. `progress/POC/done/POC-00012-link-bgg-citazioni.md`.
 - Nota su D32 (prompt: non introdurre argomenti non richiesti): verificato su un caso concreto,
   da ri-controllare con un eval completo quando si riprende il lavoro — potrebbe migliorare
   ulteriormente heg-amb-01/08.

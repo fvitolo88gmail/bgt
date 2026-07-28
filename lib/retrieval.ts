@@ -385,7 +385,12 @@ export async function matchChunksForPrompt(
 
     for (const match of matches) {
         if (match.source === 'manual') {
-            const label = match.section ?? (match.page !== null ? `Pagina ${match.page}` : 'Manuale');
+            // La pagina va sempre inclusa insieme alla sezione quando disponibile,
+            // non solo come fallback: altrimenti il numero di pagina non arriva mai
+            // al modello per il caso comune (chunk con sezione), nonostante
+            // CITATION_FORMAT_RULES lo preveda esplicitamente nelle citazioni.
+            const sectionPart = match.section ?? 'Manuale';
+            const label = match.page !== null ? `${sectionPart}, pagina ${match.page}` : sectionPart;
             context.push({content: match.content, sourceLabel: label});
             continue;
         }
@@ -406,7 +411,10 @@ export async function matchChunksForPrompt(
         context.push({
             content: expanded.content,
             sourceLabel: `Forum — Thread: ${match.threadSubject ?? ''}`,
-            url: buildBggThreadUrl(match.bggThreadId), // link alla radice del thread
+            // Link diretto al post effettivamente recuperato (la radice del
+            // thread, l'unica embeddata per D28), non alla pagina generica
+            // del thread: match.bggUrl include già il bggArticleId corretto.
+            url: match.bggUrl,
             posts: expanded.posts,
         });
     }

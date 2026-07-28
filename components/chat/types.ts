@@ -23,5 +23,10 @@ export function sourceLabel(s: Source): string {
         // qui si corregge la visualizzazione senza richiedere un backfill.
         return s.threadSubject ? `Forum — ${decodeHtmlEntities(s.threadSubject)}` : 'Forum';
     }
-    return s.section ?? (s.page != null ? `Pagina ${s.page}` : 'Manuale');
+    // La pagina va sempre inclusa insieme alla sezione quando disponibile,
+    // non solo come fallback (stesso bug già corretto in lib/retrieval.ts
+    // per il testo passato al modello — qui è la stessa etichetta ma per la
+    // UI, le due implementazioni sono separate).
+    const sectionPart = s.section ?? 'Manuale';
+    return s.page != null ? `${sectionPart}, pagina ${s.page}` : sectionPart;
 }

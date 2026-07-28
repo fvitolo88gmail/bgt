@@ -1,0 +1,27 @@
+[
+  {
+    "id": "heg-amb-en-04",
+    "question": "How do you perform a Strike?",
+    "expected_answer": "Strike is a Basic Action of the Working Class: place a Strike token on up to 2 Companies where your Workers are employed. You cannot choose Companies with committed Workers, nor Companies with Level 3 Wages; Public Companies only if the State is controlled by a player. Each Company can have at most 1 token. At the start of the Production Phase, tokens on Companies with L3 Wages are discarded; for each operational Company that still has the token, production is skipped (no resources, no Wages), the Working Class gains 1 Influence, and the tokens are discarded. Not to be confused with Demonstration, which is a different action with different requirements."
+  },
+  {
+    "id": "heg-amb-en-05",
+    "question": "What is the difference between Strike and Demonstration?",
+    "expected_answer": "They are two distinct Basic Actions of the Working Class. Strike: place tokens on Companies where your Workers are employed to block their production (the Company on strike does not produce and does not pay Wages; the Working Class gains 1 Influence per Company). Demonstration: requires unemployed Workers to exceed available slots for your Class by at least 2; place the Demonstration token in the Unemployed Workers area; if it remains until the Production Phase, the Working Class gains 1 Influence and the other players lose VP equal to the unemployed Workers plus Trade Unions."
+  },
+  {
+    "id": "heg-amb-en-09",
+    "question": "Where does the Capitalist Class keep its money, and what happens when it pays for something?",
+    "expected_answer": "The Capitalist Class has two distinct areas: Revenue, where money earned but not yet taxed goes, and Capital, money already taxed in the past. Unless stated otherwise, earnings and expenses go through Revenue; if Revenue is not enough, the difference is covered from Capital (and vice versa for costs explicitly from Capital). If neither is enough, a Loan must be taken (50 to Capital). This Revenue/Capital distinction is exclusive to the Capitalist Class; the other classes have only one money area."
+  },
+  {
+    "id": "heg-amb-en-14",
+    "question": "Can I take out a loan to build a company?",
+    "expected_answer": "No. Loans cannot be taken at will: you are only forced to take one when you must pay a mandatory cost (taxes, Wages, Cover Needs, other players' effects) and don't have enough money. Taking a Loan to finance optional expenses — like building a Company, playing a card with a cost, or buying resources other than Food — is not allowed."
+  },
+  {
+    "id": "heg-amb-en-15",
+    "question": "Does the Machinery token make my company automated?",
+    "expected_answer": "No. A Company with a Machinery token is NOT considered automated: the token only increases production by the indicated value, but the Company still requires Workers — if it has none, it becomes non-operational and does not produce. Automated Companies are instead specific cards with a large printed Machinery symbol and no Worker slots: those always produce, without Workers and without paying Wages."
+  }
+]

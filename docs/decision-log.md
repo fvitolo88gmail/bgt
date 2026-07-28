@@ -551,6 +551,133 @@ dover aprire ogni file per saperlo.
 
 ---
 
+### D57 — Aperta POC-00017 (restyling risposte), priorità sposta da POC-00011
+**Contesto:** baseline 005 (18/20, D55) sopra soglia; revisione manuale delle risposte in
+`docs/baselines/005-...json` ha rivelato problemi di forma, non di correttezza: formula
+DEDUZIONE ripetuta identica, fallback "non trovato" usato anche quando una correzione di premessa
+sarebbe possibile (heg-amb-08), citazione sistematica di autori forum non-designer (rumore per il
+lettore, non rilevante chi abbia scritto cosa).
+**Scelta:** aperta POC-00017 (S1 citazione utente attenuata, S2 varianti apertura deduzione, S3
+fallback "non trovato" come eccezione reale non rifugio, S4 eval di verifica), su richiesta
+esplicita di Francesco. POC-00011 (R2/R3 full-text search + traduzione query) messa in pausa, non
+più priorità assoluta.
+**Motivazione:** con la correttezza fattuale già sopra soglia, il valore marginale più alto ora è
+sulla qualità percepita della risposta (tono, ripetitività, rumore nelle citazioni) piuttosto che
+su un ulteriore incremento di recall.
+
+---
+
+### D58 — Chiusa POC-00017: fix WRONG_PREMISE_RULE (apertura + incompatibilità col fallback), 18/20
+**Contesto:** prima run S4 (post S1-S3) a 17/20 — heg-amb-01/02 avevano contenuto corretto ma
+forma difettosa: la correzione di premessa non era imposta come prima frase, e poteva coesistere
+nella stessa risposta col fallback "non ho trovato" (visto letteralmente in heg-amb-01, che
+spiegava correttamente il fatto e poi si contraddiceva chiudendo con "non ho trovato questa
+informazione"). heg-amb-08/13 fallivano per lo stesso motivo; heg-amb-16 fallito per omissione
+minore, ma confrontato col baseline 005 la stessa omissione era già presente e giudicata corretta
+lì — varianza del judge, non regressione.
+**Scelta:** `WRONG_PREMISE_RULE` (`lib/prompt.ts`) rafforzata: la correzione va sempre come prima
+frase della risposta, mai come nota aggiunta dopo l'esposizione dei fatti; esplicitamente vietato
+affiancarla al fallback "non ho trovato" nella stessa risposta. Ri-eseguita S4: 18/20, heg-amb-01/
+08/13/16 tutti risolti; 2 nuovi fallimenti (heg-amb-02, heg-amb-17) non riconducibili al restyling
+— stesso pattern di varianza di campionamento già noto (D53). POC-00017 chiusa, spostata in
+`done/`.
+**Motivazione:** il fix isola la causa esatta (ordine + incompatibilità mai esplicitata) invece di
+un ulteriore tuning generico; il punteggio torna in linea con la baseline 005 (90%) con tono e
+citazioni migliorati (S1-S3) e senza regressioni sui casi target.
+
+---
+
+### D59 — Chiusa POC-00016: C4/C5 mai implementati, assorbiti da CHAT-LISTING
+**Contesto:** Francesco ha notato che POC-00016 (C1-C3 ✅, C4-C5 aperti) rischiava di
+sovrapporsi a `CHAT-LISTING`, aperta successivamente. Verificato: `CHAT-LISTING.md` dichiara
+esplicitamente di dipendere dal modello dati di POC-00016 (`chat_sessions`/`chat_messages`) — C1-
+C3 non sono obsoleti, sono la base. C4 (cap fisso su turni/token) si sovrappone quasi 1:1 con
+`CHAT-LISTING-00004` (limite configurabile, stesso obiettivo, scope più ampio). C5 (scelta
+modalità in `/home`, pensata per un'unica sessione per gioco) sarebbe stata da rifare non appena
+`CHAT-LISTING-00002`/`-00003` introducono conversazioni multiple per gioco — la scelta modalità
+naturale diventa per-conversazione, non un toggle globale.
+**Scelta:** POC-00016 chiusa con C1-C3 ✅; C4 e C5 tolti come task aperti lì (mai implementati) e
+annotati come assorbiti in `CHAT-LISTING-00004` (C4) e `CHAT-LISTING-00002`/`-00003` (C5, nota su
+dove va decisa la scelta modalità).
+**Motivazione:** evita di implementare due volte lo stesso obiettivo (cap turni) e di costruire
+una UI (C5) che sarebbe da rifare appena arriva il modello multi-conversazione — stesso principio
+già applicato altrove nel progetto (non anticipare lavoro che una feature successiva già nota
+renderebbe da rifare).
+
+---
+
+### D60 — Chiusa POC-00013: S3.2 de facto, S3.3/S3.5 in ADMIN-CONSOLE, S3.7 in nuova epica GAME-REQUEST
+**Contesto:** analisi dello stato reale di POC-00013 (Fase 3 continua) contro il codice: S3.2
+(fallback esplicito su bassa similarità) risultava coperto solo dal prompt, non da una soglia nel
+codice; S3.3 (`search-game`) e S3.5 (`game-status`) mai implementate (cartelle API vuote); S3.7
+(richiesta gioco non disponibile) mai implementata (nessuna tabella `game_requests`). Francesco ha
+notato che S3.3 è utile solo per il wizard di ingest admin (`ADMIN-CONSOLE-00002`), non come
+feature utente-facing con solo 2 giochi ingested, e che S3.7 ha senso solo con distribuzione/
+traffico reale, quindi priorità molto bassa a sé stante.
+**Scelta:** S3.2 confermato soddisfatto de facto (nessuna soglia hard-coded aggiunta — il
+comportamento anti-allucinazione del prompt più il fallback di `route.ts` bastano, verificato
+dagli eval). S3.3 → `ADMIN-CONSOLE-00004`, S3.5 → `ADMIN-CONSOLE-00005` (stesso ragionamento di
+S3.3, utile a wizard/gestione stato). S3.7 → nuova epica `GAME-REQUEST` (`GAME-REQUEST-00001`),
+priorità molto bassa. POC-00013 chiusa, nessun task aperto residuo.
+**Motivazione:** i tre task residui erano legati a un contesto (Fase 3, MVP con ricerca
+self-service) superato dall'evoluzione del prodotto — reindirizzarli alle epiche che li
+useranno davvero evita di tenerli aperti in un'epica ormai chiusa nella sostanza.
+
+---
+
+### D61 — `lib/prompt.ts` splittato in `lib/prompt/` (shared + due specializzazioni qa/conversation)
+**Contesto:** durante il debug dei bug di lingua/citazioni di POC-00014 (v. sopra), Francesco ha
+segnalato di usare la modalità conversazione e ha chiesto di verificare se il problema fosse
+specifico a quella modalità, più una richiesta di refactor: `lib/prompt.ts` era diventato un
+unico file monolitico (~150 righe) con le due modalità (qa/conversation) e tutte le regole
+condivise mescolate nello stesso file.
+**Scelta:** verificato che `RESPONSE_LANGUAGE_RULE`/`CITATION_FORMAT_RULES` erano già condivise
+tra le due modalità (quindi i fix precedenti si applicavano a entrambe), ma aggiunta comunque una
+clausola esplicita in `buildConversationPrompt`: la lingua della risposta segue SOLO l'ultima
+DOMANDA, mai lo STORICO (rischio non coperto esplicitamente prima — un turno precedente in una
+lingua diversa poteva confondere il segnale). Refactor: `lib/prompt.ts` → `lib/prompt/` con
+`shared.ts` (regole comuni + `buildContext`), `qa.ts` (`buildPrompt`), `conversation.ts`
+(`buildConversationPrompt`, storico), `index.ts` (barrel — nessuna modifica richiesta al singolo
+consumer, `app/api/chat/route.ts`, che importa ancora da `@/lib/prompt`).
+**Motivazione:** un file = una responsabilità (CLAUDE.md); separare le specializzazioni riduce il
+rischio di drift accidentale tra qa/conversation e rende più facile individuare quale modalità è
+coinvolta in un bug futuro — la confusione su "il fix vale anche in conversation?" di questa
+stessa sessione ne è la controprova pratica.
+
+---
+
+### D62 — Aperta `docs/bugs/`, BUG-001 accantonato (traduzione incoerente etichette sezione)
+**Contesto:** dopo 4 tentativi di fix via prompt (v. D61 e sessione 2026-07-29) sulla traduzione
+delle etichette di sezione manuale nelle citazioni quando la risposta non è in italiano, il
+comportamento resta incoerente — alcune citazioni tradotte correttamente, altre no, nella stessa
+risposta. Non sembra un problema di istruzione mancante (istruzioni esplicite, ripetute, con
+esempi concreti, posizionate vicino al punto di lettura del contesto) ma di affidabilità del
+modello (`gemini-3.1-flash-lite`) su una trasformazione ripetuta uniforme in output lunghi.
+**Scelta:** aperta `docs/bugs/` (nuova cartella, primo bug tracciato lì) con
+`BUG-001-traduzione-parziale-etichette-sezione.md` — sintomo, tentativi già fatti, ipotesi, impatto
+(basso-medio: corpo risposta comunque corretto). Non pianificato in un'epica finché non si decide
+la direzione (backfill nome sezione canonico multilingua in DB, vs. accettare il limite).
+POC-00014 chiusa nella sostanza (L1 funzionante, refactor fatto) con questo residuo tracciato a
+parte, per non bloccare il resto del lavoro su un problema di raffinamento cosmetico.
+**Motivazione:** continuare a iterare sul prompt per lo stesso problema, dopo 4 tentativi falliti
+con approcci diversi, ha rendimento marginale decrescente — meglio tracciarlo esplicitamente e
+tornarci con un approccio strutturalmente diverso (dati, non prompt) quando ha senso investirci.
+
+---
+
+### D63 — Deprecata POC-00015 (UI Uplifting), superseded da DESIGN
+**Contesto:** POC-00015 (mai iniziata: U1 theme file, U2 applicazione componenti, U3 componenti
+base) e l'epica `DESIGN` (aperta successivamente: DESIGN-00001 tema/palette, DESIGN-00002
+componenti base, DESIGN-00003 applicazione) coprivano lo stesso scope — `DESIGN.md` segnalava già
+la sovrapposizione come nota aperta da riconciliare.
+**Scelta:** verificata corrispondenza 1:1 tra i task (U1→DESIGN-00001, U3→DESIGN-00002,
+U2→DESIGN-00003, DESIGN più granulare). POC-00015 deprecata come superseded (nessun lavoro da
+recuperare, mai iniziata) e spostata in `done/`; rimossa la nota di riconciliazione da `DESIGN.md`.
+**Motivazione:** evitare di mantenere due epiche aperte con lo stesso obiettivo — `DESIGN` è la
+versione più dettagliata e resta l'unica riferimento per questo lavoro.
+
+---
+
 ### D[N] — Titolo decisione
 **Contesto:** perché si è posta la questione
 **Opzioni:** opzione A · opzione B · opzione C
