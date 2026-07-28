@@ -493,6 +493,24 @@ conferma la direzione scelta in D49 rispetto a continuare a tarare `MIN_MANUAL_C
 
 ---
 
+### D54 — Revertato: paragrafo-soggetto in QUERY_ENHANCEMENT_PROMPT (tentativo fallito)
+**Contesto:** caso "Come funziona la Prosperità dello Stato?" (Hegemony) rispondeva "non
+trovato" invece di correggere con sicurezza (PREMESSA ERRATA: lo Stato non ha Prosperità,
+guadagna punti tramite Legittimità) — nessuna fonte "Lo Stato" mai recuperata. Tentato un fix
+generalizzato: istruzione nel prompt HyDE per generare sempre un paragrafo di overview del
+soggetto nominato, indipendente dall'argomento chiesto.
+**Scelta:** revertato subito dopo verifica — il modello, invece di generare il paragrafo-overview
+richiesto, ha inventato una meccanica "State Prosperity" completamente fittizia (tasse, eserciti,
+bancarotta, nulla di reale in Hegemony), confermando la premessa sbagliata della domanda invece
+di correggerla. Il fallback "non trovato" pre-fix era più sicuro (nessuna invenzione) del
+comportamento post-fix, anche se meno utile.
+**Motivazione:** la tecnica HyDE (scrivere prosa dichiarativa "come se fosse vera") è
+strutturalmente in tensione con la rilevazione di premesse sbagliate — spinge il modello a
+"recitare la parte" invece di verificare. Serve una guardia esplicita anti-invenzione prima di
+riprovare un fix in questa direzione (non ancora scritta/testata).
+
+---
+
 ### D[N] — Titolo decisione
 **Contesto:** perché si è posta la questione
 **Opzioni:** opzione A · opzione B · opzione C

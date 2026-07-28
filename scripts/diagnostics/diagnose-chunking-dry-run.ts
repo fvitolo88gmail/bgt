@@ -2,12 +2,9 @@ import fs from 'fs';
 import { splitIntoSections } from '../manual/ingest-pdf';
 
 /**
- * scripts/diagnostics/diagnose-chunking-dry-run.ts
- *
- * Dry-run del solo parsing (splitIntoSections), SENZA embedding né scrittura
- * su DB — utile per verificare l'effetto del fix bullet-title (Epica 0560
- * punto 3, D50) prima di un re-ingest costoso (chiamate Gemini a pagamento
- * di tempo/quota).
+ * Dry-run del solo parsing (splitIntoSections), senza embedding né scrittura
+ * su DB — utile per verificare l'effetto di un cambio al chunking prima di
+ * un re-ingest costoso.
  *
  * Uso:
  *   npx tsx scripts/diagnostics/diagnose-chunking-dry-run.ts ingest/hegemony/manual.md [filtro-titolo]

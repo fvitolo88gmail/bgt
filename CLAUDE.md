@@ -16,6 +16,13 @@ Sei un senior full-stack developer. Implementi un assistente RAG per regole di g
 - Gestisci sempre gli errori esplicitamente, no silent fail
 - Nomi descrittivi, no abbreviazioni oscure
 - Commenta solo ciò che non è auto-esplicativo
+- Commenti brevi e stringati, non saggi: 1-3 righe, spiegano il "perché" di una scelta non ovvia,
+  non il "cosa" (il codice lo dice già da solo)
+- MAI riferimenti a task/epiche/decision-log nei commenti del codice (es. "Epica 0561", "D46-D48",
+  "v. decision-log"): quei riferimenti hanno senso nel decision-log stesso o nella descrizione del
+  task, non sparsi nel codice — invecchiano male (il codice sopravvive al numero del task che lo
+  ha originato) e appesantiscono la lettura. Se serve tracciare la motivazione di una scelta non
+  ovvia, spiegala in una riga nel commento senza citare l'ID della decisione
 ## Struttura file
 - Segui la struttura di cartelle definita in `architecture.md`
 - Non creare file fuori dalla struttura prevista — se ritieni necessario un nuovo file, chiedi prima

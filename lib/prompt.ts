@@ -1,20 +1,15 @@
 // lib/prompt.ts
 
 // --- Blocchi condivisi tra buildPrompt (qa) e buildConversationPrompt ------
-// Estratti per evitare che le due modalità driftino silenziosamente su
-// regole che devono restare identiche (es. formato citazioni) — visto
-// accadere altrove nel progetto quando la stessa logica viene duplicata
-// invece che condivisa.
+// Estratti per evitare che le due modalità driftino su regole che devono
+// restare identiche (es. formato citazioni).
 //
-// REGOLA FONDAMENTALE (sessione 2026-07-27): questo file è condiviso da
-// TUTTI i giochi della piattaforma. Nessuna stringa qui dentro può
-// contenere terminologia specifica di un gioco (nomi di azioni, carte,
-// componenti, ruoli di un titolo particolare) — solo placeholder astratti
-// ("[Soggetto]", "un'azione", "un termine"). Un esempio concreto di un
-// gioco specifico, anche solo illustrativo, è rumore o motivo di
-// confusione per ogni altro gioco che usa lo stesso prompt. Verificato in
-// sessione un caso preesistente di questa violazione (esempio da Brass
-// Birmingham imbevuto nel blocco AMBIGUITÀ TERMINOLOGICA), corretto qui.
+// REGOLA FONDAMENTALE: questo file è condiviso da TUTTI i giochi della
+// piattaforma. Nessuna stringa qui dentro può contenere terminologia
+// specifica di un gioco (azioni, carte, componenti, ruoli di un titolo
+// particolare) — solo placeholder astratti ("[Soggetto]", "un'azione").
+// Un esempio concreto di un gioco specifico, anche illustrativo, è rumore
+// per ogni altro gioco che usa lo stesso prompt.
 
 const SUBJECT_VERIFICATION_RULE = `PRIMA di usare qualsiasi fonte per rispondere, verifica letteralmente: il contenuto di quella fonte discute davvero il soggetto specifico nominato nella domanda (un ruolo, una carta, un'azione, un componente)? Non basta che la fonte tratti lo stesso argomento generale (es. la stessa meccanica di gioco) — deve riguardare lo stesso soggetto. Se la fonte più pertinente disponibile descrive quel contenuto in riferimento a un soggetto DIVERSO da quello della domanda, non estenderlo per analogia al soggetto richiesto: quella fonte ti dice a chi appartiene davvero quel contenuto, non che si applichi anche a chi hai chiesto tu.`;
 
@@ -76,11 +71,10 @@ ${query}
 RISPOSTA (in italiano, in Markdown, citando le fonti secondo le regole sopra — grassetto per gli autori, link SOLO per i thread forum, mai per il manuale — segnalando esplicitamente se si tratta di una deduzione, e segnalando esplicitamente eventuali ambiguità terminologiche prima di rispondere):`;
 }
 
-// --- Modalità "conversation" (Epica 0900) ----------------------------------
+// --- Modalità "conversation" ------------------------------------------------
 
-// Epica 0900 (Chat con contesto) — C3: turno di conversazione precedente,
-// usato solo per continuità (riferimenti tipo "esso"/follow-up), mai come
-// fonte di fatti — v. buildHistorySection.
+// Turno di conversazione precedente, usato solo per continuità
+// (riferimenti tipo "esso"/follow-up), mai come fonte di fatti.
 export interface ConversationTurn {
     role: 'user' | 'assistant';
     content: string;
@@ -99,13 +93,10 @@ ${formatted}
 `;
 }
 
-// Prompt dedicato alla modalità "conversation" (non usato in "qa", che
-// resta su buildPrompt). Mantiene l'impianto anti-allucinazione e le
-// regole di citazione (condivise con buildPrompt, vedi costanti sopra),
-// ma alleggerisce il formalismo FATTO DIRETTO/DEDUZIONE e usa
-// esplicitamente lo STORICO per risolvere riferimenti impliciti invece
-// di chiedere una disambiguazione generica quando la history la risolve
-// già.
+// Prompt dedicato a "conversation" (non usato in "qa"). Mantiene
+// l'impianto anti-allucinazione e le regole di citazione condivise con
+// buildPrompt, ma alleggerisce il formalismo FATTO DIRETTO/DEDUZIONE e usa
+// lo STORICO per risolvere riferimenti impliciti.
 export function buildConversationPrompt(query: string, context: string, history: string): string {
     return `Sei un assistente esperto di regole di giochi da tavolo, e stai portando avanti una conversazione con l'utente (non una singola domanda isolata).
 

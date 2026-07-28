@@ -3,7 +3,7 @@
  *
  * Richiede autenticazione Bearer token (BGG_TOKEN) — BGG ha introdotto la
  * registrazione app obbligatoria, in deroga alla vecchia documentazione
- * pubblica che indicava l'API come open (D26). BGG segnala il throttling con
+ * pubblica che indicava l'API come open. BGG segnala il throttling con
  * risposte 500/503 ("server troppo occupato"), non con 429 — rispettiamo un
  * intervallo minimo di RATE_LIMIT_MS tra richieste consecutive e ritentiamo
  * con backoff esponenziale su questi due codici.

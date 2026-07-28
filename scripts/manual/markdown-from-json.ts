@@ -3,12 +3,10 @@ import fs from 'fs';
 import { geminiClient } from '../../lib/gemini';
 
 /**
- * scripts/manual/markdown-from-json.ts
- *
- * Step di ingest (D19): trasforma il JSON grezzo prodotto da extract-pdf.py
- * in un Markdown pulito, strutturato per sezioni semantiche (## header),
- * usando Gemini SOLO per pulizia strutturale — non per correggere, dedurre
- * o riformulare il contenuto delle regole.
+ * Trasforma il JSON grezzo prodotto da extract-pdf.py in un Markdown
+ * pulito, strutturato per sezioni semantiche (## header), usando Gemini
+ * SOLO per pulizia strutturale — non per correggere, dedurre o riformulare
+ * il contenuto delle regole.
  *
  * Processo in DUE FASI, per ridurre il rischio di riassunto/omissione
  * osservato quando l'intero documento viene passato in un'unica chiamata:
@@ -21,7 +19,7 @@ import { geminiClient } from '../../lib/gemini';
  *            tentazione del modello di accorciare frasi con più condizioni.
  *
  * L'output va SEMPRE revisionato a mano contro il PDF originale prima di
- * essere passato a ingest-pdf.ts (vedi decision-log.md D19).
+ * essere passato a ingest-pdf.ts.
  *
  * Uso:
  *   npx ts-node --project scripts/tsconfig.json scripts/markdown-from-json.ts \
@@ -83,26 +81,17 @@ async function identifySections(pages: ExtractedPage[]): Promise<SectionOutline[
 }
 
 /**
- * Fix A (D19/D20): rileva sezioni con range di pagine IDENTICI (o quasi:
- * tolleranza minima) E titoli semanticamente simili — segnale che
- * l'outline ha probabilmente prodotto due sezioni per lo stesso
- * contenuto — e le unisce prima della Fase 2.
+ * Rileva sezioni con range di pagine quasi identici E titoli
+ * semanticamente simili — segnale di duplicazione nell'outline — e le
+ * unisce prima della Fase 2.
  *
- * NOTA IMPORTANTE (revisione dopo il primo tentativo): una soglia basata
- * solo sull'overlap di pagine è troppo aggressiva quando più azioni
- * distinte condividono la stessa pagina fisica (es. "Prestito",
- * "Sviluppo", "Espansione della Rete", "Ricognizione" possono stare
- * tutte su un'unica pagina 11 per motivi di impaginazione, ma sono 4
- * regole indipendenti, non un duplicato). Fondere sezioni così ha
- * causato una regressione: il modello, ricevendo più testo grezzo
- * misto in una sola chiamata, ha rimescolato frammenti di regole
- * diverse (stesso tipo di errore visto nel debug di Cementificazione).
- *
- * Ora richiediamo overlap di pagine QUASI TOTALE (>=95%, praticamente
- * lo stesso range) E titoli testualmente simili, per intercettare solo
- * il caso vero (outline che ha duplicato la stessa sezione con lo
- * stesso nome o sinonimo) senza toccare sezioni che condividono solo
- * la pagina fisica per ragioni di impaginazione.
+ * Una soglia basata solo sull'overlap di pagine è troppo aggressiva quando
+ * più azioni distinte condividono la stessa pagina fisica per motivi di
+ * impaginazione: fondere quelle sezioni ha causato in passato una
+ * regressione (il modello, ricevendo testo misto in una sola chiamata, ha
+ * rimescolato frammenti di regole diverse). Richiediamo quindi overlap di
+ * pagine quasi totale (>=95%) E titoli testualmente simili, per
+ * intercettare solo il vero duplicato.
  */
 function titleSimilarity(a: string, b: string): number {
     return jaccardSimilarity(normalizeForComparison(a), normalizeForComparison(b));
@@ -197,20 +186,12 @@ function countWords(text: string): number {
 }
 
 /**
- * Fix B (D19/D20): rete di sicurezza indipendente dal Fix A. Anche se
- * l'outline non produce range di pagine sovrapposti, due sezioni potrebbero
- * comunque generare contenuto quasi identico (es. lo stesso argomento
- * descritto con parole leggermente diverse in due punti del documento
- * grezzo). Confrontiamo il testo NORMALIZZATO (minuscolo, spazi
- * collassati, punteggiatura rimossa) di ogni coppia di sezioni generate:
- * se la similarità supera la soglia, la sezione più corta viene scartata
+ * Rete di sicurezza indipendente dal merge sull'outline: anche se l'outline
+ * non produce range di pagine sovrapposti, due sezioni generate potrebbero
+ * comunque risultare quasi identiche. Confrontiamo il testo normalizzato di
+ * ogni coppia con la similarità di Jaccard sui set di parole (deterministico,
+ * senza chiamate aggiuntive); sopra soglia, la sezione più corta è scartata
  * come duplicato.
- *
- * Usiamo la similarità di Jaccard sui set di parole (non n-gram, non
- * embedding) per restare deterministico e senza costo di chiamate
- * aggiuntive: è un controllo grezzo ma sufficiente per il caso che
- * cerchiamo — due sezioni che raccontano la stessa regola quasi con le
- * stesse parole, non contenuto semplicemente correlato.
  */
 function normalizeForComparison(text: string): Set<string> {
     const normalized = text
@@ -313,7 +294,7 @@ function checkPageCoverage(pages: ExtractedPage[], outline: SectionOutline[]): v
         `⚠️  COPERTURA PAGINE INCOMPLETA: ${missing.length} pagine su ${maxPage} non sono incluse in NESSUNA sezione identificata: p. ${ranges.join(', ')}`,
     );
     console.warn(
-        '    Questo può essere intenzionale (crediti, indice, pagine puramente decorative) OPPURE un bug della Fase 1 che ha "perso" contenuto di regolamento (vedi D29 in decision-log.md).',
+        '    Questo può essere intenzionale (crediti, indice, pagine puramente decorative) OPPURE un bug della Fase 1 che ha "perso" contenuto di regolamento.',
     );
     console.warn('    Controlla manualmente le pagine elencate nel JSON grezzo prima di fidarti del markdown generato.');
 }
@@ -390,7 +371,7 @@ async function main() {
 
     fs.writeFileSync(outPath, markdown, 'utf-8');
 
-    // Controllo automatico di completezza (D19): non sostituisce la revisione
+    // Controllo automatico di completezza: non sostituisce la revisione
     // manuale, ma è un primo segnale se il markdown ha perso molto contenuto.
     const rawWordCount = pages.reduce((sum, p) => sum + countWords(p.content), 0);
     const mdWordCount = countWords(markdown);

@@ -1,10 +1,8 @@
-// scripts/forum/forum-discover.ts
-//
-// Fase 1/3 dell'ingest forum (D27): risolve il forum "Rules" del gioco e la
-// lista dei thread con reply_count > 0 (D10). Nessun fetch dei post qui —
+// Fase 1/3 dell'ingest forum: risolve il forum "Rules" del gioco e la
+// lista dei thread con reply_count > 0. Nessun fetch dei post qui —
 // solo discovery, così un rerun in caso di errore costa poche chiamate BGG.
 //
-// Artefatti in ingest/{game-slug}/forum/discover.json (alberatura D28).
+// Artefatti in ingest/{game-slug}/forum/discover.json.
 //
 // Uso:
 //   npx ts-node --project scripts/tsconfig.json scripts/forum/forum-discover.ts \

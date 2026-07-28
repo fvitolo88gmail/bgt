@@ -3,19 +3,16 @@ import fs from 'fs';
 import { geminiClient } from '../../../lib/gemini';
 
 /**
- * scripts/verify-markdown-completeness.ts
+ * Step di verifica post-generazione: invece di continuare a irrigidire il
+ * processo di generazione (Fase 1+2 di markdown-from-json.ts) contro ogni
+ * nuovo tipo di errore osservato, confronta l'intero testo grezzo con
+ * l'intero markdown finale e produce una lista puntuale di omissioni
+ * sospette — un compito di verifica mirata, strutturalmente più affidabile
+ * per un LLM del "genera senza mai omettere nulla" ripetuto isolatamente
+ * sezione per sezione.
  *
- * Step di verifica POST-generazione (evoluzione prevista da D19): invece
- * di continuare a irrigidire il processo di generazione (Fase 1+2 di
- * markdown-from-json.ts) contro ogni nuovo tipo di errore osservato,
- * aggiungiamo una Fase 3 dedicata che confronta l'INTERO testo grezzo con
- * l'INTERO markdown finale e produce una lista puntuale di omissioni
- * sospette — un compito di verifica mirata, strutturalmente più
- * affidabile per un LLM del "genera senza mai omettere nulla" ripetuto
- * isolatamente sezione per sezione.
- *
- * NON sostituisce la revisione umana finale, ma la rende trattabile:
- * invece di rileggere 39 pagine, il revisore controlla solo i punti
+ * Non sostituisce la revisione umana finale, ma la rende trattabile:
+ * invece di rileggere l'intero manuale, il revisore controlla solo i punti
  * segnalati qui.
  *
  * Uso:

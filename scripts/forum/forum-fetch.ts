@@ -1,16 +1,14 @@
-// scripts/forum/forum-fetch.ts
+// Fase 2/3 dell'ingest forum: scarica i post di ogni thread trovato da
+// forum-discover.ts, li pulisce (lib/bgg-clean.ts). Nessun filtro di
+// lunghezza per post: con l'approccio small-to-big, solo la radice del
+// thread viene embeddata — un post breve isolato non serve a essere trovato
+// da solo, serve solo come contenuto grezzo recuperabile in fase di
+// espansione.
 //
-// Fase 2/3 dell'ingest forum (D27): scarica i post di ogni thread trovato
-// da forum-discover.ts, li pulisce (lib/bgg-clean.ts). NESSUN filtro di
-// lunghezza per post (D10 non si applica più qui): con l'approccio
-// small-to-big, solo la radice del thread viene embeddata — un post breve
-// isolato ("Sì è corretto") non serve a essere trovato da solo, serve solo
-// come contenuto grezzo recuperabile in fase di espansione (F5).
+// Resumabile: se posts.json esiste già, i thread già presenti vengono
+// saltati. Scrittura atomica (tmp+rename) dopo ogni thread.
 //
-// RESUMABILE: se posts.json esiste già, i thread già presenti vengono
-// saltati. Scrittura atomica (tmp+rename) dopo OGNI thread.
-//
-// Legge/scrive in ingest/{game-slug}/forum/ (alberatura D28).
+// Legge/scrive in ingest/{game-slug}/forum/.
 //
 // Uso:
 //   npx ts-node --project scripts/tsconfig.json scripts/forum/forum-fetch.ts \
@@ -99,7 +97,7 @@ async function writeOutputAtomic(outPath: string, output: FetchOutput): Promise<
 /**
  * Fase 2/3: scarica i post pending (non ancora in posts.json) per un gioco,
  * più eventuali thread in `refetchIds` (rimossi e riscaricati da zero).
- * Estratta come funzione esportata così `sync-forum.ts` (F4) può richiamarla
+ * Estratta come funzione esportata così `sync-forum.ts` può richiamarla
  * senza duplicare la logica di fetch/resume.
  */
 export async function fetchForumPosts(

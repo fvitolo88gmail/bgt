@@ -1,22 +1,12 @@
 // lib/reranking.ts
 //
-// Epica 0561 (R1) — reranking a valle del retrieve ampio già esistente in
-// lib/retrieval.ts. Sostituisce la sola similarità coseno come criterio di
-// selezione finale con un giudizio di pertinenza reale (una chiamata LLM
-// dedicata sulla domanda originale, non arricchita).
-//
-// Motivazione (D52): un caso concreto ha mostrato il limite della sola
-// similarità — "Come guadagna Legittimità la Classe Media?" aveva nel
-// contesto sia le fonti corrette ("Lo Stato — ...") sia due chunk
-// "Middle Class" topicamente irrilevanti alla domanda (stesso soggetto
-// nominato, argomento diverso), inclusi solo perché la riserva
-// MIN_MANUAL_CHUNKS prende "i migliori N per similarità grezza" senza
-// verificare la pertinenza reale. Un reranking distingue esplicitamente
+// Reranking a valle del retrieve ampio in lib/retrieval.ts: sostituisce la
+// sola similarità coseno con un giudizio di pertinenza reale (una chiamata
+// LLM sulla domanda originale, non arricchita), capace di distinguere
 // "stesso soggetto, argomento diverso" da "risponde davvero alla domanda".
 //
-// Fail-soft per design, come il resto del retrieval (v. generateEnhancedQueries
-// in lib/retrieval.ts): un errore qui non deve mai far fallire l'intera
-// richiesta — il chiamante ricade sulla selezione per similarità.
+// Fail-soft: un errore qui non deve mai far fallire l'intera richiesta —
+// il chiamante ricade sulla selezione per similarità.
 
 import { geminiClient } from './gemini';
 
@@ -52,12 +42,8 @@ Rispondi SOLO con un array JSON di oggetti, uno per ciascun estratto sopra, in q
 [{"id": "<id esatto tra quelli forniti>", "score": <numero 0-10>}, ...]`;
 
 /**
- * Restituisce un punteggio di pertinenza 0-10 per ciascun candidato,
- * relativo alla domanda ORIGINALE dell'utente (non arricchita/HyDE — qui
- * serve il giudizio più fedele possibile a cosa l'utente ha davvero
- * chiesto, non una riformulazione). Ritorna null in caso di qualunque
- * errore (fail-soft): il chiamante deve ricadere sulla selezione per
- * similarità invece di far fallire l'intera richiesta.
+ * Punteggio di pertinenza 0-10 per candidato, relativo alla domanda
+ * originale (non arricchita/HyDE). Ritorna null in caso di errore.
  */
 export async function rerankByRelevance(
     question: string,

@@ -1,18 +1,15 @@
-// scripts/forum/forum-ingest.ts
-//
-// Fase 3/3 dell'ingest forum (D27): storage grezzo + embedding radice.
-// Approccio small-to-big (sessione ingest forum): ogni post viene salvato
-// per intero in forum_posts (nessun embedding, solo storage), ma SOLO la
-// radice di ogni thread viene embeddata e inserita in chunks — è l'unica
-// unità cercabile via similarità. Il resto del thread viene recuperato a
-// runtime (F5) espandendo per bgg_thread_id quando la radice vince il
-// retrieval.
+// Fase 3/3 dell'ingest forum: storage grezzo + embedding radice.
+// Approccio small-to-big: ogni post viene salvato per intero in
+// forum_posts (nessun embedding, solo storage), ma solo la radice di ogni
+// thread viene embeddata e inserita in chunks — è l'unica unità cercabile
+// via similarità. Il resto del thread viene recuperato a runtime,
+// espandendo per bgg_thread_id quando la radice vince il retrieval.
 //
 // Idempotente su entrambe le tabelle. Retry con backoff sul 429 di quota
 // embedding (limite osservato: 100 richieste/minuto su Gemini Embedding 1,
-// non documentato altrove — verificato via dashboard in sessione).
+// non documentato altrove — verificato via dashboard).
 //
-// Legge da ingest/{game-slug}/forum/posts.json (alberatura D28).
+// Legge da ingest/{game-slug}/forum/posts.json.
 //
 // Uso:
 //   npx ts-node --project scripts/tsconfig.json scripts/forum/forum-ingest.ts \
@@ -74,7 +71,7 @@ const SELECT_PAGE_SIZE = 1000; // limite di default PostgREST per richiesta senz
  * di PostgREST (SELECT_PAGE_SIZE righe): su un gioco con più post di quel
  * limite, il set di "già presenti" risultava incompleto — righe realmente
  * già in DB venivano considerate nuove, il successivo insert falliva con
- * "duplicate key" (osservato su Hegemony, ~841 thread, sync F4).
+ * "duplicate key" (osservato su Hegemony, ~841 thread).
  */
 async function fetchExistingArticleIds(
     supabase: ReturnType<typeof createServiceClient>,
@@ -139,7 +136,7 @@ async function embedWithRetry(content: string, maxRetries = 3): Promise<number[]
 /**
  * Fase 3/3: storage grezzo + embedding radice, a partire da posts.json.
  * Idempotente su entrambe le tabelle (v. commento in testa al file).
- * Estratta come funzione esportata così `sync-forum.ts` (F4) può richiamarla
+ * Estratta come funzione esportata così `sync-forum.ts` può richiamarla
  * dopo un fetch incrementale senza duplicare la logica di storage/embedding.
  */
 export async function ingestForumPosts(gameSlug: string, gameId: string): Promise<void> {

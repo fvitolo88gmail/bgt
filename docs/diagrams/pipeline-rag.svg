@@ -1,0 +1,87 @@
+<svg viewBox="0 0 960 460" xmlns="http://www.w3.org/2000/svg" role="img">
+  <title>Pipeline RAG: ingest offline e flusso di query runtime</title>
+  <desc>Corsia superiore: ingest una tantum, dal manuale PDF e dal forum BGG, tramite parsing e chunking, embedding, fino al database pgvector. Corsia inferiore: ad ogni domanda dell'utente, il flusso passa da retrieval a reranking a generazione, fino alla risposta con citazioni. Il database alimentato dall'ingest viene interrogato dalla fase di retrieval.</desc>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#999999"></path>
+    </marker>
+    <marker id="arrowDashed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#666666"></path>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="960" height="460" fill="#ffffff"></rect>
+
+  <!-- Lane labels -->
+  <text x="10" y="20" font-family="sans-serif" font-size="12" font-weight="600" letter-spacing="0.5" fill="#666666">INGEST — una tantum, offline</text>
+  <text x="10" y="290" font-family="sans-serif" font-size="12" font-weight="600" letter-spacing="0.5" fill="#666666">QUERY — ad ogni domanda dell'utente</text>
+
+  <!-- ===== TOP LANE: INGEST ===== -->
+  <!-- Box 1: Fonti -->
+  <rect x="10" y="40" width="170" height="90" rx="10" fill="#f5f5f5" stroke="#cccccc"></rect>
+  <text x="95" y="72" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="600" fill="#1a1a1a">Fonti</text>
+  <text x="95" y="92" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#666666">Manuale PDF</text>
+  <text x="95" y="108" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#666666">Thread forum BGG</text>
+
+  <!-- Box 2: Parsing & Chunking -->
+  <rect x="200" y="40" width="210" height="90" rx="10" fill="#f5f5f5" stroke="#cccccc"></rect>
+  <text x="305" y="72" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="600" fill="#1a1a1a">Parsing &amp; Chunking</text>
+  <text x="305" y="92" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#666666">Sezioni, sottosezioni,</text>
+  <text x="305" y="108" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#666666">bullet-azione, post forum</text>
+
+  <!-- Box 3: Embedding -->
+  <rect x="430" y="40" width="170" height="90" rx="10" fill="#f5f5f5" stroke="#cccccc"></rect>
+  <text x="515" y="72" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="600" fill="#1a1a1a">Embedding</text>
+  <text x="515" y="92" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#666666">Gemini embedding</text>
+  <text x="515" y="108" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#666666">768 dimensioni</text>
+
+  <!-- Box 4: Database -->
+  <rect x="620" y="40" width="210" height="90" rx="10" fill="#eaeaea" stroke="#cccccc"></rect>
+  <text x="725" y="72" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="600" fill="#1a1a1a">Database</text>
+  <text x="725" y="92" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#666666">Supabase + pgvector</text>
+  <text x="725" y="108" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#666666">chunk manuale + forum</text>
+
+  <!-- Top lane arrows -->
+  <line x1="180" y1="85" x2="198" y2="85" stroke="#999999" stroke-width="1.5" marker-end="url(#arrow)"></line>
+  <line x1="410" y1="85" x2="428" y2="85" stroke="#999999" stroke-width="1.5" marker-end="url(#arrow)"></line>
+  <line x1="600" y1="85" x2="618" y2="85" stroke="#999999" stroke-width="1.5" marker-end="url(#arrow)"></line>
+
+  <!-- ===== CONNECTOR: DB -> Retrieval ===== -->
+  <path d="M 725 130 L 725 200 L 245 200 L 245 298" fill="none" stroke="#666666" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arrowDashed)"></path>
+  <text x="480" y="215" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#666666">interrogato ad ogni domanda</text>
+
+  <!-- ===== BOTTOM LANE: QUERY ===== -->
+  <!-- Pill: Domanda utente -->
+  <rect x="10" y="320" width="120" height="50" rx="25" fill="#eaeaea" stroke="#cccccc"></rect>
+  <text x="70" y="349" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="600" fill="#1a1a1a">Domanda</text>
+
+  <!-- Box: Retrieval -->
+  <rect x="150" y="300" width="210" height="90" rx="10" fill="#f5f5f5" stroke="#cccccc"></rect>
+  <text x="255" y="332" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="600" fill="#1a1a1a">Retrieval</text>
+  <text x="255" y="352" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#666666">Query enhancement (HyDE)</text>
+  <text x="255" y="368" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#666666">ricerca vettoriale multi-query</text>
+
+  <!-- Box: Reranking -->
+  <rect x="380" y="300" width="200" height="90" rx="10" fill="#f5f5f5" stroke="#cccccc"></rect>
+  <text x="480" y="332" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="600" fill="#1a1a1a">Reranking</text>
+  <text x="480" y="352" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#666666">LLM giudica la pertinenza</text>
+  <text x="480" y="368" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#666666">reale dei candidati</text>
+
+  <!-- Box: Generazione -->
+  <rect x="600" y="300" width="200" height="90" rx="10" fill="#f5f5f5" stroke="#cccccc"></rect>
+  <text x="700" y="332" text-anchor="middle" font-family="sans-serif" font-size="14" font-weight="600" fill="#1a1a1a">Generazione</text>
+  <text x="700" y="352" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#666666">Prompt anti-allucinazione</text>
+  <text x="700" y="368" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#666666">+ chiamata LLM</text>
+
+  <!-- Pill: Risposta -->
+  <rect x="820" y="320" width="130" height="50" rx="25" fill="#eaeaea" stroke="#cccccc"></rect>
+  <text x="885" y="342" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="600" fill="#1a1a1a">Risposta</text>
+  <text x="885" y="357" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#666666">+ citazioni</text>
+
+  <!-- Bottom lane arrows -->
+  <line x1="130" y1="345" x2="148" y2="345" stroke="#999999" stroke-width="1.5" marker-end="url(#arrow)"></line>
+  <line x1="360" y1="345" x2="378" y2="345" stroke="#999999" stroke-width="1.5" marker-end="url(#arrow)"></line>
+  <line x1="580" y1="345" x2="598" y2="345" stroke="#999999" stroke-width="1.5" marker-end="url(#arrow)"></line>
+  <line x1="800" y1="345" x2="818" y2="345" stroke="#999999" stroke-width="1.5" marker-end="url(#arrow)"></line>
+</svg>

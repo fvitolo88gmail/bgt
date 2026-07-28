@@ -1,24 +1,19 @@
 /**
- * Epica 0900 (Chat con contesto) — riscrittura della domanda per il
- * retrieval in modalità "conversation".
+ * Riscrittura della domanda per il retrieval in modalità "conversation".
  *
- * Bug osservato: un follow-up come "dimmi di più su questo thread" non
- * porta alcun contenuto semantico proprio — il retrieval (embedding sulla
- * sola domanda grezza) recupera chunk totalmente estranei al thread di cui
- * si sta parlando, anche se la history viene comunque iniettata nel prompt
- * di generazione. La history arriva "tardi": al modello di generazione, non
- * al retrieval che ha già scelto le fonti sbagliate.
+ * Un follow-up come "dimmi di più su questo thread" non porta contenuto
+ * semantico proprio — il retrieval sulla sola domanda grezza recupera chunk
+ * estranei, anche se la history viene comunque iniettata nel prompt di
+ * generazione (che arriva "tardi", a scelta delle fonti già fatta).
  *
- * Soluzione: SOLO in modalità conversazione, prima del retrieval, un
- * passaggio isolato riscrive la domanda in forma autonoma (standalone),
- * risolvendo pronomi/riferimenti impliciti usando gli ultimi turni. La
- * query riscritta è usata SOLO per il retrieval — la domanda originale
- * resta quella mostrata al modello di generazione (buildConversationPrompt)
- * e quella salvata in chat_messages.
+ * Soluzione: solo in modalità conversazione, prima del retrieval, un
+ * passaggio isolato riscrive la domanda in forma autonoma, risolvendo
+ * pronomi/riferimenti impliciti usando gli ultimi turni. La query riscritta
+ * è usata solo per il retrieval — la domanda originale resta quella
+ * mostrata al modello di generazione e quella salvata in chat_messages.
  *
- * Stesso pattern fail-soft già usato per generateEnhancedQueries (D31): se
- * la riscrittura fallisce, si procede con la domanda originale invece di
- * far fallire l'intera risposta.
+ * Fail-soft: se la riscrittura fallisce, si procede con la domanda
+ * originale invece di far fallire l'intera risposta.
  */
 
 import { geminiClient } from './gemini';

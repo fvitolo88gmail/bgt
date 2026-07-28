@@ -13,8 +13,7 @@ export async function POST(req: NextRequest) {
     try {
         const body = await req.json() as { question?: string; gameId?: string; mode?: string; sessionId?: string };
         const { question, gameId } = body;
-        // Epica 0900 (Chat con contesto) — C3: "conversation" inietta la
-        // history e salva il turno, "qa" (default) resta invariato.
+        // "conversation" inietta la history e salva il turno, "qa" (default) resta invariato.
         const mode: ChatMode = body.mode === 'conversation' ? 'conversation' : 'qa';
 
         if (!question || !gameId) {
@@ -24,9 +23,8 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // D45: il sessionId è generato dal client (una sessione nuova a ogni
-        // apertura della chat, non riusata tra aperture diverse dello stesso
-        // gioco) — obbligatorio in modalità conversazione.
+        // Il sessionId è generato dal client (una sessione nuova a ogni
+        // apertura della chat) — obbligatorio in modalità conversazione.
         if (mode === 'conversation' && !body.sessionId) {
             return NextResponse.json(
                 { error: 'Missing sessionId for conversation mode' },
@@ -42,11 +40,9 @@ export async function POST(req: NextRequest) {
             ? await fetchRecentHistory(supabase, sessionId)
             : [];
 
-        // Solo in conversazione: la domanda grezza di un follow-up ("dimmi
-        // di più su questo thread") spesso non ha contenuto semantico
-        // proprio — il retrieval usa una riscrittura standalone basata sulla
-        // history, la domanda originale resta invariata per il resto (v.
-        // lib/query-contextualization.ts).
+        // Solo in conversazione: un follow-up ("dimmi di più su questo")
+        // spesso non ha contenuto semantico proprio — il retrieval usa una
+        // riscrittura standalone, la domanda originale resta invariata.
         const retrievalQuery = history.length > 0
             ? await contextualizeQueryForRetrieval(question, history)
             : question;

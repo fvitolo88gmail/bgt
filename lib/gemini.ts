@@ -89,7 +89,7 @@ export const geminiClient: LLMClient = {
                 model: process.env.CHAT_MODEL ?? 'gemini-3.1-flash-lite',
                 contents: prompt,
                 config: {
-                    temperature: 0.2, // basso deliberatamente: compito di lookup fattuale su regole, non generazione creativa — varianza minimizzata (sessione 2026-07-27, osservate 4 risposte diverse sulla stessa domanda a temperatura di default)
+                    temperature: 0.2, // basso deliberatamente: lookup fattuale su regole, non generazione creativa
                 },
             });
             const text = result.text;

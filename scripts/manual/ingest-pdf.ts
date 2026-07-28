@@ -4,29 +4,17 @@ import { createServiceClient } from '../../lib/supabase';
 import { geminiClient } from '../../lib/gemini';
 
 /**
- * scripts/manual/ingest-pdf.ts (D19, aggiornato fix 0560)
- *
  * Legge il Markdown strutturato prodotto dalla pipeline di ingest manuale
- * (revisionato a mano) e crea un chunk per ogni SOTTOSEZIONE (###), non più
- * un chunk per intera sezione (##) con fallback meccanico a 500 parole.
+ * (revisionato a mano) e crea un chunk per ogni sottosezione (###), non un
+ * chunk per intera sezione (##) con fallback meccanico a 500 parole —
+ * altrimenti azioni/argomenti eterogenei si fondono in chunk grandi e il
+ * retrieval smette di essere affidabile.
  *
- * Motivo del cambio (vedi docs/task/0560-ingest-manuale-migliorato.md):
- * trattare "###" come testo muto dentro un chunk "##" unico causava la
- * fusione di più azioni/argomenti eterogenei in singoli chunk grandi
- * (sezioni lunghe spezzate meccanicamente in "parte 1..N" da 500 parole,
- * senza rispettare i confini delle singole sottosezioni). Risultato
- * osservato: una sottosezione specifica competeva per gli stessi slot di
- * retrieval con le altre parti della stessa sezione, e quale vincesse
- * dipendeva da rumore nella query più che dalla pertinenza reale.
- *
- * Ogni "###" diventa ora un chunk a sé, ereditando la pagina dal "##"
- * padre più vicino. Il titolo del chunk combina sezione+sottosezione
- * ("Sezione — Sottosezione") per non perdere il contesto di quale area
- * di gioco appartiene. Il testo prima della prima "###" (se presente)
- * diventa un chunk "introduttivo" a sé, titolato solo con il nome della
- * sezione "##". Se una sottosezione supera CHUNK_MAX_WORDS, viene
- * comunque sub-divisa con overlap come fallback — ma ora è un evento
- * raro, non la norma.
+ * Ogni "###" diventa un chunk a sé, ereditando la pagina dal "##" padre più
+ * vicino. Il titolo combina sezione+sottosezione ("Sezione — Sottosezione").
+ * Il testo prima della prima "###" (se presente) diventa un chunk
+ * introduttivo a sé. Se una sottosezione supera CHUNK_MAX_WORDS, viene
+ * sub-divisa con overlap come fallback raro.
  *
  * Uso:
  *   npx ts-node --project scripts/tsconfig.json scripts/ingest-pdf.ts \
@@ -115,10 +103,9 @@ export function splitIntoSections(markdown: string): Section[] {
             continue;
         }
 
-        // "###" o "####" aprono entrambi un nuovo chunk dentro la sezione
-        // corrente — la pipeline vision (D36) non è coerente su quale
-        // livello di header usare per le singole azioni, quindi li
-        // trattiamo allo stesso modo (D39, appiattito).
+        // "###" e "####" aprono entrambi un nuovo chunk dentro la sezione
+        // corrente — la pipeline di estrazione non è coerente su quale
+        // livello di header usare per le singole azioni.
         if (/^#{3,4}(?!#)\s/.test(trimmed)) {
             flushBlock();
             blockTitle = trimmed.replace(/^#{3,4}\s*/, '').trim();
@@ -126,12 +113,10 @@ export function splitIntoSections(markdown: string): Section[] {
             continue;
         }
 
-        // Una riga che è INTERAMENTE un'etichetta in grassetto (es.
-        // "**Demonstration**") è trattata come lo stesso tipo di confine
-        // — pattern osservato quando la vision marca le singole azioni in
-        // grassetto invece che con un header Markdown vero (verificato:
-        // "Strike"/"Demonstration"/"Apply Political Pressure" fuse in un
-        // unico chunk, causa di un errore fattuale nella generazione).
+        // Una riga INTERAMENTE in grassetto (es. "**Demonstration**") è
+        // trattata come lo stesso tipo di confine — pattern usato quando
+        // l'estrazione marca le singole azioni in grassetto invece che
+        // con un header Markdown vero.
         const boldOnlyMatch = trimmed.match(/^\*\*([A-Za-z][a-zA-Z &]*)\*\*$/);
         const boldTitle = boldOnlyMatch?.[1];
         if (boldTitle) {
@@ -142,21 +127,13 @@ export function splitIntoSections(markdown: string): Section[] {
         }
 
         // Elenco puntato "*   **Titolo Azione**" (con o senza ":" finale,
-        // senza altro testo sulla stessa riga) — confine di chunk (Epica
-        // 0560 punto 3, D50). Pattern molto comune per elenchi di azioni
-        // nei manuali di giochi da tavolo ("Basic Actions"/"Free Actions"
-        // e simili), MAI specifico a un singolo gioco. Prima di questo
-        // fix, ogni bullet di questo tipo restava testo muto dentro il
-        // chunk della sezione/sottosezione corrente — su una sezione con
-        // molte azioni eterogenee (es. "Basic Actions": Propose Bill,
-        // Build Company, Buy Goods & Services...) l'embedding del chunk
-        // risultava diluito, facendo perdere sistematicamente il
-        // retrieval sull'azione specifica cercata anche quando il
-        // contenuto era corretto (v. D46-D48, caso Hegemony "beni di
-        // magazzino/Classe Media"). Non tocca bullet con testo aggiuntivo
-        // sulla stessa riga (es. "* **Industria**: Indicato dal colore.")
-        // — quelli restano contenuto normale del blocco corrente, sono
-        // già brevi e non affetti dal problema.
+        // senza altro testo sulla riga) — confine di chunk. Comune negli
+        // elenchi di azioni dei manuali ("Basic Actions"/"Free Actions").
+        // Senza questo, un bullet di questo tipo resta testo muto dentro
+        // il chunk della sezione corrente, e su sezioni con molte azioni
+        // eterogenee l'embedding risulta diluito e perde il retrieval
+        // sull'azione specifica. Non tocca bullet con testo aggiuntivo
+        // sulla stessa riga (es. "* **Industria**: Indicato dal colore.").
         const bulletTitleMatch = trimmed.match(/^\*\s+\*\*([A-Za-z][a-zA-Z0-9 &/'’,()-]*)\*\*:?\s*$/);
         const bulletTitle = bulletTitleMatch?.[1];
         if (bulletTitle) {
@@ -324,12 +301,9 @@ async function main() {
     console.log(`\nCompletato: ${saved} salvati, ${skipped} già presenti (saltati), ${errors} errori`);
 }
 
-// Guardia di esecuzione: questo modulo viene anche importato (non solo
-// eseguito da CLI) da scripts/diagnostics/diagnose-chunking-dry-run.ts per
-// riusare splitIntoSections in un dry-run senza embedding/DB — senza questa
-// guardia, main() (che si aspetta --md/--game-id da CLI) veniva invocato
-// anche al semplice import, sovrascrivendo l'output del dry-run con
-// l'errore "Argomenti mancanti".
+// Guardia di esecuzione: il modulo viene anche importato (non solo
+// eseguito da CLI) per riusare splitIntoSections in un dry-run senza
+// embedding/DB — senza questa guardia main() partirebbe anche all'import.
 if (require.main === module) {
     main().catch((err) => {
         console.error('Errore fatale:', err);

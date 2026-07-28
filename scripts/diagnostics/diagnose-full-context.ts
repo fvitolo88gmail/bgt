@@ -2,13 +2,10 @@ import 'dotenv/config';
 import { matchChunksForPrompt } from '../../lib/retrieval';
 
 /**
- * scripts/diagnose-full-context.ts
- *
- * A differenza di diagnose-retrieval.ts (che chiama matchChunks sulla
- * query grezza, senza arricchimento), questo script chiama
- * matchChunksForPrompt ESATTAMENTE come fa /api/chat — incluso il query
- * enhancement (decomposizione + HyDE, D31) e l'espansione forum (F5).
- * Mostra il contesto FINALE, reale, che arriva al prompt di generazione.
+ * A differenza di diagnose-retrieval.ts (che chiama matchChunks sulla query
+ * grezza, senza arricchimento), questo script chiama matchChunksForPrompt
+ * esattamente come fa /api/chat — query enhancement ed espansione forum
+ * incluse. Mostra il contesto finale, reale, che arriva al prompt.
  *
  * Uso:
  *   npx ts-node --project scripts/tsconfig.json scripts/diagnose-full-context.ts \
@@ -29,9 +26,8 @@ async function main() {
     console.log(`Game ID: ${gameId}\n`);
     console.log('Chiamata matchChunksForPrompt (con query enhancement + espansione forum)...\n');
 
-    // Allineato a topK=10 usato in app/api/chat/route.ts (v. decision-log
-    // sessione 2026-07-27/28, D51) — va tenuto sincronizzato manualmente
-    // col valore reale in produzione per non falsare il confronto.
+    // Allineato a topK=10 usato in app/api/chat/route.ts — va tenuto
+    // sincronizzato manualmente col valore reale in produzione.
     const result = await matchChunksForPrompt(query, gameId, 10);
 
     console.log(`Contesto finale: ${result.context.length} chunk assemblati per il prompt\n`);

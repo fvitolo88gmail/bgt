@@ -1,5 +1,4 @@
 /**
- * Epica 0900 (Chat con contesto) — C3.
  * Lettura/scrittura dei turni in `chat_messages`, usata solo in modalità
  * "conversation" (v. app/api/chat/route.ts).
  */
@@ -14,10 +13,8 @@ export class ChatHistoryError extends Error {
     }
 }
 
-// Limite provvisorio sul numero di messaggi riletti per turno — un cap più
-// preciso (turni/token, troncamento esplicito) arriva con C4. Qui serve solo
-// da rete di sicurezza minima per non iniettare uno storico illimitato nel
-// primo momento in cui la history viene letta.
+// Limite provvisorio sul numero di messaggi riletti per turno, come rete di
+// sicurezza minima contro uno storico illimitato.
 const HISTORY_MESSAGE_LIMIT = 20;
 
 interface ChatMessageRow {

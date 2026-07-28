@@ -50,7 +50,7 @@ function resolveGameId(): string {
 
 const GAME_ID = resolveGameId();
 
-// Soglia indicativa fissata in task.md (E3): 16/20 = 80%
+// Soglia indicativa: 16/20 = 80%
 const ACCEPTABLE_THRESHOLD = 0.8;
 
 // Timeout per domanda: ~3 chiamate Gemini (embedding+generate dentro
@@ -201,11 +201,9 @@ async function runEval(): Promise<EvalResult[]> {
             judge_reasoning: judgement.reasoning,
         });
 
-        // Scrittura incrementale (D-nuovo, sessione 2026-07-27): se il
-        // processo crasha su una domanda successiva (rete, quota), i
-        // risultati fin qui restano su disco invece di essere persi
-        // insieme al processo in memoria — stesso principio di
-        // resilienza già applicato a forum-ingest.ts/ingest-pdf.ts.
+        // Scrittura incrementale: se il processo crasha su una domanda
+        // successiva (rete, quota), i risultati fin qui restano su disco
+        // invece di essere persi insieme al processo in memoria.
         const partialPath = path.join(__dirname, "results", `${FIXTURE_NAME}-partial.json`);
         fs.mkdirSync(path.dirname(partialPath), { recursive: true });
         fs.writeFileSync(partialPath, JSON.stringify(results, null, 2), "utf-8");
@@ -260,12 +258,12 @@ describe(`Eval RAG — ${FIXTURE_NAME}`, () => {
 
             const accuracy = results.filter((r) => r.correct).length / results.length;
 
-            // Il test non fallisce sotto soglia: E3 richiede solo di DOCUMENTARE
-            // la baseline, non di bloccare la CI. La soglia è un target, non un gate.
+            // Il test non fallisce sotto soglia: serve solo a documentare la
+            // baseline. La soglia è un target, non un gate.
             expect(results.length).toBe(FIXTURE.length);
             if (accuracy < ACCEPTABLE_THRESHOLD) {
                 console.warn(
-                    `⚠️  Baseline sotto la soglia target (${(ACCEPTABLE_THRESHOLD * 100).toFixed(0)}%). Documenta comunque il risultato in task.md — questo NON blocca la Fase 2, che dipende solo dall'esistenza di una baseline (D15), non dal suo valore.`,
+                    `⚠️  Baseline sotto la soglia target (${(ACCEPTABLE_THRESHOLD * 100).toFixed(0)}%).`,
                 );
             }
         },
