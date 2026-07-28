@@ -41,7 +41,7 @@ async function main() {
     const { data, error } = await supabase.rpc('match_chunks', {
         query_embedding: embedding,
         match_game_id: gameId,
-        match_count: 10,
+        match_count: 40,
         filter_source: source ?? null,
     });
 

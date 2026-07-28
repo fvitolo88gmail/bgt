@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
             ? await contextualizeQueryForRetrieval(question, history)
             : question;
 
-        const { context: promptChunks, sources: matches } = await matchChunksForPrompt(retrievalQuery, gameId, 5);
+        const { context: promptChunks, sources: matches } = await matchChunksForPrompt(retrievalQuery, gameId, 10);
 
         if (promptChunks.length === 0) {
             const answer = 'Non ho trovato questa informazione nel manuale.';

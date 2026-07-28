@@ -29,7 +29,10 @@ async function main() {
     console.log(`Game ID: ${gameId}\n`);
     console.log('Chiamata matchChunksForPrompt (con query enhancement + espansione forum)...\n');
 
-    const result = await matchChunksForPrompt(query, gameId, 5);
+    // Allineato a topK=10 usato in app/api/chat/route.ts (v. decision-log
+    // sessione 2026-07-27/28, D51) — va tenuto sincronizzato manualmente
+    // col valore reale in produzione per non falsare il confronto.
+    const result = await matchChunksForPrompt(query, gameId, 10);
 
     console.log(`Contesto finale: ${result.context.length} chunk assemblati per il prompt\n`);
     result.context.forEach((c, i) => {

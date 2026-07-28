@@ -4,6 +4,7 @@ import {supabase} from './supabase';
 import {geminiClient} from './gemini';
 import {buildBggThreadUrl} from './bgg';
 import {decodeHtmlEntities} from './bgg-clean';
+import {rerankByRelevance, type RerankCandidate, type RerankScore} from './reranking';
 
 export interface ChunkMatch {
     id: string;
@@ -92,20 +93,46 @@ export async function matchChunks(
 
 const MAX_QUERY_ENHANCEMENT_CONCEPTS = 3;
 
-const QUERY_ENHANCEMENT_PROMPT = (question: string) => `Sei un assistente che migliora domande su regole di giochi da tavolo per un sistema di ricerca semantica (RAG).
+// Lingua di fallback se games.manual_language non è disponibile per qualche
+// motivo (riga non trovata, query fallita) — 'en' perché è la lingua di
+// tutti i manuali ingested finora (v. Epica 0551, D46). Fail-soft: meglio
+// assumere inglese (spesso corretto) che bloccare l'enhancement.
+const DEFAULT_MANUAL_LANGUAGE = 'en';
+
+// QUERY_ENHANCEMENT_PROMPT ora richiede ESPLICITAMENTE la lingua del
+// manuale target (Epica 0551, D46): prima non la specificava, quindi i
+// paragrafi HyDE ereditavano silenziosamente la lingua della domanda
+// dell'utente. Su un manuale in una lingua diversa da quella della query
+// (es. manuale EN, query IT) questo annullava il vantaggio della tecnica —
+// invece di avvicinare l'embedding della query al lessico del manuale, lo
+// allontanava di nuovo (confronto IT-generato vs EN-del-manuale, invece di
+// EN-generato vs EN-del-manuale). Verificato con
+// scripts/diagnostics/diagnose-query-enhancement.ts su Hegemony (manuale
+// EN, query IT): paragrafi generati in italiano prima di questo fix.
+const QUERY_ENHANCEMENT_PROMPT = (question: string, manualLanguage: string) => `Sei un assistente che migliora domande su regole di giochi da tavolo per un sistema di ricerca semantica (RAG).
 
 Domanda dell'utente: "${question}"
+
+Il manuale del gioco su cui verrà eseguita la ricerca è scritto in lingua "${manualLanguage}" (codice ISO 639-1). La domanda dell'utente può essere in una lingua diversa.
 
 Compito, in un solo passaggio:
 1. Identifica i concetti/meccaniche di gioco distinti coinvolti nella domanda (1 se la domanda riguarda già un solo concetto, fino a un massimo di ${MAX_QUERY_ENHANCEMENT_CONCEPTS} se ne combina diversi).
 2. Per ciascun concetto, scrivi un breve paragrafo (2-4 frasi) in prosa dichiarativa e affermativa, come se fosse un estratto di un manuale di regole che risponde a quel concetto — NON una domanda, NON un elenco puntato, NON un "forse"/"probabilmente". Usa terminologia plausibile e naturale anche se non conosci quella esatta usata dal gioco specifico: è più importante lo stile dichiarativo del contenuto esatto.
+3. IMPORTANTE: scrivi ogni paragrafo nella lingua "${manualLanguage}" (la lingua del manuale), NON nella lingua della domanda dell'utente. L'obiettivo è avvicinare il testo generato al lessico reale del manuale, che è in quella lingua.
 
-Rispondi SOLO con un array JSON di stringhe (un paragrafo per concetto), nient'altro, senza backtick, senza preamboli. Esempio di formato:
+Rispondi SOLO con un array JSON di stringhe (un paragrafo per concetto, nella lingua "${manualLanguage}"), nient'altro, senza backtick, senza preamboli. Esempio di formato:
 ["Paragrafo dichiarativo sul primo concetto...", "Paragrafo dichiarativo sul secondo concetto..."]`;
 
-async function generateEnhancedQueries(question: string): Promise<string[]> {
+// Esportata (non solo uso interno) per permettere la diagnostica isolata
+// del solo step di query enhancement, senza dover rieseguire l'intero
+// retrieval — v. scripts/diagnostics/diagnose-query-enhancement.ts
+// (sessione 2026-07-27, verifica ipotesi lingua HyDE).
+export async function generateEnhancedQueries(
+    question: string,
+    manualLanguage: string = DEFAULT_MANUAL_LANGUAGE,
+): Promise<string[]> {
     try {
-        const raw = await geminiClient.generate(QUERY_ENHANCEMENT_PROMPT(question));
+        const raw = await geminiClient.generate(QUERY_ENHANCEMENT_PROMPT(question, manualLanguage));
         const cleaned = raw.replace(/```json|```/g, '').trim();
         const parsed = JSON.parse(cleaned);
         if (!Array.isArray(parsed) || parsed.length === 0 || !parsed.every((s) => typeof s === 'string')) {
@@ -208,12 +235,42 @@ async function expandForumThread(
  * ragionevole (MIN_MANUAL_SIMILARITY) — altrimenti, su una domanda per
  * cui il manuale non ha davvero nulla di pertinente (es. domanda
  * fuori-scope, o specifica del forum come una FAQ community), forzare
- * comunque 2 chunk manuale deboli sottrarrebbe spazio a candidati forum
+ * comunque 4 chunk manuale deboli sottrarrebbe spazio a candidati forum
  * più utili solo per riempire una quota. Soglia iniziale stimata dai dati
  * osservati in sessione (match pertinenti oggi: 65-79%; da validare
  * empiricamente con più domande/giochi, stesso spirito di S3.2).
+ *
+ * MIN_MANUAL_CHUNKS alzato da 2 a 4 (sessione 2026-07-27, v. decision-log):
+ * diagnosticato un caso (Hegemony, domanda su beni di magazzino/Classe
+ * Media) in cui la regola corretta viveva in un chunk manuale con
+ * similarità grezza più bassa (embedding "diluito" da una sezione con più
+ * azioni eterogenee) rispetto ad altri due chunk manuale più generici ma
+ * meno risolutivi — con MIN_MANUAL_CHUNKS=2 quei due generici esaurivano
+ * la riserva e il chunk corretto restava fuori dal contesto finale anche
+ * con query enhancement attivo. La similarità cross-lingua (query IT su
+ * manuale EN) osservata in questo progetto ha un margine stretto (~65-79%
+ * tra chunk pertinenti e marginali): un cutoff stretto su un segnale così
+ * debole scarta chunk validi per differenze di 1-2 punti percentuali non
+ * significative. Fix generalizzato (non specifico a Hegemony): più
+ * budget di recall lato manuale, non un chunking ad hoc per un singolo
+ * gioco.
+ *
+ * Alzato ulteriormente da 4 a 6 (sessione 2026-07-28, D51, dopo il fix di
+ * chunking fine-grained di 0560 punto 3/D50): il re-chunking ha già
+ * risolto la maggior parte del problema da solo — "Classe Media — Buy
+ * Goods & Services" è salito da ~69% a 72.7% (4° posto tra i soli chunk
+ * manuale), ma restava appena fuori dalla riserva a causa di 5 chunk
+ * "Cover Needs" quasi-duplicati (uno per ruolo: Classe Media, Classe
+ * Lavoratrice, Classe Capitalista, Lo Stato, Regole Generali) che si
+ * affollano nella parte alta della classifica invece di lasciare spazio a
+ * diversità. A differenza dell'alzata precedente (segnale strutturalmente
+ * troppo debole per qualunque soglia), qui il margine è stretto (72.7%
+ * contro 74.5% del primo) — un aggiustamento fine, non una toppa alla
+ * cieca. Nota per il futuro: la ridondanza dei chunk "Cover Needs" per
+ * ruolo è essa stessa un problema di rumore da tenere d'occhio (0561,
+ * reranking, la affronterebbe meglio di un ulteriore alzamento di soglia).
  */
-const MIN_MANUAL_CHUNKS = 2;
+const MIN_MANUAL_CHUNKS = 6;
 const MIN_MANUAL_SIMILARITY = 0.4;
 
 function selectWithReservedBudget(
@@ -245,6 +302,54 @@ function selectWithReservedBudget(
     return selected.sort((a, b) => b.similarity - a.similarity).slice(0, topK);
 }
 
+// Legge games.manual_language (Epica 0551, L1) per parametrizzare la lingua
+// di output di generateEnhancedQueries. Fail-soft per design, come il resto
+// del query enhancement: un errore qui non deve mai far fallire l'intero
+// retrieval — se la lettura fallisce o il campo è vuoto, si assume
+// DEFAULT_MANUAL_LANGUAGE ('en', la lingua di tutti i manuali ingested
+// finora) invece di bloccare la richiesta.
+async function fetchManualLanguage(gameId: string): Promise<string> {
+    const { data, error } = await supabase
+        .from('games')
+        .select('manual_language')
+        .eq('id', gameId)
+        .single();
+
+    if (error || !data?.manual_language) {
+        console.error(`[retrieval] impossibile leggere manual_language per game ${gameId}, uso default '${DEFAULT_MANUAL_LANGUAGE}':`, error?.message);
+        return DEFAULT_MANUAL_LANGUAGE;
+    }
+
+    return data.manual_language as string;
+}
+
+// Epica 0561 (R1, D52): tetto al numero di candidati mandati al reranker,
+// indipendentemente da quanti ne produce il merge multi-query — limita
+// costo/dimensione del prompt di reranking in modo prevedibile. I migliori
+// per similarità grezza entrano per primi (il reranker giudica pertinenza,
+// non deve ri-scoprire candidati che il retrieval ha già scartato).
+const RERANK_POOL_CAP = 30;
+
+/**
+ * Seleziona i topK finali per punteggio di pertinenza (reranking), non più
+ * per similarità grezza. Sostituisce selectWithReservedBudget quando il
+ * reranking ha successo — un giudizio di pertinenza reale non ha bisogno
+ * della riserva a soglia fissa per fonte, che esisteva solo per compensare
+ * il segnale debole della sola similarità (v. D38, D46-D51). Candidati non
+ * scored dal reranker (risposta malformata parziale) sono trattati come
+ * peggiori di qualunque candidato scored, non esclusi silenziosamente.
+ */
+function selectByRerankScore(
+    candidates: ChunkMatch[],
+    scores: RerankScore[],
+    topK: number,
+): ChunkMatch[] {
+    const scoreById = new Map(scores.map((s) => [s.id, s.score]));
+    return [...candidates]
+        .sort((a, b) => (scoreById.get(b.id) ?? -1) - (scoreById.get(a.id) ?? -1))
+        .slice(0, topK);
+}
+
 /**
  * Retrieval per il prompt (F5, small-to-big + Epica Q query enhancement).
  * Cerca su ENTRAMBE le fonti. La query viene arricchita con paragrafi
@@ -266,7 +371,8 @@ export async function matchChunksForPrompt(
     gameId: string,
     topK: number = 5,
 ): Promise<RetrievalResult> {
-    const enhancedQueries = await generateEnhancedQueries(query);
+    const manualLanguage = await fetchManualLanguage(gameId);
+    const enhancedQueries = await generateEnhancedQueries(query, manualLanguage);
     const searchQueries = [query, ...enhancedQueries];
 
     // Fetch separato per fonte, per ogni query (originale + arricchite): un
@@ -311,7 +417,31 @@ export async function matchChunksForPrompt(
         }
     }
 
-    const matches = selectWithReservedBudget([...bestById.values()], topK, MIN_MANUAL_CHUNKS, MIN_MANUAL_SIMILARITY);
+    // Epica 0561 (R1, D52): reranking sulla domanda ORIGINALE (non
+    // arricchita) come criterio di selezione primario. Il pool è tagliato
+    // a RERANK_POOL_CAP per similarità grezza prima di essere mandato al
+    // reranker — i migliori candidati "grezzi" restano la base, il
+    // reranking ne giudica la pertinenza reale invece di riscoprirli da
+    // zero. Fail-soft: se il reranking fallisce (errore rete/parsing),
+    // si ricade sulla selezione a riserva per similarità (comportamento
+    // pre-0561, invariato).
+    const pooled = [...bestById.values()]
+        .sort((a, b) => b.similarity - a.similarity)
+        .slice(0, RERANK_POOL_CAP);
+
+    const rerankCandidates: RerankCandidate[] = pooled.map((m) => ({
+        id: m.id,
+        label: m.source === 'manual'
+            ? (m.section ?? 'Manuale')
+            : `Forum — ${m.threadSubject ?? 'n/d'}`,
+        content: m.content,
+    }));
+
+    const rerankScores = await rerankByRelevance(query, rerankCandidates);
+
+    const matches = rerankScores
+        ? selectByRerankScore(pooled, rerankScores, topK)
+        : selectWithReservedBudget(pooled, topK, MIN_MANUAL_CHUNKS, MIN_MANUAL_SIMILARITY);
 
     const context: PromptChunk[] = [];
     const expandedThreadIds = new Set<number>();
