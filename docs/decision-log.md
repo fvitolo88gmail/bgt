@@ -698,6 +698,40 @@ token, fuori scope per questo task.
 
 ---
 
+### D65 — BILLING-00001 in pausa: AUTH ha priorità prima di continuare l'istrumentazione
+**Contesto:** BILLING-00001 (schema `user_requests`/`gemini_calls`, migration
+`20260729000000_usage_tracking.sql`) definito nella sessione odierna; il passo successivo
+(istrumentare le chiamate Gemini reali) userebbe `owner_token` come identificatore utente in
+`user_requests` — mai realmente popolato in produzione (D43) e destinato a essere affiancato o
+sostituito appena `AUTH` introduce autenticazione vera.
+**Scelta:** priorità sposta su `AUTH` prima di riprendere l'istrumentazione di BILLING-00001.
+Lavoro su `AUTH` condotto da Francesco in una sessione separata.
+**Motivazione:** evita di scrivere codice di tracking legato a un identificatore che rischia di
+essere sostituito a breve — schema e migration restano validi (già forward-compatible con
+`user_id`), solo l'istrumentazione applicativa aspetta che `AUTH` chiarisca come identificare
+l'utente.
+
+---
+
+### D66 — AUTH-00001: `@supabase/ssr` per i client auth, RLS abilitata su `profiles` da subito senza policy
+**Contesto:** avvio di AUTH-00001 (Supabase Auth + tabella `profiles`); il progetto ha solo
+`@supabase/supabase-js` (client anonimo, sessione non persistita via cookie), ma AUTH-00004
+(middleware Next.js per route protette, stessa epica) richiede gestione sessione SSR-compatibile.
+**Scelta:** aggiunto `@supabase/ssr`; `lib/supabase.ts` guadagna `createBrowserSupabaseClient`
+(Client Component) e `createServerSupabaseClient` (Server Component/Route Handler/middleware,
+cookie via `next/headers`), accanto ai client esistenti (`supabase`, `createServiceClient`),
+invariati. Migration `profiles` (enum `user_role`, trigger `handle_new_user`) abilita RLS sulla
+tabella subito, senza aggiungere policy — le policy sono scope di AUTH-00003.
+**Motivazione:** implementare l'auth ora con solo client-side e rifare i client con `@supabase/ssr`
+in AUTH-00004 sarebbe lavoro doppio; RLS-on-senza-policy è il default sicuro raccomandato da
+Supabase per ogni tabella dati-utente (coerente col principio architetturale "enforcement a
+livello DB") e non anticipa le policy stesse, solo la postura di default.
+**Nota aperta:** migration non ancora applicata al DB; verifica DoD (signup/login, riga `profiles`
+auto-creata) da fare manualmente via Supabase Studio — scelta esplicita di Francesco per non
+anticipare la UI login/signup, scope di AUTH-00005.
+
+---
+
 ### D[N] — Titolo decisione
 **Contesto:** perché si è posta la questione
 **Opzioni:** opzione A · opzione B · opzione C

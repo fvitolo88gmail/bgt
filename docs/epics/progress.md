@@ -9,8 +9,8 @@ todo/progress/done).*
 | Epica | Directory | Stato |
 |---|---|---|
 | POC | `progress/POC/` | in corso (solo POC-00011 ancora aperto, in pausa; tutto il resto chiuso o deprecato) |
-| AUTH | `todo/AUTH/` | da iniziare |
-| BILLING | `todo/BILLING/` | da iniziare |
+| AUTH | `progress/AUTH/` | in corso, priorità corrente (v. D65) — AUTH-00001 ✅, AUTH-00002 prossima |
+| BILLING | `progress/BILLING/` | in corso, BILLING-00001 in pausa in attesa di AUTH (v. D65) |
 | TEACH | `todo/TEACH/` | da iniziare |
 | VISUAL | `todo/VISUAL/` | nice to have, in coda |
 | DESIGN | `done/DESIGN/` | completata (v. D64) |
@@ -52,6 +52,32 @@ Non ancora affrontati in questa sessione.
 RLS + OAuth Google) e `BILLING` (modello di costo e monetizzazione, con l'ex-epica "AI Provider
 Adapters" ridotta a un singolo task BILLING-00008). Entrambe da iniziare, nessuna priorità
 assegnata ancora rispetto a POC-00011/POC-00016.
+
+**BILLING-00001 avviata (sessione 2026-07-29):** definito con Francesco lo schema di tracking
+uso Gemini — due tabelle (`user_requests` per interazione utente, `gemini_calls` per singola
+chiamata Gemini con FK a `user_requests`), non la tabella unica `usage_logs` originariamente
+descritta nel task. `call_type` a 5 valori (`embedding`, `generation`,
+`query_contextualization`, `query_enhancement`, `reranking`), uno per ogni chiamata reale nel
+codice invece del bucket unico "expansion" del task originale — scelta esplicita di Francesco
+per dare a BILLING-00003 visibilità sul costo per tecnica, non solo imbedding vs generazione.
+Migration bozza (SQL ora in `BILLING-00001-usage-logs.md`, non più un file in
+`supabase/migrations/`: rimosso il 2026-07-29 perché il suo timestamp precedeva quello di
+`20260729010000_auth_profiles.sql`, creata dopo ma eseguita per prima — verrà ricreato con
+timestamp aggiornato quando riprende questo task). Istrumentazione delle chiamate reali
+(`lib/gemini.ts`, `lib/retrieval.ts`,
+`lib/reranking.ts`, `lib/query-contextualization.ts`, `app/api/chat/route.ts`) messa in pausa
+subito dopo (D65): userebbe `owner_token`, non ancora popolato e a rischio di essere sostituito
+appena `AUTH` introduce autenticazione vera — priorità sposta su `AUTH` prima di riprendere.
+
+**AUTH-00001 chiusa (sessione 2026-07-29):** aggiunto `@supabase/ssr`; `lib/supabase.ts` guadagna
+`createBrowserSupabaseClient`/`createServerSupabaseClient` (cookie-based, riutilizzabili dal
+middleware di AUTH-00004) accanto ai client esistenti, invariati. Migration
+`20260729010000_auth_profiles.sql` (enum `user_role`, tabella `profiles` 1:1 `auth.users`, RLS
+abilitata senza policy — deferred ad AUTH-00003 — trigger `handle_new_user`) applicata al DB da
+Francesco; DoD verificato manualmente in Supabase Studio (utente di test → riga `profiles`
+auto-creata) — v. D66. Email advisory Supabase (`rls_disabled_in_public` su `games`/`chunks`/
+`forum_threads`/`forum_posts`/`chat_sessions`/`chat_messages`) è il gap noto che AUTH-00003 chiude
+dopo AUTH-00002 — nessuna azione fuori sequenza, confermato da Francesco.
 
 **Nuove epiche (sessione 2026-07-28, seconda tranche):** aggiunte `DESIGN` (tema, palette,
 generalizzazione componenti UI base — copre `POC-00015`, ora deprecata come superseded, v. D63),

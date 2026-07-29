@@ -1,6 +1,7 @@
 # Epica BILLING — Modello di costo e monetizzazione
 
-**Stato:** da iniziare — BILLING-00001 è la story iniziale
+**Stato:** in corso — BILLING-00001 in pausa (schema `user_requests`/`gemini_calls` definito,
+migration creata; istrumentazione codice sospesa in attesa di AUTH, v. D65)
 
 ## Contesto
 
@@ -24,7 +25,7 @@ Vedi directory `BILLING/` per i task singoli.
 
 | ID | Titolo | Stato |
 |---|---|---|
-| BILLING-00001 | Logging usage: tabella `usage_logs` | todo |
+| BILLING-00001 | Logging usage: tabelle `user_requests`/`gemini_calls` | in progress |
 | BILLING-00002 | Pannello admin-only costi | todo |
 | BILLING-00003 | Calcolo costo medio reale per query | todo |
 | BILLING-00004 | Decisione modello di pricing | todo |
@@ -37,8 +38,9 @@ Vedi directory `BILLING/` per i task singoli.
 
 - Rate limiting lato Gemini Tier1 (RPM) non ancora affrontato: da valutare se emerge come
   problema reale con l'aumento degli utenti
-- Privacy sui log: valutare se `usage_logs` deve restare solo metadati aggregati (no contenuto
-  query) se il prodotto scala oltre la cerchia di utenti fidati attuale
+- Privacy sui log: valutare se `user_requests`/`gemini_calls` devono restare solo metadati
+  aggregati (no contenuto query, già così nello schema attuale) se il prodotto scala oltre la
+  cerchia di utenti fidati attuale
 - **Proiezione costi con modello più evoluto (collegata a BILLING-00003)**: riapplicare i
   prezzi di un modello superiore (es. Gemini Pro) ai `prompt_token_count`/
   `candidates_token_count` già loggati con Flash-Lite dà una stima di prima approssimazione del
