@@ -25,18 +25,18 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
     const [gameName, setGameName] = useState<string | null>(null);
-    // Ref sull'ultima domanda inviata e sul contenitore scrollabile: calcolo
-    // diretto dello scrollTop (invece di scrollIntoView, che allinea al bordo
-    // dello scrollport più vicino ma non garantisce di arrivare fino in cima
-    // in ogni browser) per portare la domanda esattamente al bordo superiore,
-    // invece di lasciarla in fondo sotto risposte precedenti lunghe.
-    const lastUserMessageRef = useRef<HTMLDivElement>(null);
+    // Ref sull'ultimo messaggio (domanda o risposta) e sul contenitore
+    // scrollabile: calcolo diretto dello scrollTop (invece di scrollIntoView,
+    // che allinea al bordo dello scrollport più vicino ma non garantisce di
+    // arrivare fino in cima in ogni browser) per portare ogni nuovo messaggio
+    // esattamente al bordo superiore — sia la domanda sia, quando arriva, la
+    // risposta — invece di lasciarlo in fondo sotto contenuto precedente lungo.
+    const lastMessageRef = useRef<HTMLDivElement>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        if (messages[messages.length - 1]?.role !== 'user') return;
         const container = messagesContainerRef.current;
-        const target = lastUserMessageRef.current;
+        const target = lastMessageRef.current;
         if (!container || !target) return;
         container.scrollTo({ top: target.offsetTop, behavior: 'smooth' });
     }, [messages]);
@@ -114,7 +114,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                 )}
 
                 {messages.map((msg, i) => (
-                    <div key={i} ref={i === messages.length - 1 && msg.role === 'user' ? lastUserMessageRef : undefined}>
+                    <div key={i} ref={i === messages.length - 1 ? lastMessageRef : undefined}>
                         <MessageBubble message={msg} />
                     </div>
                 ))}
