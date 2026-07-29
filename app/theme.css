@@ -57,6 +57,86 @@
   --radius-lg: 20px;
 }
 
+/* Mascotte in attesa risposta: 4 salti veri (su rapido/giù rapido, non una
+   sinusoide continua che "fluttua") verso destra, poi lo stesso percorso a
+   specchio all'indietro. animation-timing-function per singolo keyframe:
+   ease-out in salita (parte scattante, rallenta in cima), ease-in in
+   discesa (accelera verso l'atterraggio) — è quello che dà la sensazione di
+   rimbalzo invece di planata. */
+@keyframes owl-hop {
+  0% {
+    transform: translate(0, 4px);
+    animation-timing-function: ease-out;
+  }
+  6.25% {
+    transform: translate(10px, -10px);
+    animation-timing-function: ease-in;
+  }
+  12.5% {
+    transform: translate(20px, 4px);
+    animation-timing-function: ease-out;
+  }
+  18.75% {
+    transform: translate(30px, -10px);
+    animation-timing-function: ease-in;
+  }
+  25% {
+    transform: translate(40px, 4px);
+    animation-timing-function: ease-out;
+  }
+  31.25% {
+    transform: translate(50px, -10px);
+    animation-timing-function: ease-in;
+  }
+  37.5% {
+    transform: translate(60px, 4px);
+    animation-timing-function: ease-out;
+  }
+  43.75% {
+    transform: translate(70px, -10px);
+    animation-timing-function: ease-in;
+  }
+  50% {
+    transform: translate(80px, 4px);
+    animation-timing-function: ease-out;
+  }
+  56.25% {
+    transform: translate(70px, -10px);
+    animation-timing-function: ease-in;
+  }
+  62.5% {
+    transform: translate(60px, 4px);
+    animation-timing-function: ease-out;
+  }
+  68.75% {
+    transform: translate(50px, -10px);
+    animation-timing-function: ease-in;
+  }
+  75% {
+    transform: translate(40px, 4px);
+    animation-timing-function: ease-out;
+  }
+  81.25% {
+    transform: translate(30px, -10px);
+    animation-timing-function: ease-in;
+  }
+  87.5% {
+    transform: translate(20px, 4px);
+    animation-timing-function: ease-out;
+  }
+  93.75% {
+    transform: translate(10px, -10px);
+    animation-timing-function: ease-in;
+  }
+  100% {
+    transform: translate(0, 4px);
+  }
+}
+
+.animate-owl-hop {
+  animation: owl-hop 3.2s linear infinite;
+}
+
 @theme inline {
   --color-paper: var(--paper);
   --color-paper-2: var(--paper-2);

@@ -4,7 +4,7 @@ import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { GameOption } from './types';
 import { Button } from '@/components/ui/Button';
-import { Select } from '@/components/ui/Select';
+import { Dropdown } from '@/components/ui/Dropdown';
 
 // Epica 0900 (Chat con contesto) — C5: modalità scelta qui, non con un
 // toggle dentro la chat — v. note di scope in docs/task/0900-chat-con-contesto.md.
@@ -26,13 +26,12 @@ export function GameSelectForm({ games }: { games: GameOption[] }) {
             <label htmlFor="game-select" className="text-sm text-ink-soft">
                 Scegli il gioco
             </label>
-            <Select id="game-select" value={selectedId} onChange={(e) => setSelectedId(e.target.value)}>
-                {games.map((game) => (
-                    <option key={game.id} value={game.id}>
-                        {game.name}
-                    </option>
-                ))}
-            </Select>
+            <Dropdown
+                id="game-select"
+                value={selectedId}
+                onChange={setSelectedId}
+                options={games.map((game) => ({ value: game.id, label: game.name }))}
+            />
 
             <fieldset className="flex flex-col gap-2">
                 <legend className="mb-1 text-sm text-ink-soft">Modalità chat</legend>
