@@ -9,7 +9,7 @@ todo/progress/done).*
 | Epica | Directory | Stato |
 |---|---|---|
 | POC | `progress/POC/` | in corso (solo POC-00011 ancora aperto, in pausa; tutto il resto chiuso o deprecato) |
-| AUTH | `progress/AUTH/` | in corso, priorità corrente (v. D65) — AUTH-00001 ✅, AUTH-00002 prossima |
+| AUTH | `progress/AUTH/` | in corso, priorità corrente (v. D65) — AUTH-00001 ✅, AUTH-00002 chiusa non applicabile, AUTH-00003 in progress (migration scritta, da applicare) |
 | BILLING | `progress/BILLING/` | in corso, BILLING-00001 in pausa in attesa di AUTH (v. D65) |
 | TEACH | `todo/TEACH/` | da iniziare |
 | VISUAL | `todo/VISUAL/` | nice to have, in coda |
@@ -77,7 +77,22 @@ abilitata senza policy — deferred ad AUTH-00003 — trigger `handle_new_user`)
 Francesco; DoD verificato manualmente in Supabase Studio (utente di test → riga `profiles`
 auto-creata) — v. D66. Email advisory Supabase (`rls_disabled_in_public` su `games`/`chunks`/
 `forum_threads`/`forum_posts`/`chat_sessions`/`chat_messages`) è il gap noto che AUTH-00003 chiude
-dopo AUTH-00002 — nessuna azione fuori sequenza, confermato da Francesco.
+— nessuna azione fuori sequenza, confermato da Francesco.
+
+**AUTH-00002 chiusa, non applicabile (sessione 2026-07-29):** verificato che `owner_token` non è
+mai stato popolato in produzione (nessun riferimento in `app/`/`lib/`/`components/`, `lib/owner-
+token.ts` vuoto — D43, D65) — nessuna conversazione legacy da collegare al login, il task come
+scritto non ha nulla da fare. Chiusa senza implementazione — v. D67.
+
+**AUTH-00003 avviata (sessione 2026-07-29):** confermato con Francesco che l'accesso anonimo
+resta per `games` `shared` e per la chat — login richiesto solo per giochi privati e funzioni
+admin, coerente con D05 (MVP a basso attrito) e con "route protette" (AUTH-00004, sottoinsieme
+delle route). Migration `20260729020000_rls_policies.sql`: `user_id` aggiunto su `games`/
+`chat_sessions` (proprietà diretta); `chunks`/`forum_threads`/`forum_posts`/`chat_messages`
+restano senza colonna propria, policy con `exists` join sulla tabella padre; funzione `is_admin()`
+riusabile; trigger anti-auto-promozione su `profiles.role`. Non ancora applicata al DB — v. D68 e
+`progress/AUTH-00003-rls-policy.md` per il pre-flight check obbligatorio (`games.visibility`) e i
+passi di verifica manuale.
 
 **Nuove epiche (sessione 2026-07-28, seconda tranche):** aggiunte `DESIGN` (tema, palette,
 generalizzazione componenti UI base — copre `POC-00015`, ora deprecata come superseded, v. D63),

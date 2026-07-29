@@ -732,6 +732,68 @@ anticipare la UI login/signup, scope di AUTH-00005.
 
 ---
 
+### D67 — Chiusa AUTH-00002 senza implementazione: `owner_token` mai popolato in produzione
+**Contesto:** avvio di AUTH-00002 (migrazione soft `owner_token`→`user_id` al login); verificato
+via grep che nessun file in `app/`/`lib/`/`components/` referenzia `owner_token`/`ownerToken` —
+`lib/owner-token.ts` è vuoto, coerente con D43 ("mai realmente implementato in app/API") e D65
+("mai realmente popolato in produzione"). Nessun cookie/localStorage lo genera, nessuna riga in
+`games`/`chat_sessions` ha un valore non-null.
+**Scelta:** chiusa AUTH-00002 senza implementazione — il DoD presuppone conversazioni esistenti
+da "ritrovare" dopo il login, che non esistono; non c'è nulla da migrare. Nessuna colonna
+`user_id` aggiunta (era scope implicito di questo task, non di AUTH-00001) — resta da fare in
+AUTH-00003, che dovrà quindi anche creare le colonne oltre a scrivere le policy RLS.
+**Motivazione:** implementare una logica di linking per dati che non esistono avrebbe prodotto
+codice non testabile end-to-end e mai esercitato — scartato su decisione esplicita di Francesco
+a favore di procedere direttamente ad AUTH-00003.
+
+---
+
+### D68 — AUTH-00003: accesso anonimo confermato per shared/chat, `user_id` solo su tabelle owner dirette
+**Contesto:** avvio di AUTH-00003 (RLS policy). `games`/`chat_sessions`/`chat_messages` sono oggi
+completamente aperte (nessuna ownership mai applicata, D43/D67); il DoD del task presuppone
+isolamento testabile fra due utenti, ma non era chiaro se da ora il login diventasse necessario
+per l'uso base dell'app (rompendo il modello anonimo attuale) o se l'accesso pubblico dovesse
+restare per il contenuto condiviso.
+**Scelta:** confermato con Francesco — l'accesso anonimo resta per `games` con
+`visibility='shared'` e per la chat; login necessario solo per giochi privati e funzioni admin.
+`user_id` (FK `profiles(id)`, nullable, `on delete set null`) aggiunto solo su `games` e
+`chat_sessions` (proprietà diretta); `chunks`/`forum_threads`/`forum_posts` (via `games.game_id`)
+e `chat_messages` (via `chat_sessions.session_id`) restano senza colonna propria, policy con
+`exists` join sul genitore. Aggiunta funzione `is_admin()` (security definer, riusabile) e
+trigger `prevent_role_self_escalation` su `profiles` (un utente non può auto-promuoversi admin).
+Migration: `20260729020000_rls_policies.sql`.
+**Motivazione:** coerente con D05 (MVP a basso attrito, nessuna auth obbligatoria) e con
+"route protette" di AUTH-00004 che implica solo un sottoinsieme delle route richiede login;
+forzare il login per tutto sarebbe stato un cambio di prodotto più ampio, non richiesto da questo
+task. Colonna diretta solo dove c'è ownership reale evita dati duplicati da tenere sincronizzati
+su tabelle che ereditano l'ownership dal genitore.
+**Nota aperta:** `games.visibility` deve essere verificato `'shared'` per i giochi in uso pubblico
+(Brass Birmingham, Hegemony) prima di applicare — `match_chunks` è `security invoker`, eredita
+RLS senza bypass silenzioso, ma un game non-shared diventerebbe invisibile all'app anonima senza
+errore esplicito (la chat risponderebbe "non trovato" su un gioco prima funzionante). Migration
+non ancora applicata né verificata.
+
+---
+
+### D69 — Build rotta da `next/headers` in `lib/supabase.ts`: split in `lib/supabase.ts`/`lib/supabase-server.ts`
+**Contesto:** dopo il push di AUTH-00001, build Turbopack fallita — `app/game/[id]/page.tsx`
+(Client Component) importa `{ supabase }` da `lib/supabase.ts`, che however conteneva anche
+`createServerSupabaseClient` (import statico di `next/headers`, valido solo server-side).
+Bundlare `next/headers` in un Client Component non è permesso, a prescindere da quale export
+venga effettivamente usato — basta che sia nello stesso modulo.
+**Scelta:** `createServerSupabaseClient` spostata in un nuovo file `lib/supabase-server.ts`
+(server-only, mai importabile da codice con `'use client'`); `lib/supabase.ts` resta con gli
+export sicuri lato client (`supabase`, `createServiceClient`, `createBrowserSupabaseClient`).
+Nessun consumer esistente da aggiornare: `createServerSupabaseClient` non aveva ancora nessun
+uso reale nel codice (preparata in AUTH-00001 per AUTH-00004, mai collegata). Verificato con
+`npm run build` completo (Turbopack), non solo `tsc --noEmit`.
+**Motivazione:** fix minimo e a rischio zero — nessun import esistente cambia. Non fuso con la
+riorganizzazione `lib/repositories`/`lib/services`/`lib/clients` appena discussa (migrazione
+graduale, non urgente): questo file resta in `lib/` per ora, si sposterà in `lib/clients/`
+quando lo toccheremo di nuovo per AUTH-00004.
+
+---
+
 ### D[N] — Titolo decisione
 **Contesto:** perché si è posta la questione
 **Opzioni:** opzione A · opzione B · opzione C

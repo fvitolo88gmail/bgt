@@ -1,6 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { createBrowserClient, createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
+import { createBrowserClient } from '@supabase/ssr';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -21,26 +20,4 @@ export function createServiceClient() {
 // client con sessione via cookie, per Client Component (form login/signup, AUTH-00005)
 export function createBrowserSupabaseClient() {
     return createBrowserClient(supabaseUrl as string, supabaseAnonKey as string);
-}
-
-// client con sessione via cookie, per Server Component/Route Handler/middleware (AUTH-00004)
-export async function createServerSupabaseClient() {
-    const cookieStore = await cookies();
-    return createServerClient(supabaseUrl as string, supabaseAnonKey as string, {
-        cookies: {
-            getAll() {
-                return cookieStore.getAll();
-            },
-            setAll(cookiesToSet) {
-                try {
-                    cookiesToSet.forEach(({ name, value, options }) =>
-                        cookieStore.set(name, value, options)
-                    );
-                } catch {
-                    // setAll chiamato da un Server Component non può scrivere cookie —
-                    // va bene se la sessione viene comunque rinfrescata dal middleware (AUTH-00004)
-                }
-            },
-        },
-    });
 }

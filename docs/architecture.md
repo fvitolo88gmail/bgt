@@ -212,7 +212,8 @@ domanda utente + game_id + owner_token (da cookie/localStorage)
 │       └── types.ts
 │
 ├── lib/
-│   ├── supabase.ts             # client Supabase
+│   ├── supabase.ts             # client Supabase (anon, service, browser — safe da Client Component)
+│   ├── supabase-server.ts      # client Supabase con cookie (next/headers) — SOLO Server Component/Route Handler/middleware
 │   ├── gemini.ts               # client Gemini (embeddings + chat)
 │   ├── retrieval.ts            # match_chunks
 │   ├── prompt/                 # prompt grounded, split per specializzazione (D61)
