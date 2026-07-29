@@ -794,6 +794,86 @@ quando lo toccheremo di nuovo per AUTH-00004.
 
 ---
 
+### D70 — Aperte AUTH-00008/00009: invito nativo Supabase invece di approvazione post-signup
+**Contesto:** Francesco vuole evitare registrazioni indiscriminate quando l'app inizia a
+circolare tra amici. Opzione iniziale proposta (approvazione post-signup, utente in stato
+"pending" finché un admin non approva) valutata insieme a alternative: allowlist email, invito
+con codice custom, invito nativo Supabase.
+**Scelta:** invito nativo Supabase — signup pubblico disabilitato (Authentication → Providers →
+Email → "Allow new users to sign up" off, config progetto, non codice), inviti generati via
+`inviteUserByEmail`/Studio (`Authentication → Users → Invite`), nessuna tabella custom per
+codici/token (Supabase gestisce già token, email, scadenza). Preceduto da una richiesta esplicita
+lato utente: nuova tabella `invite_requests` (chiunque anonimo inserisce, solo admin legge/
+aggiorna via RLS). Stato `enabled`/`disabled` su `profiles` (AUTH-00009) resta una decisione
+separata e ortogonale — serve a revocare accesso a un utente già invitato, non a filtrare le
+nuove registrazioni.
+**Motivazione:** l'approvazione post-signup crea comunque un account reale in stato limbo prima
+della decisione admin — richiede una coda da controllare e, per essere davvero usabile, una UI
+admin che oggi non esiste (dipende da ADMIN-CONSOLE). L'invito nativo blocca la creazione
+dell'account a monte (zero account "pending" da gestire) e riusa un meccanismo già pronto in
+Supabase invece di reinventare token/scadenze custom — verificato via ricerca che il toggle e
+`inviteUserByEmail` sono la via documentata/supportata per questo esatto caso d'uso.
+**Nota aperta:** AUTH-00008 cambia lo scope della UI di signup (niente form libero, un form
+"richiedi invito" al suo posto) — probabile che vada affrontato prima o insieme ad AUTH-00005,
+non necessariamente dopo come l'ordine cronologico degli ID suggerirebbe. Non ancora deciso.
+
+---
+
+### D71 — AUTH-00004: `middleware.ts` deprecato in Next.js 16, rinominato `proxy.ts`
+**Contesto:** durante l'implementazione del middleware per route protette, `npm run build` ha
+segnalato: "The middleware file convention is deprecated. Please use proxy instead." Verificato
+sulla doc ufficiale Next.js: da v16.0.0 `middleware.ts` è deprecato in favore di `proxy.ts`
+(stesso file, funzione rinominata da `middleware` a `proxy`) — e un `middleware.ts` lasciato lì
+**viene ignorato in build senza errore**, quindi la protezione delle route smetterebbe di
+funzionare in silenzio, non con un crash visibile.
+**Scelta:** file scritto direttamente come `proxy.ts` (non `middleware.ts`), funzione esportata
+`proxy`. Verificato che il warning di deprecazione sparisce dalla build. Nessun altro cambio di
+comportamento rilevante per questo progetto (runtime di default passa a Node.js invece di Edge
+da v16, irrilevante qui: il client Supabase usato non ha vincoli specifici sul runtime).
+**Motivazione:** il rischio concreto (route "protette" silenziosamente non protette) è alto
+abbastanza da giustificare la verifica prima di chiudere il task, non solo affidarsi a `tsc`/
+lint che non segnalano la deprecazione — solo la build reale (Turbopack) la mostra.
+
+---
+
+### D72 — AUTH-00008: prima applicazione della convenzione repository/controller
+**Contesto:** discusso in sessione (non loggato a sé, era parte della conversazione su AUTH) di
+adottare uno stile più simile a MVC (repository/service, controller = route handler) per il
+codice nuovo, migrazione graduale — nessun refactor del `lib/` esistente. AUTH-00008 (richiesta
+di invito) è il primo codice scritto dopo quella discussione.
+**Scelta:** `lib/repositories/invite-requests.repository.ts` (accesso dati puro) +
+`app/api/invite-requests/route.ts` (controller: valida input, chiama la repository) invece di
+far scrivere il form direttamente su Supabase lato client. `lib/prompt/` e il resto di `lib/`
+restano dov'erano (nessun refactor forzato solo per coerenza nominale).
+**Motivazione:** verifica pratica della convenzione appena discussa su un caso reale e piccolo,
+a basso rischio — coerente con "migrazione graduale" invece di applicarla retroattivamente.
+
+---
+
+### D73 — AUTH-00008: SMTP custom necessario, il servizio email built-in di Supabase non basta
+**Contesto:** verifica manuale del flusso invito bloccata da `email rate limit exceeded`.
+Verificato sulla doc ufficiale Supabase: il servizio SMTP built-in ha due limiti strutturali,
+non solo di test — **2 email/ora in totale sul progetto** (non configurabile senza SMTP
+custom) e **invia solo a indirizzi già membri del team Supabase del progetto**, rifiutando
+qualunque altro destinatario. Nessuno dei due è compatibile con l'uso reale di AUTH-00008
+(invitare persone esterne al progetto).
+**Scelta:** configurare SMTP custom (Resend, raccomandato dalla doc Supabase con guida
+dedicata, piano free 3.000 email/mese) invece di continuare con il servizio built-in.
+Configurazione da fare da Francesco (richiede un account esterno, non automatizzabile) su
+Supabase Dashboard → Authentication → SMTP Settings.
+**Motivazione:** il servizio built-in è esplicitamente documentato da Supabase come "non per
+uso in produzione" — scoperto qui non per lettura preventiva della doc ma dal fallimento reale
+del test, prima di chiudere AUTH-00008 invece che dopo, quando sarebbe stato un problema con
+utenti reali invitati.
+**Nota aperta:** Francesco ha deciso esplicitamente di rimandare l'acquisto di un dominio
+(necessario per Resend, che non accetta domini condivisi). Processo interinale: crea l'utente a
+mano in Supabase Studio ("Create new user", non "Invite user" — verificato via ricerca che il
+primo non invia email, quindi non soggetto né al rate limit né alla restrizione "solo membri del
+team") e comunica le credenziali fuori dall'app. Da riprendere con SMTP custom quando si procede
+con l'acquisto del dominio.
+
+---
+
 ### D[N] — Titolo decisione
 **Contesto:** perché si è posta la questione
 **Opzioni:** opzione A · opzione B · opzione C

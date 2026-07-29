@@ -191,6 +191,8 @@ domanda utente + game_id + owner_token (da cookie/localStorage)
 │               ├── <EPICA>.md          # indice epica (contesto, decisioni, note aperte)
 │               └── todo/ | progress/ | done/   # un file per task (<EPICA>-NNNNN.md)
 ├── .env.local
+├── proxy.ts                    # ex middleware.ts (Next.js 16 l'ha rinominato, D71) — refresh
+│                                # sessione + gate sulle route protette (PROTECTED_PATH_PREFIXES)
 │
 ├── app/                        # Next.js app router
 │   ├── page.tsx                # ancora boilerplate create-next-app, non riutilizzata
@@ -198,8 +200,16 @@ domanda utente + game_id + owner_token (da cookie/localStorage)
 │   │   └── page.tsx            # selezione gioco: dropdown + redirect a /game/[id] (D41)
 │   ├── game/[id]/
 │   │   └── page.tsx            # chat UI
+│   ├── admin/
+│   │   └── page.tsx            # placeholder protetto da proxy.ts, in attesa di ADMIN-CONSOLE
+│   ├── request-invite/
+│   │   └── page.tsx            # form pubblico "richiedi accesso" (AUTH-00008)
+│   ├── login/
+│   │   └── page.tsx            # wrapper server, <LoginForm /> dentro Suspense (AUTH-00005)
 │   └── api/
-│       └── chat/               # query RAG
+│       ├── chat/               # query RAG
+│       │   └── route.ts
+│       └── invite-requests/    # controller — valida input, chiama la repository
 │           └── route.ts
 │
 ├── components/
@@ -207,13 +217,21 @@ domanda utente + game_id + owner_token (da cookie/localStorage)
 │   │   ├── MessageBubble.tsx
 │   │   ├── SourcesList.tsx
 │   │   └── types.ts
-│   └── home/                   # dropdown selezione gioco (D41)
-│       ├── GameSelectForm.tsx
-│       └── types.ts
+│   ├── home/                   # dropdown selezione gioco (D41)
+│   │   ├── GameSelectForm.tsx
+│   │   └── types.ts
+│   ├── invite/                 # form richiesta invito (AUTH-00008)
+│   │   └── RequestInviteForm.tsx
+│   └── auth/                   # login/logout (AUTH-00005)
+│       ├── LoginForm.tsx       # 'use client' — signInWithPassword, redirect via ?redirect=
+│       └── LogoutButton.tsx    # 'use client' — signOut + redirect a /home
 │
 ├── lib/
 │   ├── supabase.ts             # client Supabase (anon, service, browser — safe da Client Component)
 │   ├── supabase-server.ts      # client Supabase con cookie (next/headers) — SOLO Server Component/Route Handler/middleware
+│   ├── repositories/           # accesso dati puro, zero logica di business (convenzione da AUTH-00008, D72 —
+│   │   │                       # migrazione graduale: il resto di lib/ non è ancora stato spostato qui)
+│   │   └── invite-requests.repository.ts
 │   ├── gemini.ts               # client Gemini (embeddings + chat)
 │   ├── retrieval.ts            # match_chunks
 │   ├── prompt/                 # prompt grounded, split per specializzazione (D61)

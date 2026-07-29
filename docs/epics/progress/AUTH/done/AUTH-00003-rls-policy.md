@@ -1,6 +1,6 @@
 # AUTH-00003 — RLS policy sulle tabelle utente-specifiche
 
-**Stato:** in progress — migration scritta, da applicare e verificare
+**Stato:** done
 
 **Blocca:** AUTH-00001
 
@@ -47,3 +47,23 @@ gioco che prima funzionava).
    mano): ognuno vede solo il proprio in una query diretta, non quello dell'altro.
 3. Un utente non-admin che prova `update profiles set role='admin' where id=auth.uid()` non
    riesce (il trigger riporta `role` al valore precedente).
+
+## Verifica (2026-07-29)
+
+Migration applicata, tutti e tre i check confermati manualmente in SQL Editor (impersonazione
+via `set_config('request.jwt.claims', ...)` + `set local role authenticated`, dentro
+`begin`/`rollback` per non lasciare side-effect):
+1. Chat su giochi esistenti confermata funzionante.
+2. Game privato di test (`Test Privato`, `visibility='private'`, `user_id` = utente A): utente A
+   lo vede (1 riga), utente B ottiene 0 righe.
+3. Update diretto di `role` da parte di un utente non-admin non ha effetto — il trigger riporta
+   il valore a `user`.
+
+Nota tecnica emersa durante la verifica: l'SQL Editor di Supabase Studio, con più statement che
+restituiscono righe nello stesso script, mostra solo il risultato del **primo**, non dell'ultimo
+— per isolare l'output della query che interessa, l'impostazione del JWT va fatta dentro un
+blocco `do $$ ... perform set_config(...); end $$;` (che non produce un result set proprio),
+lasciando la select finale come unico output visibile.
+
+**Da fare, non bloccante:** rimuovere la riga `games` "Test Privato" creata per il test
+(cleanup dati, non schema).

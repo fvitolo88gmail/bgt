@@ -9,7 +9,7 @@ todo/progress/done).*
 | Epica | Directory | Stato |
 |---|---|---|
 | POC | `progress/POC/` | in corso (solo POC-00011 ancora aperto, in pausa; tutto il resto chiuso o deprecato) |
-| AUTH | `progress/AUTH/` | in corso, priorità corrente (v. D65) — AUTH-00001 ✅, AUTH-00002 chiusa non applicabile, AUTH-00003 in progress (migration scritta, da applicare) |
+| AUTH | `progress/AUTH/` | in corso, priorità corrente (v. D65) — AUTH-00001/00003/00004/00005/00008 ✅ (00008: invito via email rimandato, processo manuale via Studio nel frattempo), AUTH-00002 chiusa non applicabile, AUTH-00010 aggiunta (SMTP, in attesa dominio), prossimi: 00006/00007/00009 |
 | BILLING | `progress/BILLING/` | in corso, BILLING-00001 in pausa in attesa di AUTH (v. D65) |
 | TEACH | `todo/TEACH/` | da iniziare |
 | VISUAL | `todo/VISUAL/` | nice to have, in coda |
@@ -92,7 +92,49 @@ delle route). Migration `20260729020000_rls_policies.sql`: `user_id` aggiunto su
 restano senza colonna propria, policy con `exists` join sulla tabella padre; funzione `is_admin()`
 riusabile; trigger anti-auto-promozione su `profiles.role`. Non ancora applicata al DB — v. D68 e
 `progress/AUTH-00003-rls-policy.md` per il pre-flight check obbligatorio (`games.visibility`) e i
-passi di verifica manuale.
+passi di verifica manuale. **Chiusa (2026-07-29):** DoD verificato manualmente in SQL Editor
+(impersonazione via `set_config('request.jwt.claims', ...)`) — chat sui giochi esistenti ok,
+isolamento tra due utenti confermato (A vede il proprio game privato, B zero righe), self-role-
+escalation bloccata. Resta da fare (non bloccante): rimuovere il game di test creato per la
+verifica.
+
+**AUTH-00004 avviata (sessione 2026-07-29):** `proxy.ts` (non `middleware.ts` — Next.js 16 l'ha
+deprecato/rinominato, scoperto solo con `npm run build`, non con `tsc`; un `middleware.ts`
+residuo verrebbe ignorato in build senza errore — v. D71): rinfresca la sessione ad ogni
+richiesta (`getUser()`, validazione server-side) e redirige a `/login` per path sotto
+`/admin` (placeholder creato solo per avere un caso concreto — nessuna route esistente richiede
+login oggi, D68). **Chiusa:** verifica manuale confermata da Francesco (redirect su `/admin`,
+route pubbliche invariate).
+
+**AUTH-00008 chiusa, con eccezione nota (sessione 2026-07-30):** migration `invite_requests` +
+prima applicazione della convenzione repository/controller per codice nuovo
+(`lib/repositories/invite-requests.repository.ts`, `app/api/invite-requests/route.ts`, D72) +
+form pubblico `/request-invite`. Verificato: signup pubblico bloccato (`signup_disabled`),
+richiesta via form confermata in `invite_requests`. Non verificato: invito email end-to-end —
+il servizio SMTP built-in Supabase non è utilizzabile in pratica (2 email/ora, invia solo a
+membri del team del progetto, v. D73); servirebbe SMTP custom (Resend) + un dominio di
+proprietà, il cui acquisto Francesco ha deciso esplicitamente di rimandare. Processo interinale
+deciso: inviti gestiti a mano via Studio ("Create new user", non manda email, nessun rate limit)
+invece del meccanismo email nativo. Chiarito che il form
+richiesta-invito è scope di questo task, non di AUTH-00005 (che diventa "accetta invito + login
++ logout", da fare dopo).
+
+**AUTH-00005 avviata (sessione 2026-07-30):** scope confermato da Francesco — solo "login +
+stato sessione + logout" ora, "accetta invito" (impostare password dal link email) rimandato ad
+AUTH-00010 insieme all'SMTP, dato che nel frattempo gli account si creano a mano via Studio.
+`components/auth/LoginForm.tsx` + `app/login/page.tsx` (signIn via `@supabase/ssr`, redirect
+`?redirect=`), `components/auth/LogoutButton.tsx`, `components/ui/Header.tsx` convertito a
+Server Component `async` (mostra email/logout o link "Accedi"). `tsc`/`lint`/`build` puliti.
+**Chiusa:** verifica manuale confermata da Francesco (login/logout con utente creato via Studio,
+header mostra l'email).
+
+**AUTH-00008/00009 aggiunte (sessione 2026-07-29):** Francesco vuole evitare registrazioni
+indiscriminate se l'app circola tra amici. Invito nativo Supabase (signup pubblico disabilitato
+via config, `inviteUserByEmail`/Studio per invitare) preceduto da richiesta esplicita
+(`invite_requests`) invece di approvazione post-signup — evita utenti "pending" in limbo e non
+richiede una UI admin per essere usabile da subito (basta Supabase Studio). Stato
+`enabled`/`disabled` su `profiles` (00009) resta separato, per revocare accesso a un utente già
+invitato — v. D70.
 
 **Nuove epiche (sessione 2026-07-28, seconda tranche):** aggiunte `DESIGN` (tema, palette,
 generalizzazione componenti UI base — copre `POC-00015`, ora deprecata come superseded, v. D63),
