@@ -38,6 +38,7 @@ delle decisioni prese durante l'implementazione:
 | POC-00015 | UI Uplifting | ❌ superseded da `DESIGN` (v. D63) |
 | POC-00016 | Chat con contesto (server-side) | ✅ done (C1-C3; C4-C5 assorbiti da `CHAT-LISTING`, v. D59) |
 | POC-00017 | Restyling delle risposte (tono, ripetitività, citazioni utente) | ✅ done |
+| POC-00018 | Pollice su/giù sulle risposte (feedback good/bad) | ✅ done |
 
 ## Note aperte
 

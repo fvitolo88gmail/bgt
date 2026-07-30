@@ -23,6 +23,11 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
     const [gameName, setGameName] = useState<string | null>(null);
+    // Espansioni collegate a questo gioco base (games.base_game_id) — di default nessuna
+    // selezionata: il retrieval resta scoped al solo manuale base finché l'utente non le
+    // attiva esplicitamente per la partita in corso. Selezione non persistita (per-sessione).
+    const [expansions, setExpansions] = useState<{ id: string; name: string }[]>([]);
+    const [selectedExpansionIds, setSelectedExpansionIds] = useState<string[]>([]);
     // Ref sull'ultimo messaggio (domanda o risposta) e sul contenitore
     // scrollabile: calcolo diretto dello scrollTop (invece di scrollIntoView,
     // che allinea al bordo dello scrollport più vicino ma non garantisce di
@@ -64,6 +69,67 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
         };
     }, [id]);
 
+    // Espansioni disponibili per questo gioco — caricate a parte dal nome, stesso pattern
+    // (fetch client-side, non passato da /home).
+    useEffect(() => {
+        let cancelled = false;
+
+        supabase
+            .from('games')
+            .select('id, name')
+            .eq('base_game_id', id)
+            .order('name')
+            .then(({ data, error }) => {
+                if (cancelled) return;
+                if (error) {
+                    console.error('[game] errore caricando le espansioni:', error.message);
+                    return;
+                }
+                setExpansions(data ?? []);
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [id]);
+
+    // Aggiorna subito lo stato locale (feedback "premuto") e invia in background;
+    // in caso di errore lo stato resta com'era prima del click, l'utente può riprovare.
+    // Click sul voto già selezionato → toggle: il feedback torna a null (deselezionato).
+    async function handleFeedback(index: number, feedback: 'good' | 'bad') {
+        const target = messages[index];
+        if (!target?.messageId) return;
+
+        const previousFeedback = target.feedback ?? null;
+        const nextFeedback = previousFeedback === feedback ? null : feedback;
+
+        setMessages((prev) =>
+            prev.map((msg, i) => (i === index ? { ...msg, feedback: nextFeedback } : msg)),
+        );
+
+        try {
+            const res = await fetch('/api/chat/feedback', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ messageId: target.messageId, feedback: nextFeedback }),
+            });
+            if (!res.ok) throw new Error(`status ${res.status}`);
+        } catch (err) {
+            console.error('[game] errore salvando il feedback:', err);
+            setMessages((prev) =>
+                prev.map((msg, i) => (i === index ? { ...msg, feedback: previousFeedback } : msg)),
+            );
+        }
+    }
+
+    function toggleExpansion(expansionId: string) {
+        setSelectedExpansionIds((prev) =>
+            prev.includes(expansionId)
+                ? prev.filter((e) => e !== expansionId)
+                : [...prev, expansionId],
+        );
+    }
+
     async function handleSubmit() {
         if (!input.trim() || loading) return;
 
@@ -76,10 +142,10 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
             const res = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ question, gameId: id, mode, sessionId }),
+                body: JSON.stringify({ question, gameId: id, mode, sessionId, expansionGameIds: selectedExpansionIds }),
             });
 
-            const data = (await res.json()) as { answer: string; sources: Source[] };
+            const data = (await res.json()) as { answer: string; sources: Source[]; messageId: string | null };
 
             setMessages((prev) => [
                 ...prev,
@@ -87,6 +153,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                     role: 'assistant',
                     content: data.answer,
                     sources: data.sources,
+                    messageId: data.messageId,
                 },
             ]);
         } catch {
@@ -102,9 +169,24 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
     return (
         <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col overflow-hidden p-4">
             <h1 className="mb-1 font-serif text-xl font-bold text-ink">{gameName ?? 'Assistente Regole'}</h1>
-            <p className="mb-4 text-xs text-ink-faint">
+            <p className="mb-1 text-xs text-ink-faint">
                 Modalità: {mode === 'conversation' ? 'conversazione (con storico)' : 'domande (senza storico)'}
             </p>
+
+            {expansions.length > 0 && (
+                <div className="mb-4 flex flex-wrap gap-3">
+                    {expansions.map((expansion) => (
+                        <label key={expansion.id} className="flex items-center gap-1.5 text-xs text-ink-faint">
+                            <input
+                                type="checkbox"
+                                checked={selectedExpansionIds.includes(expansion.id)}
+                                onChange={() => toggleExpansion(expansion.id)}
+                            />
+                            Includi: {expansion.name}
+                        </label>
+                    ))}
+                </div>
+            )}
 
             <div ref={messagesContainerRef} className="mb-4 flex-1 space-y-4 overflow-y-auto overflow-x-hidden">
                 {messages.length === 0 && (
@@ -113,7 +195,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
 
                 {messages.map((msg, i) => (
                     <div key={i} ref={i === messages.length - 1 ? lastMessageRef : undefined}>
-                        <MessageBubble message={msg} />
+                        <MessageBubble message={msg} onFeedback={(feedback) => handleFeedback(i, feedback)} />
                     </div>
                 ))}
 

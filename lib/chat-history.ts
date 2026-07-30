@@ -50,18 +50,53 @@ export async function fetchRecentHistory(
 
 /**
  * Salva un turno (domanda utente o risposta assistente) nella sessione.
+ * Ritorna l'id del messaggio inserito — serve al chiamante per agganciare
+ * in seguito il feedback (pollice su/giù) alla risposta assistant.
  */
 export async function appendMessage(
     supabase: SupabaseClient,
     sessionId: string,
     role: 'user' | 'assistant',
     content: string,
-): Promise<void> {
-    const { error } = await supabase
+): Promise<string> {
+    const { data, error } = await supabase
         .from('chat_messages')
-        .insert({ session_id: sessionId, role, content });
+        .insert({ session_id: sessionId, role, content })
+        .select('id')
+        .single();
 
     if (error) {
         throw new ChatHistoryError(`Errore salvando il turno (${role}) per la sessione ${sessionId}: ${error.message}`);
+    }
+
+    return (data as { id: string }).id;
+}
+
+/**
+ * Registra il feedback (good/bad/null) di un messaggio assistant già salvato.
+ * null è un valore valido: click sul voto già selezionato → deselezione.
+ * Non verifica il ruolo del messaggio: l'endpoint chiamante espone il
+ * pollice solo sui messaggi assistant, quindi un id di un messaggio "user"
+ * non dovrebbe mai arrivare qui, ma la colonna accetta comunque il valore.
+ */
+export async function setMessageFeedback(
+    supabase: SupabaseClient,
+    messageId: string,
+    feedback: 'good' | 'bad' | null,
+): Promise<void> {
+    // .select().single() dopo l'update: un update bloccato da RLS non genera un errore,
+    // restituisce semplicemente zero righe — senza questo controllo il fallimento passa
+    // inosservato (già successo: mancava la policy di update su chat_messages).
+    const { data, error } = await supabase
+        .from('chat_messages')
+        .update({ feedback })
+        .eq('id', messageId)
+        .select('id')
+        .single();
+
+    if (error || !data) {
+        throw new ChatHistoryError(
+            `Errore salvando il feedback per il messaggio ${messageId}: ${error?.message ?? 'nessuna riga aggiornata (RLS o id inesistente)'}`
+        );
     }
 }

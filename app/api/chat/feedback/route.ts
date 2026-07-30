@@ -1,0 +1,30 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { supabase } from '@/lib/supabase';
+import { setMessageFeedback } from '@/lib/chat-history';
+
+// Endpoint dedicato al pollice su/giù sulle risposte assistant (solo
+// modalità "conversation", unica modalità che salva chat_messages oggi).
+export async function PATCH(req: NextRequest) {
+    try {
+        const body = await req.json() as { messageId?: string; feedback?: string | null };
+        const { messageId, feedback } = body;
+
+        // null è un valore valido: click sul voto già selezionato → deselezione.
+        if (!messageId || (feedback !== 'good' && feedback !== 'bad' && feedback !== null)) {
+            return NextResponse.json(
+                { error: 'Missing messageId or invalid feedback (atteso "good", "bad" o null)' },
+                { status: 400 },
+            );
+        }
+
+        await setMessageFeedback(supabase, messageId, feedback);
+
+        return NextResponse.json({ ok: true });
+    } catch (err) {
+        console.error('Chat feedback API error:', err);
+        return NextResponse.json(
+            { error: 'Internal server error' },
+            { status: 500 },
+        );
+    }
+}

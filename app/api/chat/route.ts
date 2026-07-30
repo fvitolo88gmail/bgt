@@ -11,8 +11,14 @@ type ChatMode = 'qa' | 'conversation';
 
 export async function POST(req: NextRequest) {
     try {
-        const body = await req.json() as { question?: string; gameId?: string; mode?: string; sessionId?: string };
-        const { question, gameId } = body;
+        const body = await req.json() as {
+            question?: string;
+            gameId?: string;
+            mode?: string;
+            sessionId?: string;
+            expansionGameIds?: string[];
+        };
+        const { question, gameId, expansionGameIds } = body;
         // "conversation" inietta la history e salva il turno, "qa" (default) resta invariato.
         const mode: ChatMode = body.mode === 'conversation' ? 'conversation' : 'qa';
 
@@ -47,15 +53,19 @@ export async function POST(req: NextRequest) {
             ? await contextualizeQueryForRetrieval(question, history)
             : question;
 
-        const { context: promptChunks, sources: matches } = await matchChunksForPrompt(retrievalQuery, gameId, 10);
+        // gameId (base) sempre incluso; le espansioni sono opt-in esplicito dal client,
+        // così di default il retrieval resta scoped al solo gioco base.
+        const retrievalGameIds = [gameId, ...(expansionGameIds ?? [])];
+        const { context: promptChunks, sources: matches } = await matchChunksForPrompt(retrievalQuery, retrievalGameIds, 10);
 
         if (promptChunks.length === 0) {
             const answer = 'Non ho trovato questa informazione nel manuale.';
+            let assistantMessageId: string | null = null;
             if (sessionId) {
                 await appendMessage(supabase, sessionId, 'user', question);
-                await appendMessage(supabase, sessionId, 'assistant', answer);
+                assistantMessageId = await appendMessage(supabase, sessionId, 'assistant', answer);
             }
-            return NextResponse.json({ answer, sources: [] });
+            return NextResponse.json({ answer, sources: [], messageId: assistantMessageId });
         }
 
         const context = buildContext(promptChunks);
@@ -64,9 +74,10 @@ export async function POST(req: NextRequest) {
             : buildPrompt(question, context);
         const answer = await geminiClient.generate(prompt);
 
+        let assistantMessageId: string | null = null;
         if (sessionId) {
             await appendMessage(supabase, sessionId, 'user', question);
-            await appendMessage(supabase, sessionId, 'assistant', answer);
+            assistantMessageId = await appendMessage(supabase, sessionId, 'assistant', answer);
         }
 
         const sources = matches.map((match) => ({
@@ -79,7 +90,7 @@ export async function POST(req: NextRequest) {
             bggUrl: match.bggUrl,
         }));
 
-        return NextResponse.json({ answer, sources });
+        return NextResponse.json({ answer, sources, messageId: assistantMessageId });
     } catch (err) {
         console.error('Chat API error:', err);
         return NextResponse.json(

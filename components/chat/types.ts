@@ -14,6 +14,10 @@ export interface ChatMessage {
     role: 'user' | 'assistant';
     content: string;
     sources?: Source[];
+    // presente solo per risposte assistant salvate (modalità conversation) —
+    // serve ad agganciare il pollice su/giù al messaggio corretto in DB.
+    messageId?: string | null;
+    feedback?: 'good' | 'bad' | null;
 }
 
 export function sourceLabel(s: Source): string {
