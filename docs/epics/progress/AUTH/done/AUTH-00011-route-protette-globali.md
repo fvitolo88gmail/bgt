@@ -1,6 +1,6 @@
 # AUTH-00011 — Estensione route protette a tutta l'app
 
-**Stato:** in corso — verifica DoD con Francesco
+**Stato:** ✅ done
 
 **Blocca:** AUTH-00004, AUTH-00005
 
@@ -39,6 +39,5 @@ sessione attiva, tutto resta accessibile come prima.
 
 **Verificato (tsc/lint/build):** puliti, nessun nuovo errore/warning rispetto alla baseline.
 
-**Da verificare manualmente con Francesco:** riavviare il dev server (`proxy.ts` modificato),
-poi senza login provare `/home` e `/game/[id]` (redirect a `/login` atteso) e confermare che con
-sessione attiva l'uso resti invariato.
+**Verificato manualmente da Francesco (2026-07-31):** senza sessione, `/home` e `/game/[id]`
+rimandano a `/login`; con sessione attiva l'uso resta invariato. Task chiuso.

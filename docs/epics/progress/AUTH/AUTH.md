@@ -23,12 +23,12 @@ Vedi directory `AUTH/` per i task singoli.
 | AUTH-00003 | RLS policy sulle tabelle utente-specifiche | ✅ done |
 | AUTH-00004 | Middleware Next.js per route protette | ✅ done |
 | AUTH-00005 | UI minima login/logout | ✅ done |
-| AUTH-00006 | Deprecazione formale di `owner_token` | todo |
+| AUTH-00006 | Deprecazione formale di `owner_token` | ✅ done |
 | AUTH-00007 | OAuth Google (finale, obbligatoria) | todo |
 | AUTH-00008 | Registrazione solo su invito | ✅ done (eccezione nota) |
 | AUTH-00009 | Stato utente enabled/disabled | todo |
 | AUTH-00010 | Configurazione SMTP custom (Resend) | todo — in attesa dominio |
-| AUTH-00011 | Estensione route protette a tutta l'app | in corso — verifica DoD |
+| AUTH-00011 | Estensione route protette a tutta l'app | ✅ done |
 
 ## Note aperte
 
@@ -113,3 +113,12 @@ Vedi directory `AUTH/` per i task singoli.
   pubbliche rispondono 401 JSON invece del redirect HTML usato per le pagine. `tsc`/`lint`/`build`
   puliti. In attesa di verifica manuale con Francesco (richiede riavvio del dev server) prima
   della chiusura — v. `progress/AUTH-00011-route-protette-globali.md`.
+- AUTH-00011 chiusa (2026-07-31): verifica manuale confermata da Francesco — senza sessione
+  `/home`/`/game/[id]` rimandano a `/login`, con sessione attiva l'uso resta invariato — v.
+  `done/AUTH-00011-route-protette-globali.md`.
+- AUTH-00006 chiusa (2026-07-31): lavoro solo documentale, nessun codice toccato — `owner_token`
+  non è mai stato generato/popolato (D67), quindi il DoD "nuovo utente non genera più
+  owner_token" era già soddisfatto. Aggiornato `docs/architecture.md`: principio di isolamento,
+  diagramma di topologia, schema `games` (riga `owner_token` deprecata + aggiunta riga `user_id`
+  mai documentata da AUTH-00003), pipeline di serving, abstraction `owner_token` → deprecata. V.
+  `done/AUTH-00006-deprecazione-owner-token.md`.

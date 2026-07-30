@@ -12,7 +12,7 @@ Assistente conversazionale per regole di giochi da tavolo. L'utente seleziona un
 | LLM ai bordi | Gemini interviene solo per embedding e generazione risposta. Tutta la logica è codice deterministico |
 | Fonti citate | Ogni risposta include riferimento a pagina/sezione (manuale) o thread/autore (forum) |
 | Anti-allucinazione | Il prompt vieta al modello di rispondere fuori dal contesto fornito |
-| DB condiviso, isolamento per proprietà | I giochi `shared` sono disponibili a tutti; i giochi `private` sono visibili solo a chi li ha caricati tramite owner_token — vedi D16 |
+| DB condiviso, isolamento per proprietà | I giochi `shared` sono disponibili a tutti; i giochi `private` sono visibili solo al proprietario, tramite `user_id` + RLS (AUTH-00003) — `owner_token` (D16) è deprecato, mai popolato in produzione (AUTH-00006, D67) |
 | Ingest offline | La pipeline di ingest non gira mai in una request utente — è sempre un job separato |
 | Schema forward-compatible | Campi per Fase 2 (forum) presenti nello schema MVP anche se non usati subito |
 
@@ -21,12 +21,12 @@ Assistente conversazionale per regole di giochi da tavolo. L'utente seleziona un
 ## Topologia
 
 ```
-Browser (owner_token in cookie/localStorage)
+Browser (sessione Supabase Auth via cookie — proxy.ts, AUTH-00011)
   └── Next.js App (Vercel)
         ├── UI chat (React)
         └── API routes (serving)
               ├── Gemini Embeddings  → vettore query
-              └── Supabase pgvector  → retrieval chunk (scoped per owner_token/shared)
+              └── Supabase pgvector  → retrieval chunk (scoped per user_id/shared, RLS — AUTH-00003)
                         └── Gemini Flash → risposta citata
 
 Script locale (ingest — mai su Vercel)
@@ -45,7 +45,8 @@ Script locale (ingest — mai su Vercel)
 | bgg_id | int unique | id BGG per resolver forum |
 | name | text | nome canonico |
 | base_game_id | uuid null | self-referencing FK → games(id). null = gioco base/standalone; valorizzato = questa riga è un'espansione del gioco puntato. Ogni espansione resta una riga `games` a sé (proprio bgg_id, manual_ready, visibility), i chunk restano scoped per game_id — nessun campo aggiuntivo su `chunks` (D75) |
-| owner_token | uuid null | null = gioco `shared`; altrimenti identifica il browser/dispositivo che ha caricato il manuale (D16) |
+| owner_token | uuid null | **deprecato (AUTH-00006)** — mai popolato in produzione (D67), non generato da alcun client. Isolamento reale via `user_id` (AUTH-00003). Colonna lasciata nello schema, nessuna rimozione richiesta |
+| user_id | uuid null → profiles(id) | proprietario reale del gioco (AUTH-00003); null = gioco `shared` o riga pre-auth. RLS: visibile a chi lo possiede, ad admin, o se `visibility = 'shared'` |
 | visibility | text | `private` (default) oppure `shared` — impostabile solo manualmente in DB, mai self-service utente (D16) |
 | manual_ready | boolean | ingest PDF completato |
 | forum_ready | boolean | ingest forum completato |
@@ -106,8 +107,8 @@ create index on chunks using ivfflat (embedding vector_cosine_ops) with (lists =
 -- filtro per gioco
 create index on chunks (game_id, source);
 
--- filtro per proprietà/visibilità (D16)
-create index on games (owner_token);
+-- filtro per proprietà/visibilità
+create index on games (owner_token); -- legacy, colonna deprecata (AUTH-00006), non rimosso: fuori scope senza task dedicato sullo schema
 create index on games (visibility);
 
 -- deduplicazione ingest — ogni upload privato crea una riga games propria,
@@ -160,8 +161,8 @@ confronta con author_username di ogni post
 
 ### Serving (API route Vercel)
 ```
-domanda utente + game_id + owner_token (da cookie/localStorage)
- → verifica visibilità: games.owner_token = owner_token OR games.visibility = 'shared'
+domanda utente + game_id (sessione utente verificata da proxy.ts, AUTH-00011)
+ → visibilità applicata da RLS: games.user_id = auth.uid() OR games.visibility = 'shared' OR is_admin()
  → Gemini Embeddings → vettore query
  → match_chunks(vettore, game_id, top_k=5)
  → per ogni chunk vincente con source='forum': espandi SEMPRE
@@ -295,8 +296,8 @@ Interfaccia unica per embedding e generazione. Il provider è configurabile via 
 ### match_chunks (Supabase RPC)
 Funzione SQL che prende vettore query + un array di game_id (gioco base + eventuali espansioni selezionate, D75) + top_k e restituisce chunk ordinati per similarità coseno con score. Filtro opzionale per source (manual | forum | entrambi).
 
-### owner_token
-UUID generato lato client (cookie o localStorage) al primo utilizzo dell'app, senza login. Identifica il "proprietario" dei giochi caricati privatamente. Non è autenticazione: è un identificatore di dispositivo/browser, sufficiente per un MVP condiviso con una cerchia ristretta di persone (D16).
+### owner_token (deprecato — AUTH-00006)
+Meccanismo originario (D16): UUID generato lato client per identificare il "proprietario" dei giochi privati senza login, pensato per un MVP a bassissimo attrito. Mai arrivato in produzione (D67) — superato da autenticazione reale (`user_id` + RLS, AUTH-00003) prima di essere usato. Colonna `games.owner_token` resta nello schema mai popolata, `lib/owner-token.ts` vuoto, nessun client la genera.
 
 ### Prompt grounded
 Costante in `lib/prompt.ts`. Istruisce il modello a rispondere esclusivamente dal contesto fornito e a dichiarare esplicitamente quando la risposta non è presente nelle fonti.

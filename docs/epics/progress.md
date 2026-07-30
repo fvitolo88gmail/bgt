@@ -9,7 +9,7 @@ todo/progress/done).*
 | Epica | Directory | Stato |
 |---|---|---|
 | POC | `progress/POC/` | in corso (solo POC-00011 ancora aperto, in pausa; tutto il resto chiuso o deprecato) |
-| AUTH | `progress/AUTH/` | in corso, priorità corrente (v. D65) — AUTH-00001/00003/00004/00005/00008 ✅ (00008: invito via email rimandato, processo manuale via Studio nel frattempo), AUTH-00002 chiusa non applicabile, AUTH-00010 aggiunta (SMTP, in attesa dominio), AUTH-00011 aggiunta (proxy esteso a tutta l'app, supera D68) e in verifica, prossimi: 00006/00007/00009 |
+| AUTH | `progress/AUTH/` | in corso, priorità corrente (v. D65) — AUTH-00001/00003/00004/00005/00006/00008/00011 ✅ (00008: invito via email rimandato, processo manuale via Studio nel frattempo), AUTH-00002 chiusa non applicabile, prossimi: 00007/00009/00010 (00010 in attesa dominio) |
 | BILLING | `progress/BILLING/` | in corso, BILLING-00001 in pausa in attesa di AUTH (v. D65) |
 | TEACH | `todo/TEACH/` | da iniziare |
 | VISUAL | `todo/VISUAL/` | nice to have, in coda |
@@ -134,8 +134,17 @@ chiesto che l'intera app richieda sessione, non solo `/admin` (AUTH-00004). `pro
 da allowlist-route-protette ad allowlist-route-pubbliche (`/login`, `/request-invite`,
 `/api/invite-requests`); API non pubbliche rispondono 401 JSON, pagine rimandano a `/login`.
 Supera D68 solo per la protezione delle route — le RLS con accesso anonimo (AUTH-00003) restano
-invariate come difesa in profondità, non toccato lo schema DB. `tsc`/`lint`/`build` puliti, in
-attesa di verifica manuale (richiede riavvio dev server) — v. D74.
+invariate come difesa in profondità, non toccato lo schema DB. `tsc`/`lint`/`build` puliti — v.
+D74. **Chiusa (2026-07-31):** verifica manuale confermata da Francesco (redirect a `/login` senza
+sessione su `/home`/`/game/[id]`, uso invariato con sessione attiva).
+
+**AUTH-00006 chiusa (sessione 2026-07-31):** deprecazione formale di `owner_token` — nessun
+codice da toccare, mai stato generato/popolato in produzione (D67), il DoD sull'assenza di nuova
+generazione era già soddisfatto prima del task. Lavoro solo su `docs/architecture.md`: principio
+di isolamento (`owner_token` → `user_id`+RLS), diagramma di topologia, schema `games` (riga
+`owner_token` marcata deprecata, aggiunta riga `user_id` mai documentata da AUTH-00003), pipeline
+di serving, sezione astrazioni. Colonna e indice `games.owner_token` lasciati nello schema —
+rimozione fuori scope senza task DB dedicato.
 
 **AUTH-00008/00009 aggiunte (sessione 2026-07-29):** Francesco vuole evitare registrazioni
 indiscriminate se l'app circola tra amici. Invito nativo Supabase (signup pubblico disabilitato
