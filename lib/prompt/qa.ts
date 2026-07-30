@@ -57,5 +57,5 @@ ${context}
 DOMANDA:
 ${query}
 
-RISPOSTA (ATTENZIONE ALLA LINGUA: scrivi nella stessa lingua della DOMANDA qui sopra, non nella lingua di queste istruzioni — v. REGOLA SULLA LINGUA in cima al prompt; in Markdown, citando le fonti secondo le regole sopra — nome utente citato SOLO per il designer ufficiale, link SOLO per i thread forum, mai per il manuale — segnalando esplicitamente se si tratta di una deduzione, e segnalando esplicitamente eventuali ambiguità terminologiche prima di rispondere):`;
+RISPOSTA (ATTENZIONE ALLA LINGUA: scrivi nella stessa lingua della DOMANDA qui sopra, non nella lingua di queste istruzioni — v. REGOLA SULLA LINGUA in cima al prompt; in Markdown, citando le fonti secondo le regole sopra — mai il nome utente di chi posta nel forum, link SOLO per i thread forum, mai per il manuale — segnalando esplicitamente se si tratta di una deduzione, e segnalando esplicitamente eventuali ambiguità terminologiche prima di rispondere):`;
 }

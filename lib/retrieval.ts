@@ -25,13 +25,14 @@ export interface ChunkMatch {
 
 async function queryChunksByEmbedding(
     embedding: number[],
-    gameId: string,
+    gameIds: string | string[],
     topK: number,
     filterSource?: 'manual' | 'forum',
 ): Promise<ChunkMatch[]> {
+    const matchGameIds = Array.isArray(gameIds) ? gameIds : [gameIds];
     const {data, error} = await supabase.rpc('match_chunks', {
         query_embedding: embedding,
-        match_game_id: gameId,
+        match_game_ids: matchGameIds,
         match_count: topK,
         filter_source: filterSource ?? null,
     });
@@ -73,12 +74,12 @@ async function queryChunksByEmbedding(
  */
 export async function matchChunks(
     query: string,
-    gameId: string,
+    gameIds: string | string[],
     topK: number = 5,
     filterSource?: 'manual' | 'forum',
 ): Promise<ChunkMatch[]> {
     const embedding = await geminiClient.embed(query);
-    return queryChunksByEmbedding(embedding, gameId, topK, filterSource);
+    return queryChunksByEmbedding(embedding, gameIds, topK, filterSource);
 }
 
 // Query enhancement: decomposizione + HyDE in un solo step. La
@@ -188,11 +189,13 @@ async function expandForumThread(
 
     const rows = (data ?? []) as ForumPostRow[];
 
+    // Il tag [DESIGNER UFFICIALE DEL GIOCO] non viene incluso nel contenuto: il match tra
+    // designer accreditato e username del post è un confronto di stringa senza legame verificato
+    // con l'account reale, quindi il flag associato non è abbastanza affidabile da citare in prompt.
     const segments = rows.map((post) => {
         const replyTag = post.quoted_author ? ` [in risposta a: ${post.quoted_author}]` : '';
-        const designerTag = post.is_designer_response ? ' [DESIGNER UFFICIALE DEL GIOCO]' : '';
         const postUrl = buildBggThreadUrl(bggThreadId, post.bgg_article_id);
-        return `[Autore: ${post.author_username}${designerTag}]${replyTag} [URL: ${postUrl}] [Data: ${post.post_date ?? ''}]\n${post.body_clean}`;
+        return `[Autore: ${post.author_username}]${replyTag} [URL: ${postUrl}] [Data: ${post.post_date ?? ''}]\n${post.body_clean}`;
     });
 
     const posts: ExpandedForumPost[] = rows.map((post) => ({
@@ -294,13 +297,26 @@ function selectByRerankScore(
  * Per ogni chunk forum vincente espande l'intero thread da forum_posts;
  * i chunk manuale passano invariati. `sources` mantiene i match finali
  * (non espansi) per le citazioni in UI.
+ *
+ * `gameIds` accetta anche un array: usato per includere nella stessa ricerca
+ * il gioco base e una o più espansioni (games.base_game_id) selezionate
+ * dall'utente — ogni espansione resta una riga `games`/set di chunk a sé,
+ * qui vengono solo interrogate insieme.
  */
 export async function matchChunksForPrompt(
     query: string,
-    gameId: string,
+    gameIds: string | string[],
     topK: number = 5,
 ): Promise<RetrievalResult> {
-    const manualLanguage = await fetchManualLanguage(gameId);
+    const matchGameIds = Array.isArray(gameIds) ? gameIds : [gameIds];
+    const [primaryGameId] = matchGameIds;
+    if (!primaryGameId) {
+        throw new Error('matchChunksForPrompt richiede almeno un game_id');
+    }
+    // Il primo id è sempre il gioco "primario" (quello della pagina/sessione di chat) —
+    // usato per la lingua del manuale anche quando sono incluse espansioni, che si
+    // assumono nella stessa lingua del gioco base.
+    const manualLanguage = await fetchManualLanguage(primaryGameId);
     const enhancedQueries = await generateEnhancedQueries(query, manualLanguage);
     const searchQueries = [query, ...enhancedQueries];
 
@@ -323,8 +339,8 @@ export async function matchChunksForPrompt(
             if (result.status !== 'fulfilled') return [];
             const embedding = result.value;
             return [
-                queryChunksByEmbedding(embedding, gameId, RAW_CANDIDATES_PER_SOURCE, 'manual'),
-                queryChunksByEmbedding(embedding, gameId, RAW_CANDIDATES_PER_SOURCE, 'forum'),
+                queryChunksByEmbedding(embedding, matchGameIds, RAW_CANDIDATES_PER_SOURCE, 'manual'),
+                queryChunksByEmbedding(embedding, matchGameIds, RAW_CANDIDATES_PER_SOURCE, 'forum'),
             ];
         }),
     );
@@ -407,7 +423,9 @@ export async function matchChunksForPrompt(
         if (expandedThreadIds.has(match.bggThreadId)) continue; // già espanso da un match precedente dello stesso thread
         expandedThreadIds.add(match.bggThreadId);
 
-        const expanded = await expandForumThread(gameId, match.bggThreadId, match.threadSubject ?? '');
+        // match.gameId, non il/i gameId esterni: con più giochi in ricerca (base + espansioni)
+        // il thread forum appartiene sempre al game_id specifico del chunk vincente.
+        const expanded = await expandForumThread(match.gameId, match.bggThreadId, match.threadSubject ?? '');
         context.push({
             content: expanded.content,
             sourceLabel: `Forum — Thread: ${match.threadSubject ?? ''}`,
