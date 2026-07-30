@@ -21,17 +21,25 @@ export function LoginForm() {
         setSubmitting(true);
         setError(null);
 
-        const supabase = createBrowserSupabaseClient();
-        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+        try {
+            const supabase = createBrowserSupabaseClient();
+            const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
 
-        if (signInError) {
-            setError('Email o password non corretti.');
+            if (signInError) {
+                setError('Email o password non corretti.');
+                setSubmitting(false);
+                return;
+            }
+
+            router.push(redirectTo);
+            router.refresh();
+        } catch {
+            // errore di rete (fetch fallita/interrotta): signInWithPassword può lanciare invece di
+            // restituire { error } — senza questo catch il bottone resta bloccato su "Accesso..."
+            // a tempo indeterminato, soprattutto su connessioni mobili instabili
+            setError('Connessione assente o instabile. Riprova.');
             setSubmitting(false);
-            return;
         }
-
-        router.push(redirectTo);
-        router.refresh();
     }
 
     return (
