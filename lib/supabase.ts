@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { createBrowserClient } from '@supabase/ssr';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -17,7 +17,14 @@ export function createServiceClient() {
     return createClient(supabaseUrl as string, serviceRoleKey);
 }
 
-// client con sessione via cookie, per Client Component (form login/signup, AUTH-00005)
+// client con sessione via cookie, per Client Component (form login/logout). Istanza singola
+// riusata in tutta l'app: creare un GoTrueClient nuovo a ogni chiamata sulla stessa storage key
+// produce "undefined behavior" (warning esplicito della libreria).
+let browserSupabaseClient: SupabaseClient | undefined;
+
 export function createBrowserSupabaseClient() {
-    return createBrowserClient(supabaseUrl as string, supabaseAnonKey as string);
+    if (!browserSupabaseClient) {
+        browserSupabaseClient = createBrowserClient(supabaseUrl as string, supabaseAnonKey as string);
+    }
+    return browserSupabaseClient;
 }

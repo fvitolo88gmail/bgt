@@ -412,8 +412,8 @@ export async function matchChunksForPrompt(
             content: expanded.content,
             sourceLabel: `Forum — Thread: ${match.threadSubject ?? ''}`,
             // Link diretto al post effettivamente recuperato (la radice del
-            // thread, l'unica embeddata per D28), non alla pagina generica
-            // del thread: match.bggUrl include già il bggArticleId corretto.
+            // thread, l'unica embeddata), non alla pagina generica del thread:
+            // match.bggUrl include già il bggArticleId corretto.
             url: match.bggUrl,
             posts: expanded.posts,
         });

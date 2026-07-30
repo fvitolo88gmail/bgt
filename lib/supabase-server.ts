@@ -10,7 +10,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 if (!supabaseUrl) throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL');
 if (!supabaseAnonKey) throw new Error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY');
 
-// client con sessione via cookie, per Server Component/Route Handler/middleware (AUTH-00004)
+// client con sessione via cookie, per Server Component/Route Handler/proxy
 export async function createServerSupabaseClient() {
     const cookieStore = await cookies();
     // supabaseUrl/supabaseAnonKey già validati sopra, il cast è sicuro
@@ -26,7 +26,7 @@ export async function createServerSupabaseClient() {
                     );
                 } catch {
                     // setAll chiamato da un Server Component non può scrivere cookie —
-                    // va bene se la sessione viene comunque rinfrescata dal middleware (AUTH-00004)
+                    // va bene se la sessione viene comunque rinfrescata dal proxy
                 }
             },
         },

@@ -23,6 +23,13 @@ Sei un senior full-stack developer. Implementi un assistente RAG per regole di g
   task, non sparsi nel codice — invecchiano male (il codice sopravvive al numero del task che lo
   ha originato) e appesantiscono la lettura. Se serve tracciare la motivazione di una scelta non
   ovvia, spiegala in una riga nel commento senza citare l'ID della decisione
+
+**REGOLA ASSOLUTA SUI COMMENTI NEL CODICE — NESSUNA ECCEZIONE:**
+**Un commento descrive SOLO ED ESCLUSIVAMENTE il metodo/la funzione/la porzione di codice a cui è**
+**attaccato — cosa fa, perché è scritto così se non ovvio. MAI un riferimento a task, epiche, ID**
+**del decision-log (`D` + numero), bug (`BUG-NNN`), nomi di sessione o date. Prima di scrivere**
+**`AUTH-`, `POC-`, `BUG-`, `D` seguito da un numero, o il nome di un'epica dentro un commento nel**
+**codice: FERMATI. Quel contenuto appartiene al task file o al decision-log, mai al codice.**
 ## Struttura file
 - Segui la struttura di cartelle definita in `architecture.md`
 - Non creare file fuori dalla struttura prevista — se ritieni necessario un nuovo file, chiedi prima
@@ -50,6 +57,10 @@ Sei un senior full-stack developer. Implementi un assistente RAG per regole di g
   in prosa/decision-log, lo slug serve solo a rendere leggibile una lista di file senza doverli
   aprire. Ogni file task riporta nel titolo il proprio ID e contiene il testo del task e il
   relativo DoD
+- Le sezioni di implementazione/verifica nei file task, e le note nel file indice `<EPICA>.md`,
+  restano stringate: elenco puntato di cosa è cambiato e com'è stato verificato, non narrazione
+  estesa passo-passo. Il dettaglio (perché un tentativo non ha funzionato, alternative provate)
+  non va documentato per esteso — una riga di sintesi basta
 - Quando un task cambia stato, sposta il file (`mv`) nella sottocartella corretta all'interno
   della directory dell'epica e aggiorna la tabella riassuntiva nel file indice dell'epica
 - Quando un'epica cambia stato (es. da todo a progress, o da progress a done perché tutti i task
@@ -69,8 +80,10 @@ Sei un senior full-stack developer. Implementi un assistente RAG per regole di g
 - Non loggare ogni micro-decisione implementativa (naming, refactor minori, ordine dei parametri)
 - Usa il template in fondo al file, con ID progressivo
 - Ogni nuova entry in `decision-log.md` deve restare minimale fin da subito (contesto, scelta,
-  motivazione — max ~6-8 righe, stesso formato usato per la condensazione delle entry storiche in
-  epica 0510): non farlo ricrescere verboso, altrimenti torna ingestibile
+  motivazione — max ~6-8 righe totali, stesso formato usato per la condensazione delle entry
+  storiche in epica 0510): non farlo ricrescere verboso, altrimenti torna ingestibile. Se
+  un'entry supera le 8 righe, taglia: indagini, tentativi falliti, alternative scartate non ci
+  vanno — solo contesto, scelta, motivazione
 - `docs/archived/decision-log-archive.md` è congelato: contiene solo il dettaglio esteso delle
   entry storiche (fino a D39, condensate in epica 0510). Non aggiungere mai nuove entry né
   dettagli lì — le decisioni successive vivono solo, in forma condensata, in `decision-log.md`

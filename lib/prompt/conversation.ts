@@ -1,9 +1,8 @@
 // lib/prompt/conversation.ts
 //
-// Specializzazione "conversation": chat con contesto/storico (v.
-// POC-00016). Mantiene l'impianto anti-allucinazione e le regole di
-// citazione condivise con ./qa.ts, ma alleggerisce il formalismo FATTO
-// DIRETTO/DEDUZIONE e usa lo STORICO per risolvere riferimenti impliciti.
+// Specializzazione "conversation": chat con contesto/storico. Mantiene l'impianto
+// anti-allucinazione e le regole di citazione condivise con ./qa.ts, ma alleggerisce il
+// formalismo FATTO DIRETTO/DEDUZIONE e usa lo STORICO per risolvere riferimenti impliciti.
 
 import {
     CITATION_FORMAT_RULES,

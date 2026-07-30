@@ -14,12 +14,10 @@ import { supabase } from '@/lib/supabase';
 export default function GamePage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
     const searchParams = useSearchParams();
-    // Epica 0900 (Chat con contesto) — C5: modalità scelta in /home, passata
-    // via query param. Default "qa" se assente o valore non riconosciuto.
+    // modalità scelta in /home, passata via query param. Default "qa" se assente o non riconosciuta.
     const mode = searchParams.get('mode') === 'conversation' ? 'conversation' : 'qa';
-    // D45: un id di sessione nuovo a ogni apertura/refresh della pagina —
-    // niente continuità tra aperture diverse della stessa chat per ora
-    // (v. decision-log.md).
+    // un id di sessione nuovo a ogni apertura/refresh della pagina — niente continuità tra
+    // aperture diverse della stessa chat per ora
     const [sessionId] = useState(() => crypto.randomUUID());
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState('');

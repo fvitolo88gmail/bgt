@@ -1,8 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
-// tutto richiede sessione tranne queste route (AUTH-00011): l'app non ammette più uso
-// anonimo, coerente con la registrazione solo su invito (AUTH-00008).
+// tutto richiede sessione tranne queste route — l'app non ammette uso anonimo, la registrazione
+// è solo su invito.
 const PUBLIC_PATH_PREFIXES = ['/login', '/request-invite', '/api/invite-requests'];
 
 function isPublicPath(pathname: string): boolean {

@@ -6,6 +6,26 @@ import { createBrowserSupabaseClient } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 
+const LOGIN_TIMEOUT_MS = 15000;
+
+// una fetch su mobile può restare sospesa senza mai risolversi né fallire (cambio rete a metà
+// richiesta) — un try/catch da solo non basta, serve un limite di tempo esplicito
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+    return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error('timeout')), ms);
+        promise.then(
+            (value) => {
+                clearTimeout(timer);
+                resolve(value);
+            },
+            (err: unknown) => {
+                clearTimeout(timer);
+                reject(err);
+            }
+        );
+    });
+}
+
 export function LoginForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -23,7 +43,10 @@ export function LoginForm() {
 
         try {
             const supabase = createBrowserSupabaseClient();
-            const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+            const { error: signInError } = await withTimeout(
+                supabase.auth.signInWithPassword({ email, password }),
+                LOGIN_TIMEOUT_MS
+            );
 
             if (signInError) {
                 setError('Email o password non corretti.');
@@ -33,11 +56,13 @@ export function LoginForm() {
 
             router.push(redirectTo);
             router.refresh();
-        } catch {
-            // errore di rete (fetch fallita/interrotta): signInWithPassword può lanciare invece di
-            // restituire { error } — senza questo catch il bottone resta bloccato su "Accesso..."
-            // a tempo indeterminato, soprattutto su connessioni mobili instabili
-            setError('Connessione assente o instabile. Riprova.');
+        } catch (err) {
+            const timedOut = err instanceof Error && err.message === 'timeout';
+            setError(
+                timedOut
+                    ? 'La richiesta sta impiegando troppo tempo. Controlla la connessione e riprova.'
+                    : 'Connessione assente o instabile. Riprova.'
+            );
             setSubmitting(false);
         }
     }
