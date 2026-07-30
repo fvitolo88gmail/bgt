@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { createBrowserSupabaseClient } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -27,7 +27,6 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 }
 
 export function LoginForm() {
-    const router = useRouter();
     const searchParams = useSearchParams();
     const redirectTo = searchParams.get('redirect') ?? '/home';
 
@@ -54,8 +53,11 @@ export function LoginForm() {
                 return;
             }
 
-            router.push(redirectTo);
-            router.refresh();
+            // redirect pieno (non router.push/refresh): forza un nuovo request al server con i
+            // cookie appena scritti, senza dipendere dal fetch RSC della navigazione client-side
+            // — quel fetch può restare sospeso sulle stesse condizioni di rete che bloccano
+            // signInWithPassword, lasciando la UI ferma pur essendo già autenticati
+            window.location.href = redirectTo;
         } catch (err) {
             const timedOut = err instanceof Error && err.message === 'timeout';
             setError(

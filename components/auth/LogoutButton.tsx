@@ -1,20 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { createBrowserSupabaseClient } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
 
 export function LogoutButton() {
-    const router = useRouter();
     const [signingOut, setSigningOut] = useState(false);
 
     async function handleLogout() {
         setSigningOut(true);
         const supabase = createBrowserSupabaseClient();
         await supabase.auth.signOut();
-        router.push('/home');
-        router.refresh();
+        // redirect pieno, non router.push/refresh: v. LoginForm.tsx per il motivo
+        window.location.href = '/home';
     }
 
     return (

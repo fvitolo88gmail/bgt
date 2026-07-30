@@ -61,3 +61,17 @@ quella storage key, più plausibile di una generica instabilità di rete.
 `createBrowserSupabaseClient()` ora è un singleton: la prima chiamata crea l'istanza, le
 successive riusano la stessa. Nessun cambiamento per i chiamanti (`LoginForm`, `LogoutButton`).
 Verificato `tsc`/`lint`/`build` puliti.
+
+## Riapparso in altra forma (stessa sessione)
+
+Nuovo sintomo, causa diversa: `signInWithPassword` va a buon fine (sessione creata, confermato
+ricaricando la pagina), ma `router.push(redirectTo)` + `router.refresh()` — navigazione soft
+lato client, fetch del payload RSC — resta anch'essa sospesa sulle stesse condizioni di rete
+mobile, lasciando la UI ferma sul login pur essendo già autenticati.
+
+## Fix (v4)
+
+Sostituito `router.push`/`router.refresh()` con un redirect pieno (`window.location.href`) in
+`LoginForm.tsx` e `LogoutButton.tsx`: forza un nuovo request al server con i cookie appena
+scritti, bypassando il router client-side di Next.js e la sua fetch RSC. Verificato
+`tsc`/`lint`/`build` puliti.
