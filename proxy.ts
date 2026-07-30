@@ -1,12 +1,12 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
-// prefissi di route che richiedono una sessione attiva. Vuoto salvo il placeholder /admin:
-// altre epiche (es. ADMIN-CONSOLE) aggiungono qui i propri prefissi quando arrivano.
-const PROTECTED_PATH_PREFIXES = ['/admin'];
+// tutto richiede sessione tranne queste route (AUTH-00011): l'app non ammette più uso
+// anonimo, coerente con la registrazione solo su invito (AUTH-00008).
+const PUBLIC_PATH_PREFIXES = ['/login', '/request-invite', '/api/invite-requests'];
 
-function isProtectedPath(pathname: string): boolean {
-    return PROTECTED_PATH_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+function isPublicPath(pathname: string): boolean {
+    return PUBLIC_PATH_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 
 // Client Supabase costruito qui e non riusando lib/supabase-server.ts: proxy.ts legge/scrive
@@ -42,7 +42,12 @@ export async function proxy(request: NextRequest) {
         data: { user },
     } = await supabase.auth.getUser();
 
-    if (isProtectedPath(request.nextUrl.pathname) && !user) {
+    if (!isPublicPath(request.nextUrl.pathname) && !user) {
+        // un fetch non gestisce bene un redirect verso una pagina HTML: le API rispondono 401,
+        // le pagine vengono rimandate al login (con redirect di ritorno)
+        if (request.nextUrl.pathname.startsWith('/api/')) {
+            return NextResponse.json({ error: 'Non autenticato' }, { status: 401 });
+        }
         const loginUrl = new URL('/login', request.url);
         loginUrl.searchParams.set('redirect', request.nextUrl.pathname);
         return NextResponse.redirect(loginUrl);

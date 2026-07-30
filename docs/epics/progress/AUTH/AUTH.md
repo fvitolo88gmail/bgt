@@ -28,6 +28,7 @@ Vedi directory `AUTH/` per i task singoli.
 | AUTH-00008 | Registrazione solo su invito | ✅ done (eccezione nota) |
 | AUTH-00009 | Stato utente enabled/disabled | todo |
 | AUTH-00010 | Configurazione SMTP custom (Resend) | todo — in attesa dominio |
+| AUTH-00011 | Estensione route protette a tutta l'app | in corso — verifica DoD |
 
 ## Note aperte
 
@@ -103,3 +104,12 @@ Vedi directory `AUTH/` per i task singoli.
   `createServerSupabaseClient()`. Verificato `tsc`/`lint`/`build` puliti. **Chiusa:** verifica
   manuale confermata da Francesco (login/logout con utente creato via Studio, header mostra
   l'email) — v. `done/AUTH-00005-ui-login-signup-logout.md`.
+- AUTH-00011 aggiunta (sessione 2026-07-30): dopo la verifica di AUTH-00005, Francesco ha deciso
+  che l'intera app deve richiedere sessione — non solo `/admin` come in AUTH-00004. Supera D68
+  limitatamente alla protezione delle route (non alle RLS, lasciate come difesa in profondità —
+  v. nota nel task file): l'uso anonimo non è più ammesso, coerente con la registrazione solo su
+  invito (AUTH-00008). `proxy.ts` invertito da allowlist-di-route-protette ad
+  allowlist-di-route-pubbliche (`/login`, `/request-invite`, `/api/invite-requests`); le API non
+  pubbliche rispondono 401 JSON invece del redirect HTML usato per le pagine. `tsc`/`lint`/`build`
+  puliti. In attesa di verifica manuale con Francesco (richiede riavvio del dev server) prima
+  della chiusura — v. `progress/AUTH-00011-route-protette-globali.md`.

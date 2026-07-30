@@ -192,7 +192,8 @@ domanda utente + game_id + owner_token (da cookie/localStorage)
 │               └── todo/ | progress/ | done/   # un file per task (<EPICA>-NNNNN.md)
 ├── .env.local
 ├── proxy.ts                    # ex middleware.ts (Next.js 16 l'ha rinominato, D71) — refresh
-│                                # sessione + gate sulle route protette (PROTECTED_PATH_PREFIXES)
+│                                # sessione + gate su tutta l'app tranne PUBLIC_PATH_PREFIXES
+│                                # (login, request-invite; AUTH-00011, D74)
 │
 ├── app/                        # Next.js app router
 │   ├── page.tsx                # ancora boilerplate create-next-app, non riutilizzata
@@ -201,7 +202,7 @@ domanda utente + game_id + owner_token (da cookie/localStorage)
 │   ├── game/[id]/
 │   │   └── page.tsx            # chat UI
 │   ├── admin/
-│   │   └── page.tsx            # placeholder protetto da proxy.ts, in attesa di ADMIN-CONSOLE
+│   │   └── page.tsx            # placeholder, in attesa di ADMIN-CONSOLE (ora protetto come tutta l'app)
 │   ├── request-invite/
 │   │   └── page.tsx            # form pubblico "richiedi accesso" (AUTH-00008)
 │   ├── login/

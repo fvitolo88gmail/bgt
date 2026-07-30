@@ -874,6 +874,24 @@ con l'acquisto del dominio.
 
 ---
 
+### D74 — AUTH-00011: route protette estese a tutta l'app, supera D68
+
+**Contesto:** dopo la verifica manuale di AUTH-00005 (login/logout), Francesco ha chiesto che
+l'intera app richieda sessione attiva, non solo `/admin` (scope originale di AUTH-00004, D68:
+accesso anonimo mantenuto per giochi condivisi/chat).
+**Scelta:** `proxy.ts` invertito da allowlist-di-route-protette ad allowlist-di-route-pubbliche
+(`/login`, `/request-invite`, `/api/invite-requests`); tutto il resto — incluse `/home`,
+`/game/[id]`, `/api/chat` — richiede utente autenticato. Le API non pubbliche rispondono `401`
+JSON, le pagine rimandano a `/login`.
+**Motivazione:** coerente con la registrazione solo su invito (AUTH-00008) — non ha senso
+lasciare uso anonimo pieno dell'app se non ci si può nemmeno registrare da soli. Solo `/login` e
+il flusso di richiesta invito restano pubblici perché servono a raggiungere l'accesso stesso.
+**Nota aperta:** le RLS anonime su `games`/tabelle derivate (AUTH-00003) non sono state toccate
+— restano come difesa in profondità, ora codice morto nel flusso normale ma non rimosse (tocca
+lo schema DB, fuori scope senza task esplicito).
+
+---
+
 ### D[N] — Titolo decisione
 **Contesto:** perché si è posta la questione
 **Opzioni:** opzione A · opzione B · opzione C
