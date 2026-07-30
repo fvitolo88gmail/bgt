@@ -18,9 +18,11 @@ async function main() {
     const jsonPath = getFlag(args, '--json');
     const pdfPath = getFlag(args, '--pdf');
     const outPath = getFlag(args, '--out');
+    // Default 'inglese' per non rompere gli ingest già lanciati con questo flag assente.
+    const manualLanguage = getFlag(args, '--lang') ?? 'inglese';
 
     if (!jsonPath || !pdfPath || !outPath) {
-        console.error('Uso: --json <path> --pdf <path> --out <path>');
+        console.error('Uso: --json <path> --pdf <path> --out <path> [--lang <lingua>]');
         process.exit(1);
     }
 
@@ -39,7 +41,7 @@ async function main() {
 
     for (const [i, section] of outline.entries()) {
         console.log(`  [${i + 1}/${outline.length}] ${section.title}...`);
-        const body = await generateSectionMarkdownFromPdf(section, pages, pdfPath);
+        const body = await generateSectionMarkdownFromPdf(section, pages, pdfPath, manualLanguage);
         const pageLabel = section.startPage === section.endPage
             ? `p. ${section.startPage}`
             : `p. ${section.startPage}-${section.endPage}`;

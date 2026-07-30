@@ -34,9 +34,10 @@ async function main() {
     const title = getFlag(args, '--title');
     const startRaw = getFlag(args, '--start');
     const endRaw = getFlag(args, '--end');
+    const manualLanguage = getFlag(args, '--lang') ?? 'inglese';
 
     if (!jsonPath || !pdfPath || !title || !startRaw || !endRaw) {
-        console.error('Uso: --json <path> --pdf <path> --title "<titolo>" --start N --end N');
+        console.error('Uso: --json <path> --pdf <path> --title "<titolo>" --start N --end N [--lang <lingua>]');
         process.exit(1);
     }
 
@@ -48,7 +49,7 @@ async function main() {
     };
 
     console.error(`Rigenero "${title}" [p. ${section.startPage}-${section.endPage}]...`);
-    const body = await generateSectionMarkdownFromPdf(section, pages, pdfPath);
+    const body = await generateSectionMarkdownFromPdf(section, pages, pdfPath, manualLanguage);
 
     const pageLabel = section.startPage === section.endPage
         ? `p. ${section.startPage}`

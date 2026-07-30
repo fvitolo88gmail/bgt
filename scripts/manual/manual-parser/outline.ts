@@ -20,6 +20,39 @@ Regole:
 - ECCEZIONE legittima: se un argomento è davvero frammentato in punti non contigui, è corretto creare sezioni separate con range diversi.
 - Non includere numeri di pagina isolati o artefatti OCR come voci di sezione.`;
 
+/**
+ * Il modello a volte omette startPage/endPage o restituisce tipi sbagliati per una
+ * singola sezione (osservato: endPage assente sulla prima sezione di un documento).
+ * Senza questa validazione l'errore emergeva solo molto più tardi, dentro la
+ * generazione vision della sezione (messaggio criptico "nessuna pagina fisica
+ * trovata"), dopo aver già consumato la chiamata Gemini di Fase 1 — qui fallisce
+ * subito con un messaggio che indica esattamente quale sezione è malformata.
+ */
+function validateOutline(parsed: unknown): SectionOutline[] {
+    if (!Array.isArray(parsed)) {
+        throw new Error(`L'outline non è un array JSON: ${JSON.stringify(parsed)}`);
+    }
+
+    return parsed.map((raw, index) => {
+        const section = raw as Partial<SectionOutline>;
+        if (typeof section.title !== 'string' || section.title.trim().length === 0) {
+            throw new Error(`Outline non valido: sezione #${index} senza titolo: ${JSON.stringify(raw)}`);
+        }
+        if (typeof section.startPage !== 'number' || typeof section.endPage !== 'number') {
+            throw new Error(
+                `Outline non valido: sezione #${index} ("${section.title}") ha startPage/endPage non numerici ` +
+                `(risposta malformata del modello, riprova): ${JSON.stringify(raw)}`,
+            );
+        }
+        if (section.endPage < section.startPage) {
+            throw new Error(
+                `Outline non valido: sezione #${index} ("${section.title}") ha endPage < startPage: ${JSON.stringify(raw)}`,
+            );
+        }
+        return { title: section.title, startPage: section.startPage, endPage: section.endPage };
+    });
+}
+
 async function identifySectionsRaw(pages: ExtractedPage[]): Promise<SectionOutline[]> {
     const rawText = pages
         .map((p) => `--- INIZIO PAGINA ${p.page} ---\n${p.content}\n--- FINE PAGINA ${p.page} ---`)
@@ -30,9 +63,12 @@ async function identifySectionsRaw(pages: ExtractedPage[]): Promise<SectionOutli
     const cleaned = response.replace(/```json|```/g, '').trim();
 
     try {
-        return JSON.parse(cleaned) as SectionOutline[];
+        return validateOutline(JSON.parse(cleaned));
     } catch (err) {
-        throw new Error(`Impossibile interpretare l'outline come JSON: "${cleaned}". Errore: ${err}`);
+        if (err instanceof SyntaxError) {
+            throw new Error(`Impossibile interpretare l'outline come JSON: "${cleaned}". Errore: ${err}`);
+        }
+        throw err;
     }
 }
 
@@ -83,10 +119,17 @@ function mergeOverlappingSections(sections: SectionOutline[]): SectionOutline[] 
             const candidate = sections[j];
             if (!candidate) continue;
 
+            // Range di pagine identico (non solo overlap alto): la generazione vision vede
+            // esattamente le stesse pagine per entrambe le sezioni, quindi produce quasi
+            // sempre contenuto duplicato — anche quando i titoli sono troppo diversi per
+            // superare TITLE_SIMILARITY_THRESHOLD (osservato su SETI: "Introduzione: X" vs
+            // "X: Carte e Y", stessa pagina, similarità titolo sotto soglia). In questo caso
+            // il merge scatta a prescindere dal titolo.
+            const identicalRange = current.startPage === candidate.startPage && current.endPage === candidate.endPage;
             const pagesOverlap = overlapRatio(current, candidate) >= PAGE_OVERLAP_THRESHOLD;
             const titlesSimilar = titleSimilarity(current.title, candidate.title) >= TITLE_SIMILARITY_THRESHOLD;
 
-            if (pagesOverlap && titlesSimilar) {
+            if (identicalRange || (pagesOverlap && titlesSimilar)) {
                 console.warn(
                     `⚠️  Sezioni probabilmente duplicate: "${current.title}" [p.${current.startPage}-${current.endPage}] e "${candidate.title}" [p.${candidate.startPage}-${candidate.endPage}] — unite.`,
                 );

@@ -25,6 +25,21 @@ returning id;
   implementato S3.3 — ricerca su BGG).
 - Copia l'`id` (uuid) restituito: serve in tutti gli step successivi.
 
+**Se stai ingestando un'espansione** (D75): crea comunque una riga `games` a
+sé, col proprio `bgg_id`, valorizzando `base_game_id` con l'`id` del gioco
+base:
+
+```sql
+insert into games (name, bgg_id, base_game_id, visibility, manual_ready, forum_ready)
+values ('Nome Espansione', {bgg_id_espansione}, '{uuid-gioco-base}', 'shared', false, false)
+returning id;
+```
+
+Il resto della procedura (step 1-5) è identico, usando l'`id` dell'espansione
+come `--game-id`. Ricorda che `visibility` va impostata separatamente per
+ogni riga: il gioco base "shared" non rende visibili di riflesso i chunk
+dell'espansione se la sua riga resta `private`.
+
 ---
 
 ## 1. Il manuale è fotografato o è già un PDF testuale?
@@ -57,6 +72,7 @@ di `extract-pdf.py`).
 ```bash
 brew install tesseract        # motore OCR
 brew install tesseract-lang   # pacchetti lingua aggiuntivi (es. italiano)
+brew install ocrmypdf         # tool che orchestra tesseract sul PDF, non incluso sopra
 ```
 
 Verifica che la lingua che ti serve sia disponibile:

@@ -17,6 +17,7 @@ todo/progress/done).*
 | CHAT-LISTING | `todo/CHAT-LISTING/` | da iniziare |
 | ADMIN-CONSOLE | `todo/ADMIN-CONSOLE/` | da iniziare |
 | GAME-REQUEST | `todo/GAME-REQUEST/` | da iniziare, priorità molto bassa |
+| EXPANSIONS | `progress/EXPANSIONS/` | in corso — EXPANSIONS-00001 in verifica (v. D75) |
 
 ## Priorità corrente
 
@@ -156,6 +157,16 @@ da `AUTH-00001`, sovrappone `BILLING-00002`). Tutte da iniziare, nessuna priorit
 Badge, Card, Header, Footer, Modal, OwlMark — DESIGN-00002), applicati a tutte le pagine esistenti
 (home, chat, citazioni — DESIGN-00003). `Modal` pronto ma non ancora agganciato a nessuna
 schermata; nessuna pagina login/admin esiste ancora nel codice (solo nel mockup di riferimento).
+
+**Epica EXPANSIONS aggiunta (sessione 2026-07-30):** nata durante l'ingest di SETI (espansione
+Space Agencies) — Francesco ha chiesto di evitare che il retrieval consideri sempre valide le
+regole di un'espansione anche quando si gioca solo la base. `games.base_game_id`
+(self-referencing FK nullable) invece di un tag su `chunks` (v. D75): ogni espansione resta una
+riga `games` a sé con proprio `bgg_id`/`manual_ready`/`visibility`; `match_chunks`/
+`lib/retrieval.ts`/`/api/chat` accettano un insieme di game_id; toggle in `/game/[id]` per
+attivare le espansioni collegate, non selezionate di default. Codice completo, `tsc`/`lint`
+puliti — **in verifica**: migration da applicare e ingest di SETI (base + espansione) da fare in
+locale, non ancora testato end-to-end.
 
 ## Note aperte
 

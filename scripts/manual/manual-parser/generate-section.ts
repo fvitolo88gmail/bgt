@@ -21,6 +21,7 @@ export async function generateSectionMarkdownFromPdf(
     section: SectionOutline,
     pages: ExtractedPage[],
     pdfPath: string,
+    manualLanguage: string = 'inglese',
 ): Promise<string> {
     const physicalPages = logicalRangeToPhysicalPages(pages, section.startPage, section.endPage);
     if (physicalPages.length === 0) {
@@ -28,6 +29,7 @@ export async function generateSectionMarkdownFromPdf(
     }
 
     const pdfBase64 = await extractPdfPagesAsBase64(pdfPath, physicalPages);
-    const prompt = `${SECTION_PROMPT_VISION}\n\nSEZIONE DA TRASCRIVERE: ${section.title}\n\nRICORDA: il manuale è in INGLESE. Scrivi OGNI PAROLA del tuo output in inglese, comprese le frasi descrittive che scrivi tu stesso — non solo le etichette copiate dalle pagine. Zero parole italiane nel markdown restituito, a parte eventuali nomi propri.`;
+    const languageUpper = manualLanguage.toUpperCase();
+    const prompt = `${SECTION_PROMPT_VISION}\n\nSEZIONE DA TRASCRIVERE: ${section.title}\n\nRICORDA: il manuale è in ${languageUpper}. Scrivi OGNI PAROLA del tuo output in ${manualLanguage}, comprese le frasi descrittive che scrivi tu stesso — non solo le etichette copiate dalle pagine. Zero parole in una lingua diversa da ${manualLanguage} nel markdown restituito, a parte eventuali nomi propri.`;
     return generateFromPdfBase64(prompt, pdfBase64);
 }

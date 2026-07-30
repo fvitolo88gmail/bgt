@@ -44,6 +44,7 @@ Script locale (ingest — mai su Vercel)
 | id | uuid PK | |
 | bgg_id | int unique | id BGG per resolver forum |
 | name | text | nome canonico |
+| base_game_id | uuid null | self-referencing FK → games(id). null = gioco base/standalone; valorizzato = questa riga è un'espansione del gioco puntato. Ogni espansione resta una riga `games` a sé (proprio bgg_id, manual_ready, visibility), i chunk restano scoped per game_id — nessun campo aggiuntivo su `chunks` (D75) |
 | owner_token | uuid null | null = gioco `shared`; altrimenti identifica il browser/dispositivo che ha caricato il manuale (D16) |
 | visibility | text | `private` (default) oppure `shared` — impostabile solo manualmente in DB, mai self-service utente (D16) |
 | manual_ready | boolean | ingest PDF completato |
@@ -292,7 +293,7 @@ domanda utente + game_id + owner_token (da cookie/localStorage)
 Interfaccia unica per embedding e generazione. Il provider è configurabile via env var. Permette di swappare Gemini con Ollama senza modificare il codice chiamante.
 
 ### match_chunks (Supabase RPC)
-Funzione SQL che prende vettore query + game_id + top_k e restituisce chunk ordinati per similarità coseno con score. Filtro opzionale per source (manual | forum | entrambi).
+Funzione SQL che prende vettore query + un array di game_id (gioco base + eventuali espansioni selezionate, D75) + top_k e restituisce chunk ordinati per similarità coseno con score. Filtro opzionale per source (manual | forum | entrambi).
 
 ### owner_token
 UUID generato lato client (cookie o localStorage) al primo utilizzo dell'app, senza login. Identifica il "proprietario" dei giochi caricati privatamente. Non è autenticazione: è un identificatore di dispositivo/browser, sufficiente per un MVP condiviso con una cerchia ristretta di persone (D16).

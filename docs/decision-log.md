@@ -892,6 +892,43 @@ lo schema DB, fuori scope senza task esplicito).
 
 ---
 
+### D75 — Ingest SETI: espansioni modellate come righe `games` collegate, non come tag su `chunks`
+**Contesto:** ingest di SETI con l'espansione Space Agencies (D03/copyright escluso upload
+self-service). Prima ipotesi (tag testuale/colonna `expansion` su `chunks`) scartata su
+osservazione di Francesco: un'espansione ha già un proprio `bgg_id` su BGG, modellarla come
+gioco a sé è più naturale e generalizza a più espansioni/forum propri.
+**Opzioni:** colonna `chunks.expansion` (slug) · tabella di join `game_expansions` (n:n) ·
+`games.base_game_id` self-referencing (1:n, un'espansione ha una base).
+**Scelta:** `games.base_game_id` nullable. `match_chunks`/retrieval accettano un array di
+game_id (base + espansioni selezionate in chat) invece di uno solo; `chunks` invariata.
+**Motivazione:** riusa lo schema esistente (stesso stile di `chunks.game_id`), zero rischio di
+collisione pagina/sezione tra manuali diversi (game_id diversi), copre il caso reale (n:1) senza
+la complessità di una tabella di join non necessaria oggi.
+
+---
+
+### D76 — extract-pdf.py: bug perdita contenuto su pagine spread + nuovo caso di rilevamento
+**Contesto:** ingest di SETI: Space Agencies (PDF con dimensioni pagina eterogenee, alcune a
+larghezza doppia dichiarata — pagine affiancate nel proprio page box, non testo che sconfina da
+una pagina dichiarata singola come nel caso D19/D20). `is_full_spread` non rilevava questo caso
+(il testo resta dentro la larghezza già "doppia" dichiarata), quindi 3 pagine fisiche su 5 non
+venivano divise. Verificando la stessa funzione su SETI base è emerso un bug indipendente e più
+grave: quando uno spread viene diviso in due, la metà destra viene salvata con
+`content_left` invece di `content_right` — perdita silenziosa del testo reale della pagina
+destra (verificato: pagina fisica 10 del manuale SETI produceva due pagine logiche con
+contenuto identico).
+**Scelta:** `is_full_spread` accetta ora anche una larghezza di riferimento "pagina singola"
+(il minimo tra tutte le pagine del documento) e segnala spread anche quando una pagina è
+dichiarata a larghezza ~doppia rispetto ad essa; il midpoint di split usa `declared_width / 2`
+quando disponibile, non solo il punto medio del testo. Corretto il bug `content_left`/
+`content_right`.
+**Motivazione:** il bug perdita-contenuto è indipendente dal documento specifico e probabilmente
+già presente in ingest precedenti con pagine spread (da verificare caso per caso se riemerge un
+problema di retrieval) — corretto subito perché perde informazione in modo silenzioso, non un
+semplice miglioramento incrementale dell'euristica.
+
+---
+
 ### D[N] — Titolo decisione
 **Contesto:** perché si è posta la questione
 **Opzioni:** opzione A · opzione B · opzione C

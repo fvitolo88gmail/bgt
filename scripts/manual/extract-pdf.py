@@ -149,28 +149,41 @@ def extract_page_words(page) -> list[dict]:
     return page.extract_words(use_text_flow=False, keep_blank_chars=False)
 
 
-def is_full_spread(words: list[dict], declared_width: float) -> bool:
+def is_full_spread(words: list[dict], declared_width: float, reference_single_width: float | None = None) -> bool:
     """
-    Una pagina è considerata uno "spread completo" (doppia pagina fisica
-    con coordinate assolute) se il testo si estende ben oltre la larghezza
-    di pagina dichiarata. Vedi decision-log.md D19/D20.
+    Una pagina è considerata uno "spread completo" (doppia pagina fisica) in due casi:
+    1. il testo si estende ben oltre la larghezza di pagina dichiarata (coordinate
+       assolute su una pagina dichiarata a larghezza singola) — vedi D19/D20;
+    2. la pagina stessa è dichiarata a una larghezza ~doppia rispetto alle altre pagine
+       del documento (PDF con dimensioni pagina eterogenee, dove le pagine doppie sono
+       genuinamente due pagine fisiche affiancate nel proprio page box) — vedi D76.
+    Senza il caso 2, un documento con pagine di larghezza mista (es. copertina a pagina
+    singola, interno a doppia pagina) non viene rilevato: `max_x1` resta dentro i limiti
+    della propria larghezza dichiarata, che è già "doppia".
     """
     if not words:
         return False
     max_x1 = max(w['x1'] for w in words)
-    return max_x1 > declared_width * 1.3
+    overflow_spread = max_x1 > declared_width * 1.3
+    declared_double = reference_single_width is not None and declared_width > reference_single_width * 1.6
+    return overflow_spread or declared_double
 
 
-def extract_spread_as_two_pages(words: list[dict]) -> tuple[str, str]:
+def extract_spread_as_two_pages(words: list[dict], declared_width: float | None = None) -> tuple[str, str]:
     """
-    Data la lista di parole di uno spread a doppia pagina (coordinate
-    assolute), calcola il punto medio reale e produce il testo delle
-    due metà (sinistra, destra), ciascuna con rilevamento colonne interno
-    come rifinitura.
+    Data la lista di parole di uno spread a doppia pagina, calcola il punto medio e
+    produce il testo delle due metà (sinistra, destra), ciascuna con rilevamento colonne
+    interno come rifinitura.
+
+    Il midpoint usa `declared_width / 2` quando disponibile (pagina dichiarata a doppia
+    larghezza, D76): geometricamente più corretto del punto medio del testo, che può
+    essere sbilanciato se una metà ha molto meno testo dell'altra (es. immagine grande).
+    Fallback al punto medio del testo (comportamento originale, D19/D20) quando la
+    larghezza dichiarata non è nota o non è affidabile (caso overflow su pagina singola).
     """
     max_x1 = max(w['x1'] for w in words)
     min_x0 = min(w['x0'] for w in words)
-    midpoint = max_x1 / 2
+    midpoint = declared_width / 2 if declared_width is not None else max_x1 / 2
 
     left_words = [w for w in words if w['x0'] < midpoint]
     right_words = [w for w in words if w['x0'] >= midpoint]
@@ -191,14 +204,22 @@ def extract_pdf(pdf_path: str) -> list[dict]:
     logical_page_num = 0
 
     with pdfplumber.open(pdf_path) as pdf:
-        i = 0
         raw_pages = pdf.pages
+
+        # Larghezza di riferimento per una pagina "singola": il minimo tra tutte le
+        # pagine del documento. Le pagine spread a larghezza dichiarata doppia (D76)
+        # non possono essere più strette di una pagina singola reale, quindi il minimo
+        # è un proxy affidabile anche in documenti a larghezza mista (copertina singola,
+        # interno a doppia pagina o viceversa).
+        reference_single_width = min(p.width for p in raw_pages) if raw_pages else None
+
+        i = 0
         while i < len(raw_pages):
             page = raw_pages[i]
             words = extract_page_words(page)
 
-            if is_full_spread(words, page.width):
-                left_text, right_text = extract_spread_as_two_pages(words)
+            if is_full_spread(words, page.width, reference_single_width):
+                left_text, right_text = extract_spread_as_two_pages(words, page.width)
 
                 logical_page_num += 1
                 content_left = clean_text(left_text)
@@ -208,11 +229,11 @@ def extract_pdf(pdf_path: str) -> list[dict]:
                 logical_page_num += 1
                 content_right = clean_text(right_text)
                 if len(content_right) >= 50:
-                    pages.append({"page": logical_page_num, "physicalPage": i, "content": content_left})
+                    pages.append({"page": logical_page_num, "physicalPage": i, "content": content_right})
 
                 if i + 1 < len(raw_pages):
                     next_words = extract_page_words(raw_pages[i + 1])
-                    if not is_full_spread(next_words, raw_pages[i + 1].width) and abs(
+                    if not is_full_spread(next_words, raw_pages[i + 1].width, reference_single_width) and abs(
                             len(next_words) - len(words)
                     ) < max(10, len(words) * 0.1):
                         i += 1  # salta la gemella
