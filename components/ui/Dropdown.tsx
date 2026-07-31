@@ -52,7 +52,7 @@ export function Dropdown({ options, value, onChange, placeholder = 'Seleziona...
                 onClick={() => setOpen((prev) => !prev)}
                 aria-haspopup="listbox"
                 aria-expanded={open}
-                className="flex w-full items-center justify-between rounded-lg border border-line bg-card px-3 py-2 text-sm text-ink focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary-soft"
+                className="flex w-full cursor-pointer items-center justify-between rounded-lg border border-line bg-card px-3 py-2 text-sm text-ink focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary-soft"
             >
                 <span className={selected ? '' : 'text-ink-faint'}>{selected?.label ?? placeholder}</span>
                 <span
@@ -78,7 +78,7 @@ export function Dropdown({ options, value, onChange, placeholder = 'Seleziona...
                                     onChange(option.value);
                                     setOpen(false);
                                 }}
-                                className={`block w-full px-3 py-2 text-left text-sm hover:bg-primary-soft ${
+                                className={`block w-full cursor-pointer px-3 py-2 text-left text-sm hover:bg-primary-soft ${
                                     option.value === value ? 'bg-primary-soft font-medium text-primary' : 'text-ink'
                                 }`}
                             >

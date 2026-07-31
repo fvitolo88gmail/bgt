@@ -1,13 +1,18 @@
 import Link from 'next/link';
 import { OwlMark } from './OwlMark';
+import { UserMenu } from './UserMenu';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
-import { LogoutButton } from '@/components/auth/LogoutButton';
+import { getProfile } from '@/lib/repositories/profiles.repository';
+import { getDisplayName, getInitials } from '@/lib/profile-display';
 
 export async function Header() {
     const supabase = await createServerSupabaseClient();
     const {
         data: { user },
     } = await supabase.auth.getUser();
+
+    const profile = user ? await getProfile(supabase, user.id).catch(() => null) : null;
+    const email = user?.email ?? '';
 
     return (
         <header className="flex items-center justify-between gap-2 border-b border-line-soft bg-card px-4 py-3">
@@ -16,11 +21,13 @@ export async function Header() {
                 BGT
             </Link>
 
-            {user ? (
-                <div className="flex items-center gap-3 text-sm text-ink-soft">
-                    <span>{user.email}</span>
-                    <LogoutButton />
-                </div>
+            {user && profile ? (
+                <UserMenu
+                    displayName={getDisplayName(profile, email)}
+                    initials={getInitials(profile, email)}
+                    email={email}
+                    isAdmin={profile.role === 'admin'}
+                />
             ) : (
                 <Link href="/login" className="text-sm text-ink-soft hover:text-ink">
                     Accedi
