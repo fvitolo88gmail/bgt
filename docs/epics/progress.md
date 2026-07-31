@@ -10,10 +10,10 @@ todo/progress/done).*
 |---|---|---|
 | POC | `progress/POC/` | in corso (solo POC-00011 ancora aperto, in pausa; tutto il resto chiuso o deprecato) |
 | AUTH | `progress/AUTH/` | in corso, priorità corrente (v. D65) — AUTH-00001/00003/00004/00005/00006/00008/00011 ✅ (00008: invito via email rimandato, processo manuale via Studio nel frattempo), AUTH-00002 chiusa non applicabile, prossimi: 00007/00009/00010 (00010 in attesa dominio) |
-| BILLING | `progress/BILLING/` | in corso, BILLING-00001 in pausa in attesa di AUTH (v. D65) |
+| BILLING | `progress/BILLING/` | in corso, BILLING-00001 ✅ done, BILLING-00002 riaperta (revisione design, manca riverifica) |
 | TEACH | `todo/TEACH/` | da iniziare |
 | VISUAL | `todo/VISUAL/` | nice to have, in coda |
-| DESIGN | `done/DESIGN/` | completata (v. D64) |
+| DESIGN | `progress/DESIGN/` | riaperta, DESIGN-00004 codice pronto (manca verifica manuale) |
 | CHAT-LISTING | `todo/CHAT-LISTING/` | da iniziare |
 | ADMIN-CONSOLE | `todo/ADMIN-CONSOLE/` | da iniziare |
 | GAME-REQUEST | `todo/GAME-REQUEST/` | da iniziare, priorità molto bassa |
@@ -63,12 +63,106 @@ codice invece del bucket unico "expansion" del task originale — scelta esplici
 per dare a BILLING-00003 visibilità sul costo per tecnica, non solo imbedding vs generazione.
 Migration bozza (SQL ora in `BILLING-00001-usage-logs.md`, non più un file in
 `supabase/migrations/`: rimosso il 2026-07-29 perché il suo timestamp precedeva quello di
-`20260729010000_auth_profiles.sql`, creata dopo ma eseguita per prima — verrà ricreato con
-timestamp aggiornato quando riprende questo task). Istrumentazione delle chiamate reali
-(`lib/gemini.ts`, `lib/retrieval.ts`,
-`lib/reranking.ts`, `lib/query-contextualization.ts`, `app/api/chat/route.ts`) messa in pausa
-subito dopo (D65): userebbe `owner_token`, non ancora popolato e a rischio di essere sostituito
-appena `AUTH` introduce autenticazione vera — priorità sposta su `AUTH` prima di riprendere.
+`20260729010000_auth_profiles.sql`, creata dopo ma eseguita per prima). Istrumentazione delle
+chiamate reali messa in pausa subito dopo (D65): userebbe `owner_token`, non ancora popolato e a
+rischio di essere sostituito appena `AUTH` introduce autenticazione vera — priorità sposta su
+`AUTH` prima di riprendere.
+
+**BILLING-00001 ripresa (sessione 2026-07-31, AUTH sostanzialmente chiusa):** schema aggiornato
+per riflettere l'auth reale — `owner_token` rimosso dal design (deprecato in via definitiva da
+AUTH-00006), `user_id` referenzia `profiles(id)` come già `games`/`chat_sessions`. Migration
+ricreata con timestamp aggiornato: `supabase/migrations/20260731000000_usage_tracking.sql`
+(aggiunta anche RLS admin-only su entrambe le tabelle, coerente col principio di enforcement a
+livello DB già seguito da AUTH), non ancora applicata al DB. Gap emerso: `app/api/chat/route.ts`
+usa ancora il client Supabase anonimo, non risolve mai l'utente autenticato lato server nonostante
+`proxy.ts` garantisca sessione valida (AUTH-00011) — `chat_sessions.user_id` di conseguenza non è
+mai popolato da `getOrCreateSession`. Gap preesistente più ampio di questo task; per il DoD di
+BILLING-00001 basta risolvere l'utente dentro `route.ts`, senza necessariamente sistemare
+`getOrCreateSession` (valutare come task a parte se serve altrove).
+
+**BILLING-00001 istrumentazione completata (sessione 2026-07-31):** scelto wrapper centralizzato
+in `lib/gemini.ts` (Francesco, tra le due opzioni proposte) invece di logging esplicito per call
+site. `embed`/`generate` accettano un `GeminiCallContext` opzionale e loggano internamente via
+il nuovo `lib/repositories/usage-tracking.repository.ts` (convenzione repository di D72,
+sempre `createServiceClient()`); `withGeminiRetry` ora espone il retry_count reale anche su
+esito di errore (`GeminiRetryError`). `userRequestId` propagato attraverso
+`lib/retrieval.ts`/`lib/reranking.ts`/`lib/query-contextualization.ts` fino a
+`app/api/chat/route.ts`, che ora risolve anche l'utente autenticato via
+`createServerSupabaseClient()` (colmato il gap segnalato sopra, limitatamente a questa route —
+`getOrCreateSession`/`chat_sessions.user_id` restano non toccati, fuori scope). Token count
+embedding stimati (caratteri/4): l'API `embedContent` con chiave AI Studio non restituisce un
+conteggio reale. `tsc`/`eslint` puliti; `npm run build` non eseguibile in sandbox (nessun
+accesso di rete a Google Fonts, non collegato a queste modifiche).
+
+**Prezzi in tabella `model_pricing` con periodo di validità (sessione 2026-07-31, su richiesta
+di Francesco):** invece di congelare prezzo/costo su ogni riga `gemini_calls` (nessun modo di
+correggerlo se un aggiornamento prezzo viene scoperto in ritardo, e nessuna API ufficiale Gemini
+per recuperare i prezzi automaticamente), `gemini_calls` registra solo i token; il costo si
+legge a runtime dalla vista `gemini_calls_costed`, join con la nuova tabella `model_pricing`
+(model_name, prezzi, `effective_from`/`effective_to`) sul periodo in vigore alla data della
+chiamata — un prezzo corretto a posteriori (nuovo periodo inserito) ricalcola anche lo storico.
+Aggiornare un prezzo resta un processo manuale via Studio (chiudere il periodo aperto, inserire
+il nuovo), stesso pattern interinale già usato da AUTH. Migration riscritta in place (non ancora
+applicata quando modificata), poi Francesco ha ripulito con uno script `drop` mirato la versione
+precedente già lanciata per errore e applicato quella corretta. **Non ancora chiusa:** manca la
+verifica manuale del DoD (righe prodotte da una domanda reale, costo aggregato per interazione
+via `gemini_calls_costed`, riga `status = error` su un fallimento forzato).
+
+**BILLING-00001 chiusa (sessione 2026-07-31):** verificata da Francesco su due interazioni reali
+in `/game/[id]` (una `qa`, una `conversation`) — una riga per chiamata Gemini con tutti i
+`call_type` rappresentati tra le due, costi in `gemini_calls_costed` ricalcolati a mano e
+corretti (es. $0.00588 su un'interazione), `price_output_per_1m` null solo sulle righe
+`embedding` (atteso, nessun token di output per quel modello). Path di errore verificato solo
+per lettura del codice, non su un fallimento reale forzato — nota aperta, non bloccante per un
+progetto personale. Spostata in `done/`.
+
+**BILLING-00002 avviata (sessione 2026-07-31):** su richiesta di Francesco, riusa il design
+system esistente (`app/theme.css`/`components/ui`, non un mockup dedicato — non ce n'è uno nel
+reference `DESIGN`). Aggiunta `recharts` (prima libreria di grafici del progetto, scelta di
+Francesco tra le due opzioni proposte, contro "solo tabelle"). Nuova vista
+`user_request_costs` (migration `20260731010000_user_request_costs_view.sql`, non ancora
+applicata) pre-aggrega il costo per interazione; aggregazioni per gioco/nel tempo fatte in JS
+(`lib/billing-aggregation.ts`, con test) — volume dati ancora troppo piccolo per RPC dedicate.
+Prima verifica ruolo admin lato app (`lib/repositories/profiles.repository.ts`, `isAdmin`) — fin
+qui esisteva solo a livello RLS. Pagina `app/admin/costs`. `tsc`/`eslint`/`vitest` puliti (22
+test). Verificata da Francesco su `/admin/costs` con dati reali. Nota emersa nel bootstrap del
+primo admin: il trigger `prevent_role_self_escalation` (AUTH-00003) blocca anche un update da
+SQL Editor di Studio, perché lì non c'è un `auth.uid()` di sessione (gira come `postgres`) — va
+disabilitato temporaneamente (`alter table profiles disable/enable trigger ...`) per il primo
+`role = 'admin'`, poi promozioni successive le fa un admin già esistente tramite l'app.
+
+**BILLING-00002 riaperta (sessione 2026-07-31):** Francesco ha segnalato che la prima versione
+non seguiva il design di riferimento e non aveva un punto d'accesso diretto. Il reference (nel
+frattempo spostato da `docs/epics/done/DESIGN/reference/` a `docs/design-reference/`) contiene
+una sezione "ADMIN" mai vista prima — shell con sidebar scura (palette neutra distinta dal tema
+chat, nuovi token in `app/theme.css`), pensata per la console admin generale (ADMIN-CONSOLE), non
+solo per i costi. Su richiesta esplicita di Francesco: shell completa costruita subito
+(`components/admin/AdminShell.tsx`, riusabile da ADMIN-CONSOLE), voci non ancora funzionanti
+presenti ma disabilitate con "(prossimamente)" invece che link morti o omesse. `/admin` ora
+redirige a `/admin/costs`; aggiunto link "Admin" nell'Header visibile solo per `role = 'admin'`
+(prima l'unico accesso era digitare l'URL a mano). `tsc`/`eslint`/`vitest` puliti.
+
+**BILLING-00002 seconda revisione (stessa sessione):** tolta l'etichetta "(prossimamente)" dalle
+voci sidebar non pronte (restano solo disabilitate, scelta esplicita di Francesco). Aggiunto
+`components/ui/UserMenu.tsx` — avatar in fondo all'Header, click espande nome utente + voci
+abilitate (Admin solo se il ruolo lo prevede, poi Esci) — sostituisce l'email/link testuali.
+`tsc`/`eslint` puliti. **Non ancora richiusa:** manca la riverifica manuale di Francesco sulla
+nuova versione.
+
+**Aperta DESIGN-00004 (sessione 2026-07-31):** su richiesta di Francesco, epica DESIGN
+(completata da D64) riaperta — `done/DESIGN` → `progress/DESIGN` — per un task che estende il
+menu avatar introdotto in BILLING-00002 come primo tentativo minimale: `profiles` guadagna
+nome/cognome, nuova pagina profilo raggiungibile dal menu avatar, avatar ridisegnato (cerchio
+bianco, bordo bold, iniziali su colori palette, non più l'`OwlMark` provvisorio), homepage con
+saluto personalizzato sopra il dropdown di selezione gioco esistente, menu avatar ristrutturato
+(Nome Cognome + email non cliccabile, poi Profilo → Admin se admin → Esci). Implementato subito dopo, stessa sessione: migration
+`20260801000000_profiles_name.sql` (non ancora applicata), `lib/profile-display.ts` (nome
+visualizzato/iniziali, con test), `components/ui/Avatar.tsx` (cerchio bianco, bordo bold,
+iniziali `text-primary`), `UserMenu` ristrutturato, `app/profile` (form nome/cognome),
+saluto in `/home`. `tsc`/`eslint`/`vitest` puliti (29 test). File spostato in
+`progress/DESIGN/progress/DESIGN-00004-menu-avatar-profilo.md`. **Non ancora chiusa:** manca
+la verifica manuale di Francesco (applicare la migration, salvare nome/cognome, controllare
+avatar/menu/saluto).
 
 **AUTH-00001 chiusa (sessione 2026-07-29):** aggiunto `@supabase/ssr`; `lib/supabase.ts` guadagna
 `createBrowserSupabaseClient`/`createServerSupabaseClient` (cookie-based, riutilizzabili dal
