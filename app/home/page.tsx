@@ -5,6 +5,7 @@ import { getGreetingName } from '@/lib/profile-display';
 import { GameSelectForm } from '@/components/home/GameSelectForm';
 import { GameOption } from '@/components/home/types';
 import { Card } from '@/components/ui/Card';
+import { OwlMark } from '@/components/ui/OwlMark';
 
 // Solo giochi con almeno una fonte pronta (manuale o forum) — evita di
 // portare l'utente su una chat senza contenuto ingested.
@@ -33,10 +34,11 @@ export default async function HomePage() {
     return (
         <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-6 p-4">
             <div className="text-center">
-                <h1 className="font-serif text-2xl font-bold text-ink">
+                <h1 className="flex items-center justify-center gap-2 font-serif text-2xl font-bold text-ink">
+                    <OwlMark size={48} />
                     {greetingName ? `Bentornato ${greetingName}!` : 'Bentornato!'}
                 </h1>
-                <p className="mt-1 text-sm text-ink-soft">A cosa giochiamo oggi</p>
+                <p className="mt-1 text-sm text-ink-soft">A cosa giochiamo oggi?</p>
             </div>
 
             {games.length === 0 ? (

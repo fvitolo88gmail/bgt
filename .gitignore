@@ -48,3 +48,4 @@ next-env.d.ts
 /ingest
 /scripts/test-decomposition.ts
 /eval/results
+package-lock.json

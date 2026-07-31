@@ -46,7 +46,7 @@ export default async function AdminCostsPage() {
         <AdminShell active="Costi">
             <h2 className="mb-1.5 border-b border-line pb-3.5 font-serif text-xl text-ink">Costi Gemini</h2>
             <p className="mb-6 text-[13.5px] text-ink-soft">
-                Costo proiettato a prezzi Tier 1, calcolato su token realmente consumati — v. BILLING-00001.
+                Costo proiettato a prezzi Tier 1, calcolato su token realmente consumati
             </p>
 
             {overall.interactionCount === 0 ? (
