@@ -29,7 +29,12 @@ export default function RootLayout({
       <html lang="it" className={`${sora.variable} ${ibmPlexMono.variable} h-full antialiased`}>
       <body className="flex h-full flex-col" suppressHydrationWarning>
       <Header />
-      <main className="flex flex-1 flex-col overflow-hidden">{children}</main>
+      {/* overflow-y-auto (non hidden): pagine senza un proprio contenitore
+          di scroll interno (profilo, home, ecc.) devono poter scrollare qui.
+          La chat gestisce già il suo scroll con un div interno dedicato,
+          quindi non ne risente — la sua altezza viene dal layout flex, non
+          da questa proprietà. */}
+      <main className="flex flex-1 flex-col overflow-y-auto">{children}</main>
       <Footer />
       </body>
       </html>
