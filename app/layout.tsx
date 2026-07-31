@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Sora, IBM_Plex_Mono } from "next/font/google";
 import { Header } from "@/components/ui/Header";
 import { Footer } from "@/components/ui/Footer";
+import { InactivityLogout } from "@/components/auth/InactivityLogout";
 import "./globals.css";
 
 const sora = Sora({
@@ -28,6 +29,7 @@ export default function RootLayout({
   return (
       <html lang="it" className={`${sora.variable} ${ibmPlexMono.variable} h-full antialiased`}>
       <body className="flex h-full flex-col" suppressHydrationWarning>
+      <InactivityLogout />
       <Header />
       {/* overflow-y-auto (non hidden): pagine senza un proprio contenitore
           di scroll interno (profilo, home, ecc.) devono poter scrollare qui.

@@ -53,6 +53,11 @@ export async function proxy(request: NextRequest) {
         return NextResponse.redirect(loginUrl);
     }
 
+    // sessione già attiva: /login non ha senso, evita di far ripassare l'utente dal form
+    if (request.nextUrl.pathname === '/login' && user) {
+        return NextResponse.redirect(new URL('/home', request.url));
+    }
+
     return response;
 }
 

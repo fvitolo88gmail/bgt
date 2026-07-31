@@ -29,6 +29,7 @@ Vedi directory `AUTH/` per i task singoli.
 | AUTH-00009 | Stato utente enabled/disabled | todo |
 | AUTH-00010 | Configurazione SMTP custom (Resend) | todo — in attesa dominio |
 | AUTH-00011 | Estensione route protette a tutta l'app | ✅ done |
+| AUTH-00012 | Redirect da /login se già loggato + scadenza sessione per inattività | ✅ done |
 
 ## Note aperte
 
@@ -135,3 +136,12 @@ Vedi directory `AUTH/` per i task singoli.
   diagramma di topologia, schema `games` (riga `owner_token` deprecata + aggiunta riga `user_id`
   mai documentata da AUTH-00003), pipeline di serving, abstraction `owner_token` → deprecata. V.
   `done/AUTH-00006-deprecazione-owner-token.md`.
+- AUTH-00012 aggiunta e avviata (sessione 2026-07-31): due fix richiesti direttamente da
+  Francesco, non pianificati in precedenza. (1) `proxy.ts` rimanda a `/home` chi ha sessione
+  attiva e prova ad aprire `/login`. (2) Scadenza sessione per inattività chiarita con
+  Francesco (non è la scadenza del JWT Supabase, già gestita da refresh automatico): nuovo
+  componente client `InactivityLogout` montato nel root layout, timer di 30 minuti resettato su
+  interazione, logout automatico + redirect a `/login` allo scadere. `tsc`/`eslint` puliti.
+  **Chiusa (2026-07-31):** verifica manuale confermata da Francesco (redirect `/login`→`/home`
+  con sessione attiva, logout dopo 30 minuti di inattività) — v.
+  `done/AUTH-00012-redirect-login-e-scadenza-sessione.md`.
