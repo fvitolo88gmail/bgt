@@ -53,35 +53,37 @@ export default async function AdminCostsPage() {
                 <p className="text-sm text-ink-faint">Nessuna interazione registrata ancora.</p>
             ) : (
                 <>
-                    <div className="mb-6 grid grid-cols-3 gap-3.5">
+                    <div className="mb-6 grid grid-cols-1 gap-3.5 sm:grid-cols-3">
                         <KpiCard label="Interazioni" value={String(overall.interactionCount)} />
                         <KpiCard label="Costo totale" value={formatUsd(overall.totalCostUsd)} />
                         <KpiCard label="Costo medio / query" value={formatUsd(overall.avgCostPerQueryUsd)} />
                     </div>
 
                     <p className="mb-2.5 text-xs font-bold text-ink-soft">Distribuzione per gioco</p>
-                    <table className="mb-6 w-full border-collapse text-[12.5px]">
-                        <thead>
-                            <tr className="text-left text-[11px] uppercase tracking-wide text-ink-faint">
-                                <th className="px-2.5 py-2 font-semibold">Gioco</th>
-                                <th className="px-2.5 py-2 font-semibold">Interazioni</th>
-                                <th className="px-2.5 py-2 font-semibold">Costo totale</th>
-                                <th className="px-2.5 py-2 font-semibold">Costo medio</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {byGame.map((g) => (
-                                <tr key={g.gameId} className="border-t border-line-soft bg-card">
-                                    <td className="px-2.5 py-2.5 font-semibold text-ink">
-                                        {gameNameById.get(g.gameId) ?? g.gameId}
-                                    </td>
-                                    <td className="px-2.5 py-2.5 font-mono text-ink-soft">{g.interactionCount}</td>
-                                    <td className="px-2.5 py-2.5 font-mono text-ink-soft">{formatUsd(g.totalCostUsd)}</td>
-                                    <td className="px-2.5 py-2.5 font-mono text-ink-soft">{formatUsd(g.avgCostPerQueryUsd)}</td>
+                    <div className="mb-6 overflow-x-auto">
+                        <table className="w-full min-w-[480px] border-collapse text-[12.5px]">
+                            <thead>
+                                <tr className="text-left text-[11px] uppercase tracking-wide text-ink-faint">
+                                    <th className="px-2.5 py-2 font-semibold">Gioco</th>
+                                    <th className="px-2.5 py-2 font-semibold">Interazioni</th>
+                                    <th className="px-2.5 py-2 font-semibold">Costo totale</th>
+                                    <th className="px-2.5 py-2 font-semibold">Costo medio</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {byGame.map((g) => (
+                                    <tr key={g.gameId} className="border-t border-line-soft bg-card">
+                                        <td className="px-2.5 py-2.5 font-semibold text-ink">
+                                            {gameNameById.get(g.gameId) ?? g.gameId}
+                                        </td>
+                                        <td className="px-2.5 py-2.5 font-mono text-ink-soft">{g.interactionCount}</td>
+                                        <td className="px-2.5 py-2.5 font-mono text-ink-soft">{formatUsd(g.totalCostUsd)}</td>
+                                        <td className="px-2.5 py-2.5 font-mono text-ink-soft">{formatUsd(g.avgCostPerQueryUsd)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
 
                     <p className="mb-2.5 text-xs font-bold text-ink-soft">Andamento nel tempo</p>
                     <div className="rounded-md border border-line bg-card p-4">

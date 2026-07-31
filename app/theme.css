@@ -5,6 +5,12 @@
  */
 
 :root {
+  /* Nessuna dark mode implementata: forza il browser a ignorare la
+     preferenza scura del sistema per gli elementi nativi (scrollbar,
+     controlli form, overscroll), altrimenti stona con la palette fissa
+     definita qui sotto. */
+  color-scheme: light;
+
   /* Superfici */
   --paper: oklch(97% 0.006 90);
   --paper-2: oklch(93.5% 0.012 320);
