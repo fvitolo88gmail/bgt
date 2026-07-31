@@ -1,7 +1,7 @@
 # Epica BILLING — Modello di costo e monetizzazione
 
-**Stato:** in corso — BILLING-00001 in pausa (schema `user_requests`/`gemini_calls` definito,
-migration creata; istrumentazione codice sospesa in attesa di AUTH, v. D65)
+**Stato:** in corso — BILLING-00001 ✅ done, BILLING-00002 riaperta per allinearsi al design di
+riferimento, in attesa di riverifica
 
 ## Contesto
 
@@ -25,8 +25,8 @@ Vedi directory `BILLING/` per i task singoli.
 
 | ID | Titolo | Stato |
 |---|---|---|
-| BILLING-00001 | Logging usage: tabelle `user_requests`/`gemini_calls` | in progress |
-| BILLING-00002 | Pannello admin-only costi | todo |
+| BILLING-00001 | Logging usage: tabelle `user_requests`/`gemini_calls` | ✅ done |
+| BILLING-00002 | Pannello admin-only costi | in progress — riaperta, revisione design |
 | BILLING-00003 | Calcolo costo medio reale per query | todo |
 | BILLING-00004 | Decisione modello di pricing | todo |
 | BILLING-00005 | Gestione atomica saldo crediti (se applicabile) | todo |

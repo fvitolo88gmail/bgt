@@ -55,6 +55,14 @@
   --radius-sm: 8px;
   --radius-md: 14px;
   --radius-lg: 20px;
+
+  /* Pannello admin (BILLING-00002/ADMIN-CONSOLE): palette neutra distinta dal tema
+     "Ludico Vivace" del resto dell'app — scelta esplicita nel reference ("dashboard:
+     neutro, denso, desktop-first — meno gufo, più dati", uso interno occasionale). */
+  --admin-sidebar: oklch(24% 0.02 50);
+  --admin-sidebar-active: oklch(34% 0.03 50);
+  --admin-sidebar-ink: oklch(75% 0.01 60);
+  --admin-sidebar-ink-muted: oklch(55% 0.01 60);
 }
 
 /* Mascotte in attesa risposta: 4 salti veri (su rapido/giù rapido, non una
@@ -175,4 +183,9 @@
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
   --radius-lg: var(--radius-lg);
+
+  --color-admin-sidebar: var(--admin-sidebar);
+  --color-admin-sidebar-active: var(--admin-sidebar-active);
+  --color-admin-sidebar-ink: var(--admin-sidebar-ink);
+  --color-admin-sidebar-ink-muted: var(--admin-sidebar-ink-muted);
 }
