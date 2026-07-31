@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { OwlMark } from './OwlMark';
 import { UserMenu } from './UserMenu';
+import { HeaderAuthLink } from './HeaderAuthLink';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { getProfile } from '@/lib/repositories/profiles.repository';
 import { getDisplayName, getInitials } from '@/lib/profile-display';
@@ -29,9 +30,7 @@ export async function Header() {
                     isAdmin={profile.role === 'admin'}
                 />
             ) : (
-                <Link href="/login" className="text-sm text-ink-soft hover:text-ink">
-                    Accedi
-                </Link>
+                <HeaderAuthLink />
             )}
         </header>
     );
