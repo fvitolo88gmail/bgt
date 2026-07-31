@@ -48,11 +48,15 @@ Rispondi SOLO con un array JSON di oggetti, uno per ciascun estratto sopra, in q
 export async function rerankByRelevance(
     question: string,
     candidates: RerankCandidate[],
+    userRequestId?: string | null,
 ): Promise<RerankScore[] | null> {
     if (candidates.length === 0) return [];
 
     try {
-        const raw = await geminiClient.generate(RERANK_PROMPT(question, candidates));
+        const raw = await geminiClient.generate(
+            RERANK_PROMPT(question, candidates),
+            userRequestId ? { userRequestId, callType: 'reranking' } : undefined,
+        );
         const cleaned = raw.replace(/```json|```/g, '').trim();
         const parsed: unknown = JSON.parse(cleaned);
 

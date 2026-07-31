@@ -120,9 +120,13 @@ Rispondi SOLO con un array JSON di stringhe (un paragrafo per concetto, nella li
 export async function generateEnhancedQueries(
     question: string,
     manualLanguage: string = DEFAULT_MANUAL_LANGUAGE,
+    userRequestId?: string | null,
 ): Promise<string[]> {
     try {
-        const raw = await geminiClient.generate(QUERY_ENHANCEMENT_PROMPT(question, manualLanguage));
+        const raw = await geminiClient.generate(
+            QUERY_ENHANCEMENT_PROMPT(question, manualLanguage),
+            userRequestId ? { userRequestId, callType: 'query_enhancement' } : undefined,
+        );
         const cleaned = raw.replace(/```json|```/g, '').trim();
         const parsed = JSON.parse(cleaned);
         if (!Array.isArray(parsed) || parsed.length === 0 || !parsed.every((s) => typeof s === 'string')) {
@@ -307,6 +311,7 @@ export async function matchChunksForPrompt(
     query: string,
     gameIds: string | string[],
     topK: number = 5,
+    userRequestId?: string | null,
 ): Promise<RetrievalResult> {
     const matchGameIds = Array.isArray(gameIds) ? gameIds : [gameIds];
     const [primaryGameId] = matchGameIds;
@@ -317,7 +322,7 @@ export async function matchChunksForPrompt(
     // usato per la lingua del manuale anche quando sono incluse espansioni, che si
     // assumono nella stessa lingua del gioco base.
     const manualLanguage = await fetchManualLanguage(primaryGameId);
-    const enhancedQueries = await generateEnhancedQueries(query, manualLanguage);
+    const enhancedQueries = await generateEnhancedQueries(query, manualLanguage, userRequestId);
     const searchQueries = [query, ...enhancedQueries];
 
     // Fetch separato per fonte, per ogni query: un pool ampio per lato evita
@@ -331,7 +336,10 @@ export async function matchChunksForPrompt(
     // matchChunks 'manual', una per 'forum'), raddoppiando inutilmente le
     // chiamate Gemini per domanda.
     const embeddingResults = await Promise.allSettled(
-        searchQueries.map((q) => geminiClient.embed(q)),
+        searchQueries.map((q) => geminiClient.embed(
+            q,
+            userRequestId ? { userRequestId, callType: 'embedding' } : undefined,
+        )),
     );
 
     const rpcSettled = await Promise.allSettled(
@@ -390,7 +398,7 @@ export async function matchChunksForPrompt(
         content: m.content,
     }));
 
-    const rerankScores = await rerankByRelevance(query, rerankCandidates);
+    const rerankScores = await rerankByRelevance(query, rerankCandidates, userRequestId);
 
     const matches = rerankScores
         ? selectByRerankScore(pooled, rerankScores, topK)

@@ -45,11 +45,15 @@ Rispondi SOLO con la domanda riscritta, una singola riga di testo, senza virgole
 export async function contextualizeQueryForRetrieval(
     question: string,
     history: ConversationTurn[],
+    userRequestId?: string | null,
 ): Promise<string> {
     if (history.length === 0) return question;
 
     try {
-        const raw = await geminiClient.generate(QUERY_CONTEXTUALIZATION_PROMPT(question, history));
+        const raw = await geminiClient.generate(
+            QUERY_CONTEXTUALIZATION_PROMPT(question, history),
+            userRequestId ? { userRequestId, callType: 'query_contextualization' } : undefined,
+        );
         const rewritten = raw.trim().replace(/^["']|["']$/g, '');
         if (!rewritten) {
             throw new Error('riscrittura vuota');

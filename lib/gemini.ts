@@ -1,11 +1,43 @@
 // lib/gemini.ts
 
 import { GoogleGenAI } from '@google/genai';
+import { logGeminiCall, type GeminiCallContext } from './repositories/usage-tracking.repository';
 
 const apiKey = process.env.GEMINI_API_KEY;
 if (!apiKey) throw new Error('Missing GEMINI_API_KEY');
 
 const ai = new GoogleGenAI({ apiKey });
+
+const EMBEDDING_MODEL = process.env.EMBEDDING_MODEL ?? 'gemini-embedding-001';
+const CHAT_MODEL = process.env.CHAT_MODEL ?? 'gemini-3.1-flash-lite';
+
+// L'API embedContent (chiave AI Studio) non restituisce un conteggio token
+// reale in risposta (solo billableCharacterCount, riservato a Enterprise) —
+// approssimazione standard caratteri/4, sufficiente per una proiezione di
+// costo, non un valore fatturato esatto.
+function estimateTokenCount(text: string): number {
+    return Math.ceil(text.length / 4);
+}
+
+// BILLING-00001: un log fallito non deve mai far fallire la chiamata Gemini
+// che lo ha generato.
+async function logGeminiCallSafely(params: Parameters<typeof logGeminiCall>[0]): Promise<void> {
+    try {
+        await logGeminiCall(params);
+    } catch (err) {
+        console.error('[usage-tracking] logging chiamata Gemini fallito:', err);
+    }
+}
+
+// Il chiamante (embed/generate) riceve l'errore originale (cause), non
+// GeminiRetryError — qui si estrae solo il retryCount per il logging prima
+// di rilanciare quello originale.
+function unwrapRetryError(error: unknown): { cause: unknown; retryCount: number } {
+    if (error instanceof GeminiRetryError) {
+        return { cause: error.cause, retryCount: error.retryCount };
+    }
+    return { cause: error, retryCount: 0 };
+}
 
 /**
  * Retry con backoff per errori TRANSITORI di Gemini: 503 (UNAVAILABLE,
@@ -38,13 +70,30 @@ function extractRetryDelaySeconds(error: unknown): number | null {
     return match?.[1] ? Number(match[1]) : null;
 }
 
-async function withGeminiRetry<T>(label: string, fn: () => Promise<T>): Promise<T> {
+interface RetryResult<T> {
+    value: T;
+    retryCount: number;
+}
+
+// Errore arricchito col numero di tentativi già assorbiti (BILLING-00001):
+// serve al chiamante per loggare retry_count anche su un esito finale di
+// errore, non solo su successo.
+class GeminiRetryError extends Error {
+    constructor(public readonly cause: unknown, public readonly retryCount: number) {
+        super(cause instanceof Error ? cause.message : String(cause));
+    }
+}
+
+// Espone il numero di tentativi assorbiti (BILLING-00001, colonna
+// gemini_calls.retry_count) invece del solo valore finale.
+async function withGeminiRetry<T>(label: string, fn: () => Promise<T>): Promise<RetryResult<T>> {
     let attempt = 0;
     while (true) {
         try {
-            return await fn();
+            const value = await fn();
+            return { value, retryCount: attempt };
         } catch (error) {
-            if (!isTransientGeminiError(error) || attempt >= MAX_RETRIES) throw error;
+            if (!isTransientGeminiError(error) || attempt >= MAX_RETRIES) throw new GeminiRetryError(error, attempt);
 
             attempt += 1;
             const explicitDelay = extractRetryDelaySeconds(error);
@@ -61,60 +110,132 @@ async function withGeminiRetry<T>(label: string, fn: () => Promise<T>): Promise<
 }
 
 export interface LLMClient {
-    embed(text: string): Promise<number[]>;
-    generate(prompt: string): Promise<string>;
+    embed(text: string, context?: GeminiCallContext): Promise<number[]>;
+    generate(prompt: string, context?: GeminiCallContext): Promise<string>;
 }
 
 export const geminiClient: LLMClient = {
-    async embed(text: string): Promise<number[]> {
-        return withGeminiRetry('embed', async () => {
-            const result = await ai.models.embedContent({
-                model: process.env.EMBEDDING_MODEL ?? 'gemini-embedding-001',
-                contents: text,
-                config: {
-                    outputDimensionality: parseInt(
-                        process.env.EMBEDDING_DIMENSIONS ?? '768'
-                    ),
-                },
+    async embed(text: string, context?: GeminiCallContext): Promise<number[]> {
+        try {
+            const { value, retryCount } = await withGeminiRetry('embed', async () => {
+                const result = await ai.models.embedContent({
+                    model: EMBEDDING_MODEL,
+                    contents: text,
+                    config: {
+                        outputDimensionality: parseInt(
+                            process.env.EMBEDDING_DIMENSIONS ?? '768'
+                        ),
+                    },
+                });
+                const values = result.embeddings?.[0]?.values;
+                if (!values) throw new Error('No embedding values returned');
+                return values;
             });
-            const values = result.embeddings?.[0]?.values;
-            if (!values) throw new Error('No embedding values returned');
-            return values;
-        });
+
+            if (context) {
+                await logGeminiCallSafely({
+                    userRequestId: context.userRequestId,
+                    callType: context.callType,
+                    modelName: EMBEDDING_MODEL,
+                    promptTokenCount: estimateTokenCount(text),
+                    candidatesTokenCount: null,
+                    cachedTokenCount: null,
+                    status: 'success',
+                    retryCount,
+                });
+            }
+
+            return value;
+        } catch (error) {
+            const { cause, retryCount } = unwrapRetryError(error);
+            if (context) {
+                await logGeminiCallSafely({
+                    userRequestId: context.userRequestId,
+                    callType: context.callType,
+                    modelName: EMBEDDING_MODEL,
+                    promptTokenCount: null,
+                    candidatesTokenCount: null,
+                    cachedTokenCount: null,
+                    status: 'error',
+                    retryCount,
+                });
+            }
+            throw cause;
+        }
     },
 
-    async generate(prompt: string): Promise<string> {
-        return withGeminiRetry('generate', async () => {
-            const result = await ai.models.generateContent({
-                model: process.env.CHAT_MODEL ?? 'gemini-3.1-flash-lite',
-                contents: prompt,
-                config: {
-                    temperature: 0.2, // basso deliberatamente: lookup fattuale su regole, non generazione creativa
-                },
+    async generate(prompt: string, context?: GeminiCallContext): Promise<string> {
+        try {
+            const { value, retryCount } = await withGeminiRetry('generate', async () => {
+                const result = await ai.models.generateContent({
+                    model: CHAT_MODEL,
+                    contents: prompt,
+                    config: {
+                        temperature: 0.2, // basso deliberatamente: lookup fattuale su regole, non generazione creativa
+                    },
+                });
+                const text = result.text;
+                if (!text) throw new Error('No text returned from Gemini');
+                return { text, usage: result.usageMetadata };
             });
-            const text = result.text;
-            if (!text) throw new Error('No text returned from Gemini');
-            return text;
-        });
+
+            if (context) {
+                await logGeminiCallSafely({
+                    userRequestId: context.userRequestId,
+                    callType: context.callType,
+                    modelName: CHAT_MODEL,
+                    promptTokenCount: value.usage?.promptTokenCount ?? null,
+                    candidatesTokenCount: value.usage?.candidatesTokenCount ?? null,
+                    cachedTokenCount: value.usage?.cachedContentTokenCount ?? null,
+                    status: 'success',
+                    retryCount,
+                });
+            }
+
+            return value.text;
+        } catch (error) {
+            const { cause, retryCount } = unwrapRetryError(error);
+            if (context) {
+                await logGeminiCallSafely({
+                    userRequestId: context.userRequestId,
+                    callType: context.callType,
+                    modelName: CHAT_MODEL,
+                    promptTokenCount: null,
+                    candidatesTokenCount: null,
+                    cachedTokenCount: null,
+                    status: 'error',
+                    retryCount,
+                });
+            }
+            throw cause;
+        }
     },
 };
 
+// Fuori da LLMClient/BILLING-00001 di proposito: percorso di ingest PDF
+// (script locale, mai in una richiesta utente), nessuna interazione da
+// tracciare.
 export async function generateFromPdfBase64(prompt: string, pdfBase64: string): Promise<string> {
-    return withGeminiRetry('generateFromPdfBase64', async () => {
-        const result = await ai.models.generateContent({
-            model: process.env.CHAT_MODEL ?? 'gemini-3.1-flash-lite',
-            contents: [
-                {
-                    role: 'user',
-                    parts: [
-                        { text: prompt },
-                        { inlineData: { mimeType: 'application/pdf', data: pdfBase64 } },
-                    ],
-                },
-            ],
+    try {
+        const { value } = await withGeminiRetry('generateFromPdfBase64', async () => {
+            const result = await ai.models.generateContent({
+                model: CHAT_MODEL,
+                contents: [
+                    {
+                        role: 'user',
+                        parts: [
+                            { text: prompt },
+                            { inlineData: { mimeType: 'application/pdf', data: pdfBase64 } },
+                        ],
+                    },
+                ],
+            });
+            const text = result.text;
+            if (!text) throw new Error('No text returned from Gemini (PDF input)');
+            return text;
         });
-        const text = result.text;
-        if (!text) throw new Error('No text returned from Gemini (PDF input)');
-        return text;
-    });
+        return value;
+    } catch (error) {
+        throw unwrapRetryError(error).cause;
+    }
 }
