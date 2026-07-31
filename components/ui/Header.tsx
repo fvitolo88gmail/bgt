@@ -2,9 +2,9 @@ import Link from 'next/link';
 import { OwlMark } from './OwlMark';
 import { UserMenu } from './UserMenu';
 import { HeaderAuthLink } from './HeaderAuthLink';
-import { createServerSupabaseClient } from '@/lib/supabase-server';
-import { getProfile } from '@/lib/repositories/profiles.repository';
-import { getDisplayName, getInitials } from '@/lib/profile-display';
+import { createServerSupabaseClient } from '@/lib/shared/supabase-server';
+import { getProfile } from '@/lib/profile/repository/profiles.repository';
+import { getDisplayName, getInitials } from '@/lib/profile/service/profile-display';
 
 export async function Header() {
     const supabase = await createServerSupabaseClient();

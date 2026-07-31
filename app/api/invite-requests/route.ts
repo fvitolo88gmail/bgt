@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createInviteRequest } from '@/lib/repositories/invite-requests.repository';
+import { createInviteRequest } from '@/lib/invite/repository/invite-requests.repository';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 

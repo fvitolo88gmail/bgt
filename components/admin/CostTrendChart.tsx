@@ -1,7 +1,7 @@
 'use client';
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import type { DailyCostPoint } from '@/lib/billing-aggregation';
+import type { DailyCostPoint } from '@/lib/billing/service/billing-aggregation';
 
 // Client Component isolato: recharts non può girare in un Server Component.
 // La pagina (app/admin/costs/page.tsx) resta server-side per il fetch/gate admin.

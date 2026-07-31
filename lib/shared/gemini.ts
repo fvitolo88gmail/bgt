@@ -1,7 +1,7 @@
 // lib/gemini.ts
 
 import { GoogleGenAI } from '@google/genai';
-import { logGeminiCall, type GeminiCallContext } from './repositories/usage-tracking.repository';
+import { logGeminiCall, type GeminiCallContext } from '../billing/repository/usage-tracking.repository';
 
 const apiKey = process.env.GEMINI_API_KEY;
 if (!apiKey) throw new Error('Missing GEMINI_API_KEY');

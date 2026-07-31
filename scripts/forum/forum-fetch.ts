@@ -19,8 +19,8 @@
 import 'dotenv/config';
 import { mkdir, readFile, writeFile, rename } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { getThread } from '../../lib/bgg';
-import { cleanForumBody } from '../../lib/bgg-clean';
+import { getThread } from '@/lib/bgg/service/bgg';
+import { cleanForumBody } from '@/lib/bgg/service/bgg-clean';
 
 interface DiscoverInput {
     bggId: number;

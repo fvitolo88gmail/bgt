@@ -1,7 +1,7 @@
-import { createServerSupabaseClient } from '@/lib/supabase-server';
-import { isAdmin } from '@/lib/repositories/profiles.repository';
-import { getUserRequestCosts } from '@/lib/repositories/usage-tracking.repository';
-import { summarizeOverallCost, summarizeCostByGame, summarizeCostByDay } from '@/lib/billing-aggregation';
+import { createServerSupabaseClient } from '@/lib/shared/supabase-server';
+import { isAdmin } from '@/lib/profile/repository/profiles.repository';
+import { getUserRequestCosts } from '@/lib/billing/repository/usage-tracking.repository';
+import { summarizeOverallCost, summarizeCostByGame, summarizeCostByDay } from '@/lib/billing/service/billing-aggregation';
 import { AdminShell } from '@/components/admin/AdminShell';
 import { CostTrendChart } from '@/components/admin/CostTrendChart';
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
-import { createBrowserSupabaseClient } from '@/lib/supabase';
+import { createBrowserSupabaseClient } from '@/lib/shared/supabase';
 import { Button } from '@/components/ui/Button';
 import { PasswordInput } from '@/components/ui/PasswordInput';
 import { Toast, type ToastVariant } from '@/components/ui/Toast';

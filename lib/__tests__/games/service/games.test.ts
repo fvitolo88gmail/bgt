@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { verifyGameIdentity, GameIdentityMismatchError } from './games';
+import { verifyGameIdentity, GameIdentityMismatchError } from '../../../games/service/games';
 
 function mockSupabase(result: { data: unknown; error: { message: string } | null }): SupabaseClient {
     const chain = {

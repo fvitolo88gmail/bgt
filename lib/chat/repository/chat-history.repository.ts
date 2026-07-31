@@ -4,7 +4,7 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { ConversationTurn } from './prompt';
+import type { ConversationTurn } from '../prompt';
 
 export class ChatHistoryError extends Error {
     constructor(message: string) {

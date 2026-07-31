@@ -8,7 +8,7 @@
 // Fail-soft: un errore qui non deve mai far fallire l'intera richiesta —
 // il chiamante ricade sulla selezione per similarità.
 
-import { geminiClient } from './gemini';
+import { geminiClient } from '../../shared/gemini';
 
 export interface RerankCandidate {
     id: string;

@@ -2,7 +2,7 @@
 
 import { useState, FormEvent } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { createBrowserSupabaseClient } from '@/lib/supabase';
+import { createBrowserSupabaseClient } from '@/lib/shared/supabase';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { PasswordInput } from '@/components/ui/PasswordInput';

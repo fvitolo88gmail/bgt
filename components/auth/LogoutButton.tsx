@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { createBrowserSupabaseClient } from '@/lib/supabase';
+import { createBrowserSupabaseClient } from '@/lib/shared/supabase';
 import { Button } from '@/components/ui/Button';
 
 export function LogoutButton() {

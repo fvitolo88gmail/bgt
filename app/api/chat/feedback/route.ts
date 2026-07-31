@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
-import { setMessageFeedback } from '@/lib/chat-history';
+import { supabase } from '@/lib/shared/supabase';
+import { setMessageFeedback } from '@/lib/chat/repository/chat-history.repository';
 
 // Endpoint dedicato al pollice su/giù sulle risposte assistant (solo
 // modalità "conversation", unica modalità che salva chat_messages oggi).

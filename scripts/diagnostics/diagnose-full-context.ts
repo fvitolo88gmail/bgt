@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { matchChunksForPrompt } from '../../lib/retrieval';
+import { matchChunksForPrompt } from '@/lib/chat/service/retrieval';
 
 /**
  * A differenza di diagnose-retrieval.ts (che chiama matchChunks sulla query

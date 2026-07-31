@@ -7,7 +7,7 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { createServiceClient } from '../supabase';
+import { createServiceClient } from '../../shared/supabase';
 
 export type GeminiCallType =
     | 'embedding'

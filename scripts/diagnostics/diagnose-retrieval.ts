@@ -1,6 +1,6 @@
 import 'dotenv/config';
-import { geminiClient } from '../../lib/gemini';
-import { createServiceClient } from '../../lib/supabase';
+import { geminiClient } from '@/lib/shared/gemini';
+import { createServiceClient } from '@/lib/shared/supabase';
 
 /**
  * Diagnostica retrieval: genera l'embedding di una query e mostra TUTTI

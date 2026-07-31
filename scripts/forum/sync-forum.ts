@@ -28,9 +28,9 @@
 import 'dotenv/config';
 import { readFile, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { getForumThreads } from '../../lib/bgg';
-import { createServiceClient } from '../../lib/supabase';
-import { verifyGameIdentity } from '../../lib/games';
+import { getForumThreads } from '@/lib/bgg/service/bgg';
+import { createServiceClient } from '@/lib/shared/supabase';
+import { verifyGameIdentity } from '@/lib/games/service/games';
 import { fetchForumPosts } from './forum-fetch';
 import { ingestForumPosts } from './forum-ingest';
 

@@ -18,9 +18,9 @@
 import 'dotenv/config';
 import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { createServiceClient } from '../../lib/supabase';
-import { geminiClient } from '../../lib/gemini';
-import { verifyGameIdentity } from '../../lib/games';
+import { createServiceClient } from '@/lib/shared/supabase';
+import { geminiClient } from '@/lib/shared/gemini';
+import { verifyGameIdentity } from '@/lib/games/service/games';
 
 const EMBED_PAUSE_MS = 800; // ~75 req/min, sotto il tetto reale di 100/min (verificato via dashboard)
 

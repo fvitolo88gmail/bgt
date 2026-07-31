@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getDisplayName, getGreetingName, getInitials } from './profile-display';
+import { getDisplayName, getGreetingName, getInitials } from '../../../profile/service/profile-display';
 
 describe('getDisplayName', () => {
     it('nome e cognome se entrambi presenti', () => {

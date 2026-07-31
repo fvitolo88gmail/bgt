@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { createBrowserSupabaseClient } from '@/lib/supabase';
+import { createBrowserSupabaseClient } from '@/lib/shared/supabase';
 
 const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
 

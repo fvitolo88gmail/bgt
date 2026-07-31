@@ -1,7 +1,7 @@
-import { supabase } from '@/lib/supabase';
-import { createServerSupabaseClient } from '@/lib/supabase-server';
-import { getProfile } from '@/lib/repositories/profiles.repository';
-import { getGreetingName } from '@/lib/profile-display';
+import { supabase } from '@/lib/shared/supabase';
+import { createServerSupabaseClient } from '@/lib/shared/supabase-server';
+import { getProfile } from '@/lib/profile/repository/profiles.repository';
+import { getGreetingName } from '@/lib/profile/service/profile-display';
 import { GameSelectForm } from '@/components/home/GameSelectForm';
 import { GameOption } from '@/components/home/types';
 import { Card } from '@/components/ui/Card';

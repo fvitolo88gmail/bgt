@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import fs from 'fs';
-import { geminiClient } from '../../../lib/gemini';
+import { geminiClient } from '@/lib/shared/gemini';
 
 /**
  * Step di verifica post-generazione: invece di continuare a irrigidire il

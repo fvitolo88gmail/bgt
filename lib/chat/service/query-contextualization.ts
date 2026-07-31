@@ -16,8 +16,8 @@
  * originale invece di far fallire l'intera risposta.
  */
 
-import { geminiClient } from './gemini';
-import type { ConversationTurn } from './prompt';
+import { geminiClient } from '../../shared/gemini';
+import type { ConversationTurn } from '../prompt';
 
 const QUERY_CONTEXTUALIZATION_PROMPT = (question: string, history: ConversationTurn[]) => {
     const formattedHistory = history

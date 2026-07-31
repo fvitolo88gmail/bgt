@@ -229,21 +229,55 @@ domanda utente + game_id (sessione utente verificata da proxy.ts, AUTH-00011)
 │       ├── LoginForm.tsx       # 'use client' — signInWithPassword, redirect via ?redirect=
 │       └── LogoutButton.tsx    # 'use client' — signOut + redirect a /home
 │
-├── lib/
-│   ├── supabase.ts             # client Supabase (anon, service, browser — safe da Client Component)
-│   ├── supabase-server.ts      # client Supabase con cookie (next/headers) — SOLO Server Component/Route Handler/middleware
-│   ├── repositories/           # accesso dati puro, zero logica di business (convenzione da AUTH-00008, D72 —
-│   │   │                       # migrazione graduale: il resto di lib/ non è ancora stato spostato qui)
-│   │   └── invite-requests.repository.ts
-│   ├── gemini.ts               # client Gemini (embeddings + chat)
-│   ├── retrieval.ts            # match_chunks
-│   ├── prompt/                 # prompt grounded, split per specializzazione (D61)
-│   │   ├── index.ts            # barrel — punto d'ingresso per i consumer (@/lib/prompt)
-│   │   ├── shared.ts           # regole condivise (lingua, citazioni, anti-premessa-errata) + buildContext
-│   │   ├── qa.ts                # specializzazione "qa" — buildPrompt
-│   │   └── conversation.ts     # specializzazione "conversation" — buildConversationPrompt, storico
-│   ├── owner-token.ts          # generazione/lettura owner_token client-side (D16)
-│   └── bgg.ts                  # client BGG XML API2
+├── lib/                         # package per feature; dentro ogni feature, sotto-cartelle per layer
+│   │                            # (service = logica di dominio, repository = accesso dati puro).
+│   │                            # Import cross-feature sempre via alias (@/lib/<feature>/...),
+│   │                            # import interni alla stessa feature sempre relativi
+│   ├── shared/                  # infrastruttura trasversale, nessuna feature specifica
+│   │   ├── supabase.ts          # client Supabase (anon, service, browser — safe da Client Component)
+│   │   ├── supabase-server.ts   # client Supabase con cookie (next/headers) — SOLO Server Component/Route Handler/middleware
+│   │   └── gemini.ts            # client Gemini (embeddings + chat)
+│   ├── chat/                    # pipeline RAG conversazionale
+│   │   ├── service/
+│   │   │   ├── retrieval.ts             # match_chunks
+│   │   │   ├── reranking.ts             # rerank a valle del retrieve (fail-soft)
+│   │   │   └── query-contextualization.ts  # riscrittura query in modalità conversazione (fail-soft)
+│   │   ├── repository/
+│   │   │   ├── chat-history.repository.ts  # turni chat_messages
+│   │   │   └── session.repository.ts       # registrazione chat_sessions
+│   │   └── prompt/               # prompt grounded, split per specializzazione (D61)
+│   │       ├── index.ts          # barrel — punto d'ingresso per i consumer (@/lib/chat/prompt)
+│   │       ├── shared.ts         # regole condivise (lingua, citazioni, anti-premessa-errata) + buildContext
+│   │       ├── qa.ts             # specializzazione "qa" — buildPrompt
+│   │       └── conversation.ts   # specializzazione "conversation" — buildConversationPrompt, storico
+│   ├── bgg/
+│   │   └── service/
+│   │       ├── bgg.ts            # client BGG XML API2
+│   │       └── bgg-clean.ts      # pulizia testo forum BGG (entità HTML, citazioni)
+│   ├── games/
+│   │   └── service/
+│   │       └── games.ts          # coerenza identità gioco tra slug/bggId/game_id (script ingest)
+│   ├── billing/
+│   │   ├── service/
+│   │   │   └── billing-aggregation.ts   # aggregazioni pure per pannello admin costi
+│   │   └── repository/
+│   │       └── usage-tracking.repository.ts   # scrittura user_requests/gemini_calls
+│   ├── profile/
+│   │   ├── service/
+│   │   │   └── profile-display.ts       # derivazioni pure per display (nome, iniziali)
+│   │   └── repository/
+│   │       └── profiles.repository.ts
+│   ├── invite/
+│   │   └── repository/
+│   │       └── invite-requests.repository.ts
+│   └── __tests__/               # test unitari, un'unica cartella con l'alberatura di lib/ replicata
+│       ├── bgg/service/bgg-clean.test.ts
+│       ├── billing/service/billing-aggregation.test.ts
+│       ├── chat/
+│       │   ├── repository/session.repository.test.ts
+│       │   └── service/query-contextualization.test.ts
+│       ├── games/service/games.test.ts
+│       └── profile/service/profile-display.test.ts
 │
 ├── ingest/                     # artefatti locali di ingest, gitignored (D27)
 │   └── {game-slug}/
@@ -297,10 +331,10 @@ Interfaccia unica per embedding e generazione. Il provider è configurabile via 
 Funzione SQL che prende vettore query + un array di game_id (gioco base + eventuali espansioni selezionate, D75) + top_k e restituisce chunk ordinati per similarità coseno con score. Filtro opzionale per source (manual | forum | entrambi).
 
 ### owner_token (deprecato — AUTH-00006)
-Meccanismo originario (D16): UUID generato lato client per identificare il "proprietario" dei giochi privati senza login, pensato per un MVP a bassissimo attrito. Mai arrivato in produzione (D67) — superato da autenticazione reale (`user_id` + RLS, AUTH-00003) prima di essere usato. Colonna `games.owner_token` resta nello schema mai popolata, `lib/owner-token.ts` vuoto, nessun client la genera.
+Meccanismo originario (D16): UUID generato lato client per identificare il "proprietario" dei giochi privati senza login, pensato per un MVP a bassissimo attrito. Mai arrivato in produzione (D67) — superato da autenticazione reale (`user_id` + RLS, AUTH-00003) prima di essere usato. Colonna `games.owner_token` resta nello schema mai popolata, nessun client la genera; il file `lib/owner-token.ts` (vuoto) è stato rimosso in fase di riordino di `lib/`.
 
 ### Prompt grounded
-Costante in `lib/prompt.ts`. Istruisce il modello a rispondere esclusivamente dal contesto fornito e a dichiarare esplicitamente quando la risposta non è presente nelle fonti.
+Costruito in `lib/chat/prompt/`. Istruisce il modello a rispondere esclusivamente dal contesto fornito e a dichiarare esplicitamente quando la risposta non è presente nelle fonti.
 
 ---
 

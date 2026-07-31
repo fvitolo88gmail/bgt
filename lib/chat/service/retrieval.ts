@@ -1,9 +1,9 @@
 // lib/retrieval.ts
 
-import {supabase} from './supabase';
-import {geminiClient} from './gemini';
-import {buildBggThreadUrl} from './bgg';
-import {decodeHtmlEntities} from './bgg-clean';
+import {supabase} from '../../shared/supabase';
+import {geminiClient} from '../../shared/gemini';
+import {buildBggThreadUrl} from '../../bgg/service/bgg';
+import {decodeHtmlEntities} from '../../bgg/service/bgg-clean';
 import {rerankByRelevance, type RerankCandidate, type RerankScore} from './reranking';
 
 export interface ChunkMatch {

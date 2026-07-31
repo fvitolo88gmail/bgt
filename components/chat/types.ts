@@ -1,4 +1,4 @@
-import { decodeHtmlEntities } from '@/lib/bgg-clean';
+import { decodeHtmlEntities } from '@/lib/bgg/service/bgg-clean';
 
 export interface Source {
     source: 'manual' | 'forum';

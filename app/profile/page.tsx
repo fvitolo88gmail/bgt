@@ -1,6 +1,6 @@
-import { createServerSupabaseClient } from '@/lib/supabase-server';
-import { getProfile } from '@/lib/repositories/profiles.repository';
-import { getInitials } from '@/lib/profile-display';
+import { createServerSupabaseClient } from '@/lib/shared/supabase-server';
+import { getProfile } from '@/lib/profile/repository/profiles.repository';
+import { getInitials } from '@/lib/profile/service/profile-display';
 import { Avatar } from '@/components/ui/Avatar';
 import { ProfileForm } from '@/components/profile/ProfileForm';
 import { UpdatePasswordForm } from '@/components/profile/UpdatePasswordForm';

@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { createServiceClient } from '../../lib/supabase';
+import { createServiceClient } from '@/lib/shared/supabase';
 
 async function main() {
   const supabase = createServiceClient();

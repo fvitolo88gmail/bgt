@@ -6,7 +6,7 @@
  * ogni aggregazione, quindi si fa qui in JS.
  */
 
-import type { UserRequestCostRow } from './repositories/usage-tracking.repository';
+import type { UserRequestCostRow } from '../repository/usage-tracking.repository';
 
 export interface OverallCostSummary {
     interactionCount: number;

@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import fs from 'fs';
-import { geminiClient } from '../../lib/gemini';
+import { geminiClient } from '@/lib/shared/gemini';
 
 /**
  * Trasforma il JSON grezzo prodotto da extract-pdf.py in un Markdown

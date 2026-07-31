@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import fs from 'fs';
-import { createServiceClient } from '../../lib/supabase';
-import { geminiClient } from '../../lib/gemini';
+import { createServiceClient } from '@/lib/shared/supabase';
+import { geminiClient } from '@/lib/shared/gemini';
 
 /**
  * Legge il Markdown strutturato prodotto dalla pipeline di ingest manuale

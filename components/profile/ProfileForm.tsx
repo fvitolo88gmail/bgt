@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
-import { createBrowserSupabaseClient } from '@/lib/supabase';
-import { updateProfileName } from '@/lib/repositories/profiles.repository';
+import { createBrowserSupabaseClient } from '@/lib/shared/supabase';
+import { updateProfileName } from '@/lib/profile/repository/profiles.repository';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Toast, type ToastVariant } from '@/components/ui/Toast';

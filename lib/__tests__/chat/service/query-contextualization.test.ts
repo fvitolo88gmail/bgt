@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
-import { contextualizeQueryForRetrieval } from './query-contextualization';
-import { geminiClient } from './gemini';
-import type { ConversationTurn } from './prompt';
+import { contextualizeQueryForRetrieval } from '../../../chat/service/query-contextualization';
+import { geminiClient } from '../../../shared/gemini';
+import type { ConversationTurn } from '../../../chat/prompt';
 
 vi.mock('./gemini', () => ({
     geminiClient: { generate: vi.fn() },

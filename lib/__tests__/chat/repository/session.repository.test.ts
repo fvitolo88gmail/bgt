@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { getOrCreateSession, SessionError } from './session';
+import { getOrCreateSession, SessionError } from '../../../chat/repository/session.repository';
 
 function mockSupabase(upsertResult: { error: { message: string } | null }): {
     client: SupabaseClient;

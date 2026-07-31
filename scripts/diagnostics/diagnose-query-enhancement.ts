@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { generateEnhancedQueries } from '../../lib/retrieval';
+import { generateEnhancedQueries } from '@/lib/chat/service/retrieval';
 
 /**
  * Chiama SOLO generateEnhancedQueries, senza fare retrieval, per ispezionare

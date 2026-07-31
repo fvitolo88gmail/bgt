@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { matchChunksForPrompt } from '@/lib/retrieval';
-import { buildPrompt, buildConversationPrompt, buildContext, buildHistorySection } from '@/lib/prompt';
-import { geminiClient } from '@/lib/gemini';
-import { supabase } from '@/lib/supabase';
-import { createServerSupabaseClient } from '@/lib/supabase-server';
-import { getOrCreateSession } from '@/lib/session';
-import { fetchRecentHistory, appendMessage } from '@/lib/chat-history';
-import { contextualizeQueryForRetrieval } from '@/lib/query-contextualization';
-import { createUserRequest, updateUserRequestOutcome } from '@/lib/repositories/usage-tracking.repository';
+import { matchChunksForPrompt } from '@/lib/chat/service/retrieval';
+import { buildPrompt, buildConversationPrompt, buildContext, buildHistorySection } from '@/lib/chat/prompt';
+import { geminiClient } from '@/lib/shared/gemini';
+import { supabase } from '@/lib/shared/supabase';
+import { createServerSupabaseClient } from '@/lib/shared/supabase-server';
+import { getOrCreateSession } from '@/lib/chat/repository/session.repository';
+import { fetchRecentHistory, appendMessage } from '@/lib/chat/repository/chat-history.repository';
+import { contextualizeQueryForRetrieval } from '@/lib/chat/service/query-contextualization';
+import { createUserRequest, updateUserRequestOutcome } from '@/lib/billing/repository/usage-tracking.repository';
 
 type ChatMode = 'qa' | 'conversation';
 

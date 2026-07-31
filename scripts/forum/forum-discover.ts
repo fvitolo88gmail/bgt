@@ -10,7 +10,7 @@
 
 import 'dotenv/config';
 import { mkdir, writeFile } from 'node:fs/promises';
-import { getThing, getForumList, getForumThreads } from '../../lib/bgg';
+import { getThing, getForumList, getForumThreads } from '@/lib/bgg/service/bgg';
 
 interface DiscoverOutput {
     bggId: number;

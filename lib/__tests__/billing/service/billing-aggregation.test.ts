@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { summarizeOverallCost, summarizeCostByGame, summarizeCostByDay } from './billing-aggregation';
-import type { UserRequestCostRow } from './repositories/usage-tracking.repository';
+import { summarizeOverallCost, summarizeCostByGame, summarizeCostByDay } from '../../../billing/service/billing-aggregation';
+import type { UserRequestCostRow } from '../../../billing/repository/usage-tracking.repository';
 
 function row(overrides: Partial<UserRequestCostRow>): UserRequestCostRow {
     return {

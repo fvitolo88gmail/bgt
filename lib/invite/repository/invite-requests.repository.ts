@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { supabase } from '../../shared/supabase';
 
 export class InviteRequestError extends Error {
     constructor(message: string) {
