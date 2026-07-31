@@ -1,8 +1,12 @@
 // Icona gufo con tocco da laurea — geometria ripresa dal design di
 // riferimento (docs/epics/todo/DESIGN/reference), colori sempre da theme.css.
+// viewBox spostato di -4 in y: il disegno (corpo + tocco) non è centrato nel
+// box 64x64 originale, lascia più spazio vuoto sotto che sopra — allineato
+// qui per farlo centrare correttamente col testo quando affiancato in flex
+// items-center.
 export function OwlMark({ size = 26 }: { size?: number }) {
     return (
-        <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true">
+        <svg width={size} height={size} viewBox="0 -4 64 64" aria-hidden="true">
             <circle cx="32" cy="34" r="22" fill="var(--owl-body)" />
             <circle cx="24" cy="30" r="7" fill="white" />
             <circle cx="40" cy="30" r="7" fill="white" />

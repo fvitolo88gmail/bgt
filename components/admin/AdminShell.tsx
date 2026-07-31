@@ -63,9 +63,9 @@ export function AdminShell({ active, children }: { active?: string; children: Re
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     return (
-        <div className="min-h-[calc(100vh-57px)] md:flex">
+        <div className="flex h-[calc(100vh-57px)] flex-col md:flex-row">
             {/* Top bar con hamburger, visibile solo sotto md */}
-            <div className="flex items-center justify-between bg-admin-sidebar px-3.5 py-3 md:hidden">
+            <div className="flex shrink-0 items-center justify-between bg-admin-sidebar px-3.5 py-3 md:hidden">
                 <span className="flex items-center gap-1.5 font-serif text-sm font-bold text-white">
                     <OwlMark size={18} />
                     BGT Admin
@@ -91,7 +91,7 @@ export function AdminShell({ active, children }: { active?: string; children: Re
             </div>
 
             {isMenuOpen && (
-                <nav className="flex flex-col gap-1 bg-admin-sidebar px-3.5 py-3 md:hidden">
+                <nav className="flex shrink-0 flex-col gap-1 bg-admin-sidebar px-3.5 py-3 md:hidden">
                     <NavLinks active={active} onNavigate={() => setIsMenuOpen(false)} />
                 </nav>
             )}
@@ -104,7 +104,10 @@ export function AdminShell({ active, children }: { active?: string; children: Re
                 <NavLinks active={active} />
             </aside>
 
-            <div className="flex-1 bg-paper p-6">{children}</div>
+            {/* min-h-0 necessario perché un figlio flex non si restringe sotto
+                il contenuto senza di esso, altrimenti l'overflow-y-auto non
+                scrolla mai (rimane alto quanto il contenuto). */}
+            <div className="min-h-0 flex-1 overflow-y-auto bg-paper p-6">{children}</div>
         </div>
     );
 }
