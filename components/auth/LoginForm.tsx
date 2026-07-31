@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { createBrowserSupabaseClient } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 
 const LOGIN_TIMEOUT_MS = 15000;
 
@@ -85,9 +86,8 @@ export function LoginForm() {
             <label htmlFor="login-password" className="text-sm text-ink-soft">
                 Password
             </label>
-            <Input
+            <PasswordInput
                 id="login-password"
-                type="password"
                 required
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}

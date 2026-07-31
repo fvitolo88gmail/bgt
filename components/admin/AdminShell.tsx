@@ -2,13 +2,12 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { OwlMark } from '@/components/ui/OwlMark';
 
 /**
  * Shell della console admin (sidebar + contenuto), dal design di riferimento
  * (docs/design-reference/"BGT Design System - Standalone.html", sezione
- * ADMIN). Le voci non ancora costruite (ADMIN-CONSOLE) restano nel menu ma
- * disabilitate — visibili per fedeltà al reference, non anticipano
+ * ADMIN). Le voci non ancora costruite restano nel menu ma disabilitate —
+ * visibili per fedeltà al reference, non anticipano
  * l'implementazione di quelle pagine. Nessuna etichetta "in arrivo": solo
  * non cliccabili (scelta esplicita di Francesco).
  *
@@ -63,13 +62,14 @@ export function AdminShell({ active, children }: { active?: string; children: Re
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
     return (
-        <div className="flex h-[calc(100vh-57px)] flex-col md:flex-row">
+        // h-full invece di un calc(100vh-...) hardcoded: il genitore <main>
+        // è già dimensionato correttamente da flexbox (viewport meno header
+        // meno footer, v. app/layout.tsx) — ricalcolare qui rischia di
+        // disallinearsi se l'altezza di header/footer cambia altrove.
+        <div className="flex h-full flex-col md:flex-row">
             {/* Top bar con hamburger, visibile solo sotto md */}
             <div className="flex shrink-0 items-center justify-between bg-admin-sidebar px-3.5 py-3 md:hidden">
-                <span className="flex items-center gap-1.5 font-serif text-sm font-bold text-white">
-                    <OwlMark size={18} />
-                    BGT Admin
-                </span>
+                <span className="font-serif text-sm font-bold text-white">Administration</span>
                 <button
                     type="button"
                     aria-label={isMenuOpen ? 'Chiudi menu' : 'Apri menu'}
@@ -97,10 +97,7 @@ export function AdminShell({ active, children }: { active?: string; children: Re
             )}
 
             <aside className="hidden w-[200px] shrink-0 flex-col gap-1 bg-admin-sidebar px-3.5 py-5 md:flex">
-                <span className="mb-4 flex items-center gap-1.5 font-serif text-sm font-bold text-white">
-                    <OwlMark size={18} />
-                    BGT Admin
-                </span>
+                <span className="mb-4 font-serif text-sm font-bold text-white">Administration</span>
                 <NavLinks active={active} />
             </aside>
 

@@ -3,10 +3,11 @@ import { getProfile } from '@/lib/repositories/profiles.repository';
 import { getInitials } from '@/lib/profile-display';
 import { Avatar } from '@/components/ui/Avatar';
 import { ProfileForm } from '@/components/profile/ProfileForm';
+import { UpdatePasswordForm } from '@/components/profile/UpdatePasswordForm';
 
-// proxy.ts garantisce già una sessione valida per ogni route non pubblica
-// (AUTH-00011) — se per qualche motivo user è null si mostra solo un
-// messaggio, nessun redirect qui (già gestito a monte).
+// proxy.ts garantisce già una sessione valida per ogni route non pubblica —
+// se per qualche motivo user è null si mostra solo un messaggio, nessun
+// redirect qui (già gestito a monte).
 export default async function ProfilePage() {
     const supabase = await createServerSupabaseClient();
     const {
@@ -36,6 +37,10 @@ export default async function ProfilePage() {
                 initialFirstName={profile.firstName ?? ''}
                 initialLastName={profile.lastName ?? ''}
             />
+
+            <hr className="my-8 border-line-soft" />
+
+            <UpdatePasswordForm email={email} />
         </div>
     );
 }
