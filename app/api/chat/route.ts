@@ -11,9 +11,9 @@ import { createUserRequest, updateUserRequestOutcome } from '@/lib/repositories/
 
 type ChatMode = 'qa' | 'conversation';
 
-// BILLING-00001: un problema nel tracking non deve mai bloccare la risposta
-// all'utente — createUserRequest/updateUserRequestOutcome sono sempre
-// avvolte in un catch che si limita a loggare e restituire null.
+// Un problema nel tracking non deve mai bloccare la risposta all'utente —
+// createUserRequest/updateUserRequestOutcome sono sempre avvolte in un catch
+// che si limita a loggare e restituire null.
 async function createUserRequestSafely(
     params: Parameters<typeof createUserRequest>[0],
 ): Promise<string | null> {
@@ -73,9 +73,9 @@ export async function POST(req: NextRequest) {
             : null;
 
         // proxy.ts garantisce già che la richiesta arrivi con una sessione
-        // valida (AUTH-00011) — getUser() qui serve solo a risolvere l'id
-        // per il tracking, fail-soft: un errore non deve bloccare la chat,
-        // user_id resta nullable in user_requests proprio per questo.
+        // valida — getUser() qui serve solo a risolvere l'id per il
+        // tracking, fail-soft: un errore non deve bloccare la chat, user_id
+        // resta nullable in user_requests proprio per questo.
         const userId = await createServerSupabaseClient()
             .then((client) => client.auth.getUser())
             .then(({ data }) => data.user?.id ?? null)

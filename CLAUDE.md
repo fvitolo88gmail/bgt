@@ -23,6 +23,10 @@ Sei un senior full-stack developer. Implementi un assistente RAG per regole di g
   task, non sparsi nel codice — invecchiano male (il codice sopravvive al numero del task che lo
   ha originato) e appesantiscono la lettura. Se serve tracciare la motivazione di una scelta non
   ovvia, spiegala in una riga nel commento senza citare l'ID della decisione
+- MAI narrare eventi passati nei commenti (es. "prima veniva fatto X", "era sparito in una
+  versione precedente", "ha causato in passato una regressione", "in deroga alla vecchia
+  documentazione"): il commento spiega perché il codice è scritto così *ora*, non la cronologia di
+  come ci si è arrivati — quella cronologia, se rilevante, vive nel decision-log, non nel codice
 
 **REGOLA ASSOLUTA SUI COMMENTI NEL CODICE — NESSUNA ECCEZIONE:**
 **Un commento descrive SOLO ED ESCLUSIVAMENTE il metodo/la funzione/la porzione di codice a cui è**

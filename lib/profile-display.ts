@@ -1,7 +1,7 @@
 /**
  * Derivazioni pure per la visualizzazione del profilo (saluto in /home,
  * iniziali sull'avatar, nome nel menu utente) — nessun accesso DB qui, solo
- * logica su nome/cognome/email già letti altrove (DESIGN-00004).
+ * logica su nome/cognome/email già letti altrove.
  */
 
 export interface ProfileNameInput {

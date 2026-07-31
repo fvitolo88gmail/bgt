@@ -27,8 +27,8 @@ export async function isAdmin(supabase: SupabaseClient, userId: string): Promise
 }
 
 /**
- * Legge nome/cognome/ruolo dell'utente autenticato (DESIGN-00004) — usato dal
- * menu avatar, dalla pagina profilo e dal saluto in /home.
+ * Legge nome/cognome/ruolo dell'utente autenticato — usato dal menu avatar,
+ * dalla pagina profilo e dal saluto in /home.
  */
 export async function getProfile(supabase: SupabaseClient, userId: string): Promise<Profile> {
     const { data, error } = await supabase

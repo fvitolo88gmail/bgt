@@ -28,15 +28,14 @@ export function SourcesList({ sources }: SourcesListProps) {
     // pagine di quella sezione aggregate in un'unica riga ("Nome Sezione —
     // p. 1 - 3") invece di una voce separata per ogni chunk — più compatto
     // quando più chunk della stessa sezione contribuiscono alla risposta,
-    // ma senza perdere il riferimento al capitolo (era sparito in una
-    // versione precedente che aggregava solo le pagine, ignorando la
-    // sezione). L'ordine dei gruppi segue il primo ordine di apparizione.
+    // mantenendo comunque il riferimento al capitolo. L'ordine dei gruppi
+    // segue il primo ordine di apparizione.
     const manualSources = sources.filter((s) => s.source === 'manual');
     const otherSources = sources.filter((s) => s.source !== 'manual');
 
     // maxSimilarity: la rilevanza più alta tra i chunk aggregati nel gruppo,
-    // così la riga riporta comunque un indicatore utile invece di sparire
-    // insieme all'aggregazione (era sparita nella versione precedente).
+    // così la riga riporta comunque un indicatore utile anche dopo
+    // l'aggregazione.
     const manualGroups = new Map<string, { pages: number[]; maxSimilarity: number }>();
     for (const s of manualSources) {
         const key = s.section ?? 'Manuale';

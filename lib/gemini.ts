@@ -19,8 +19,8 @@ function estimateTokenCount(text: string): number {
     return Math.ceil(text.length / 4);
 }
 
-// BILLING-00001: un log fallito non deve mai far fallire la chiamata Gemini
-// che lo ha generato.
+// Un log fallito non deve mai far fallire la chiamata Gemini che lo ha
+// generato.
 async function logGeminiCallSafely(params: Parameters<typeof logGeminiCall>[0]): Promise<void> {
     try {
         await logGeminiCall(params);
@@ -75,17 +75,17 @@ interface RetryResult<T> {
     retryCount: number;
 }
 
-// Errore arricchito col numero di tentativi già assorbiti (BILLING-00001):
-// serve al chiamante per loggare retry_count anche su un esito finale di
-// errore, non solo su successo.
+// Errore arricchito col numero di tentativi già assorbiti: serve al
+// chiamante per loggare retry_count anche su un esito finale di errore,
+// non solo su successo.
 class GeminiRetryError extends Error {
     constructor(public readonly cause: unknown, public readonly retryCount: number) {
         super(cause instanceof Error ? cause.message : String(cause));
     }
 }
 
-// Espone il numero di tentativi assorbiti (BILLING-00001, colonna
-// gemini_calls.retry_count) invece del solo valore finale.
+// Espone il numero di tentativi assorbiti (colonna gemini_calls.retry_count)
+// invece del solo valore finale.
 async function withGeminiRetry<T>(label: string, fn: () => Promise<T>): Promise<RetryResult<T>> {
     let attempt = 0;
     while (true) {
@@ -212,9 +212,8 @@ export const geminiClient: LLMClient = {
     },
 };
 
-// Fuori da LLMClient/BILLING-00001 di proposito: percorso di ingest PDF
-// (script locale, mai in una richiesta utente), nessuna interazione da
-// tracciare.
+// Fuori da LLMClient di proposito: percorso di ingest PDF (script locale,
+// mai in una richiesta utente), nessuna interazione da tracciare.
 export async function generateFromPdfBase64(prompt: string, pdfBase64: string): Promise<string> {
     try {
         const { value } = await withGeminiRetry('generateFromPdfBase64', async () => {

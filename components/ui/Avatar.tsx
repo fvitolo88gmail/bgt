@@ -1,5 +1,5 @@
-// Cerchio bianco, bordo bold, iniziali colorate dalla palette — sostituisce
-// l'OwlMark usato provvisoriamente in BILLING-00002 (DESIGN-00004).
+// Cerchio bianco, bordo bold, iniziali colorate dalla palette: identifica
+// l'utente autenticato in modo distinguibile dal marchio OwlMark del brand.
 export function Avatar({ initials, size = 32 }: { initials: string; size?: number }) {
     return (
         <span

@@ -13,7 +13,7 @@ export default function LoginPage() {
                     <LoginForm />
                 </Suspense>
             </Card>
-            {/* niente signup pubblico (AUTH-00008) — il link porta alla richiesta d'invito, dal
+            {/* niente signup pubblico — il link porta alla richiesta d'invito, dal
                 reference ("Non hai un account? Registrati"), adattato alla registrazione solo
                 su invito */}
             <p className="text-center text-sm text-ink-faint">

@@ -8,7 +8,7 @@ import { LogoutButton } from '@/components/auth/LogoutButton';
 /**
  * Avatar in fondo all'Header: click per espandere. Primo item non
  * cliccabile con nome + email, poi i link (Profilo, Admin solo per chi ha
- * il ruolo, Esci) — DESIGN-00004.
+ * il ruolo, Esci).
  */
 export function UserMenu({
     displayName,

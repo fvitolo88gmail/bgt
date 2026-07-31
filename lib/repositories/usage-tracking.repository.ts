@@ -1,6 +1,6 @@
 /**
- * Scrittura di user_requests/gemini_calls (BILLING-00001). Sempre via service
- * client: sono log interni (RLS admin-only in lettura, v. migration
+ * Scrittura di user_requests/gemini_calls. Sempre via service client: sono
+ * log interni (RLS admin-only in lettura, v. migration
  * 20260731000000_usage_tracking.sql), nessun ruolo applicativo deve scriverci
  * direttamente. Fail-soft per design nei chiamanti (lib/gemini.ts, route.ts):
  * un errore qui non deve mai interrompere la risposta all'utente.
@@ -107,7 +107,7 @@ export async function logGeminiCall(params: {
     }
 }
 
-// --- BILLING-00002: lettura per il pannello admin costi ---
+// --- Lettura per il pannello admin costi ---
 // A differenza delle scritture sopra (sempre service client, log interni),
 // le letture qui prendono il client del chiamante: la RLS admin-only su
 // user_requests/gemini_calls/model_pricing resta l'enforcement reale, il

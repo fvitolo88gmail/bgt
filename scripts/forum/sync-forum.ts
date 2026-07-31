@@ -1,6 +1,6 @@
 // scripts/forum/sync-forum.ts
 //
-// F4 — aggiornamento periodico incrementale del forum (D27/architecture.md).
+// Aggiornamento periodico incrementale del forum (v. architecture.md).
 // Non ripete l'intero fetch+ingest: confronta reply_count vivo su BGG con
 // quello salvato in forum_threads (stato dell'ultimo ingest) per capire quali
 // thread sono nuovi o hanno ricevuto nuovi post, e ri-processa solo quelli.

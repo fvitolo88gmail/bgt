@@ -332,9 +332,9 @@ export async function matchChunksForPrompt(
     const RAW_CANDIDATES_PER_SOURCE = 8;
 
     // Un solo embed per query, riusato per la ricerca manuale e quella
-    // forum: prima venivano fatte due chiamate embed identiche (una per
-    // matchChunks 'manual', una per 'forum'), raddoppiando inutilmente le
-    // chiamate Gemini per domanda.
+    // forum: evita di raddoppiare inutilmente le chiamate Gemini per
+    // domanda con due embed identici (uno per matchChunks 'manual', uno
+    // per 'forum').
     const embeddingResults = await Promise.allSettled(
         searchQueries.map((q) => geminiClient.embed(
             q,

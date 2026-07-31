@@ -1,6 +1,6 @@
 /**
- * Aggregazioni pure per il pannello admin costi (BILLING-00002), a partire
- * dalle righe già sommate per interazione (`getUserRequestCosts`). Separate
+ * Aggregazioni pure per il pannello admin costi, a partire dalle righe già
+ * sommate per interazione (`getUserRequestCosts`). Separate
  * dalla lettura DB per essere testabili senza un client Supabase — il
  * volume di dati è ancora troppo piccolo per giustificare RPC dedicate per
  * ogni aggregazione, quindi si fa qui in JS.

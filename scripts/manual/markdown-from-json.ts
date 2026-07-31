@@ -87,11 +87,11 @@ async function identifySections(pages: ExtractedPage[]): Promise<SectionOutline[
  *
  * Una soglia basata solo sull'overlap di pagine è troppo aggressiva quando
  * più azioni distinte condividono la stessa pagina fisica per motivi di
- * impaginazione: fondere quelle sezioni ha causato in passato una
- * regressione (il modello, ricevendo testo misto in una sola chiamata, ha
- * rimescolato frammenti di regole diverse). Richiediamo quindi overlap di
- * pagine quasi totale (>=95%) E titoli testualmente simili, per
- * intercettare solo il vero duplicato.
+ * impaginazione: fondere quelle sezioni rischia di mescolare testo di regole
+ * diverse in una sola chiamata al modello, che può poi rimescolare
+ * frammenti tra loro non correlati. Richiediamo quindi overlap di pagine
+ * quasi totale (>=95%) E titoli testualmente simili, per intercettare solo
+ * il vero duplicato.
  */
 function titleSimilarity(a: string, b: string): number {
     return jaccardSimilarity(normalizeForComparison(a), normalizeForComparison(b));
