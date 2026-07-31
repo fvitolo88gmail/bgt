@@ -32,6 +32,10 @@ Vedi directory `AUTH/` per i task singoli.
 
 ## Note aperte
 
+- Follow-up minore ad AUTH-00008 (sessione 2026-07-31, da DESIGN-00004): `invite_requests`
+  guadagna `first_name`/`last_name` (migration `20260801010000_invite_requests_name.sql`), form
+  `RequestInviteForm` aggiornato; aggiunto anche un link "Non hai un account? Richiedi accesso"
+  in `/login` verso `/request-invite`. Non riaperta per un'aggiunta così piccola.
 - Ruoli custom/permessi granulari (tabella `roles`/`user_roles` many-to-many) non necessari
   per ora: `role` enum su `profiles` è sufficiente per lo scope attuale.
 - AUTH-00001 chiusa: migration `20260729010000_auth_profiles.sql` applicata al DB, DoD verificato
@@ -116,6 +120,15 @@ Vedi directory `AUTH/` per i task singoli.
 - AUTH-00011 chiusa (2026-07-31): verifica manuale confermata da Francesco — senza sessione
   `/home`/`/game/[id]` rimandano a `/login`, con sessione attiva l'uso resta invariato — v.
   `done/AUTH-00011-route-protette-globali.md`.
+- Bootstrap del primo admin (emerso in sessione 2026-07-31, durante BILLING-00002): il trigger
+  `prevent_role_self_escalation` (AUTH-00003) blocca anche un `update profiles set role='admin'`
+  fatto da SQL Editor di Studio, non solo dall'app — lì non c'è un `auth.uid()` di sessione (gira
+  come `postgres`), quindi `is_admin()` risulta falso e il trigger silenziosamente riporta
+  `role` al valore precedente, senza errore. Per promuovere il primissimo admin va disabilitato
+  temporaneamente: `alter table profiles disable trigger profiles_prevent_role_escalation;` →
+  update → `alter table profiles enable trigger profiles_prevent_role_escalation;`. Le
+  promozioni successive le fa un admin già esistente tramite l'app (RLS/trigger si comportano
+  normalmente lì, c'è un `auth.uid()` reale).
 - AUTH-00006 chiusa (2026-07-31): lavoro solo documentale, nessun codice toccato — `owner_token`
   non è mai stato generato/popolato (D67), quindi il DoD "nuovo utente non genera più
   owner_token" era già soddisfatto. Aggiornato `docs/architecture.md`: principio di isolamento,

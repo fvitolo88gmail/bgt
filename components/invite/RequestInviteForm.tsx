@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/Input';
 type Status = 'idle' | 'submitting' | 'success' | 'error';
 
 export function RequestInviteForm() {
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
     const [email, setEmail] = useState('');
     const [message, setMessage] = useState('');
     const [status, setStatus] = useState<Status>('idle');
@@ -19,7 +21,7 @@ export function RequestInviteForm() {
             const response = await fetch('/api/invite-requests', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, message: message || undefined }),
+                body: JSON.stringify({ firstName, lastName, email, message: message || undefined }),
             });
 
             if (!response.ok) {
@@ -43,6 +45,28 @@ export function RequestInviteForm() {
 
     return (
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+            <label htmlFor="invite-first-name" className="text-sm text-ink-soft">
+                Nome
+            </label>
+            <Input
+                id="invite-first-name"
+                required
+                value={firstName}
+                onChange={(event) => setFirstName(event.target.value)}
+                placeholder="Nome"
+            />
+
+            <label htmlFor="invite-last-name" className="text-sm text-ink-soft">
+                Cognome
+            </label>
+            <Input
+                id="invite-last-name"
+                required
+                value={lastName}
+                onChange={(event) => setLastName(event.target.value)}
+                placeholder="Cognome"
+            />
+
             <label htmlFor="invite-email" className="text-sm text-ink-soft">
                 La tua email
             </label>
