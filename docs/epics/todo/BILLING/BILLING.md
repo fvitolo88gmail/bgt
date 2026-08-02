@@ -1,7 +1,7 @@
 # Epica BILLING — Modello di costo e monetizzazione
 
-**Stato:** in corso — BILLING-00001 ✅ done, BILLING-00002 ✅ done, BILLING-00009 in progress
-(codice pronto, manca riverifica manuale)
+**Stato:** in pausa — BILLING-00001/00002/00009 ✅ done, prossimo BILLING-00003 in attesa di
+raccolta dati reali, nessun lavoro attivo
 
 ## Contesto
 
@@ -33,7 +33,7 @@ Vedi directory `BILLING/` per i task singoli.
 | BILLING-00006 | Verifica compliance vendita crediti/abbonamento | todo |
 | BILLING-00007 | BYOK per gruppo ristretto di tester | todo |
 | BILLING-00008 | AI Provider Adapters (generazione, selezionabile per utente) | todo |
-| BILLING-00009 | Viste per utente e per tipo di operazione nel pannello costi | in progress |
+| BILLING-00009 | Viste per utente e per tipo di operazione nel pannello costi | ✅ done |
 
 ## Note aperte
 

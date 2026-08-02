@@ -94,5 +94,4 @@ l'icona a seconda dello spazio disponibile.
 - Nessuna etichetta "Gemini" nella UI del pannello.
 - `tsc`/`eslint`/`vitest` puliti.
 
-**Da verificare manualmente**: applicare la migration corretta (`user_id` in coda), aprire
-`/admin/costs`, controllare che le tre tabelle mostrino dati reali coerenti.
+**Verificato manualmente da Francesco (2026-08-02).** Task chiuso.

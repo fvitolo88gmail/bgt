@@ -10,7 +10,7 @@ todo/progress/done).*
 |---|---|---|
 | POC | `progress/POC/` | in corso (solo POC-00011 ancora aperto, in pausa; tutto il resto chiuso o deprecato) |
 | AUTH | `progress/AUTH/` | in corso, priorità corrente (v. D65) — AUTH-00001/00003/00004/00005/00006/00008/00011 ✅ (00008: invito via email rimandato, processo manuale via Studio nel frattempo), AUTH-00002 chiusa non applicabile, AUTH-00012 ✅ (redirect /login se già loggato + logout per inattività), prossimi: 00007/00009/00010 (00010 in attesa dominio) |
-| BILLING | `progress/BILLING/` | in corso, BILLING-00001/00002 ✅ done, BILLING-00009 in progress (manca riverifica), poi BILLING-00003 (in attesa raccolta dati) |
+| BILLING | `todo/BILLING/` | in pausa — BILLING-00001/00002/00009 ✅ done, prossimo BILLING-00003 in attesa raccolta dati reali |
 | TEACH | `todo/TEACH/` | da iniziare |
 | VISUAL | `todo/VISUAL/` | nice to have, in coda |
 | DESIGN | `done/DESIGN/` | ✅ completata — DESIGN-00004 chiusa, verifica manuale confermata |
@@ -297,10 +297,14 @@ Component, unico con stato client nel pannello).
 **BILLING-00009 aggiunta minore (stessa sessione): tooltip sul tipo di operazione.** Icona info
 accanto al nome operazione (tabella distribuzione + dettaglio top 10) con spiegazione breve di
 cosa fa quella chiamata. Consolidate le mappe `call_type` → etichetta duplicate in
-`lib/billing/service/call-type-labels.ts`; `InfoTooltip.tsx` nuovo, solo CSS (nessuno stato
-client, riusabile da Server e Client Component). `tsc`/`eslint`/`vitest` puliti. **Non ancora
-chiusa:** manca la verifica manuale di Francesco (applicare la migration, controllare le
-quattro viste + i tooltip su dati reali).
+`lib/billing/service/call-type-labels.ts`; `InfoTooltip.tsx` nuovo, prima versione solo CSS
+(`group`/`group-hover`), poi convertita a Client Component con posizione `fixed` calcolata via
+`getBoundingClientRect` — la versione `absolute` veniva tagliata dal clipping verticale
+implicito di `overflow-x-auto` sulle tabelle. `tsc`/`eslint`/`vitest` puliti.
+
+**BILLING-00009 chiusa (2026-08-02):** verifica manuale confermata da Francesco. Epica BILLING
+senza altro lavoro attivo (prossimo task, BILLING-00003, aspetta un periodo di raccolta dati
+reali) — spostata `progress/BILLING` → `todo/BILLING`.
 
 **DESIGN-00004 chiusa (2026-08-02):** verifica manuale confermata da Francesco (migration
 applicata, avatar/menu/saluto/profilo verificati). Epica DESIGN nuovamente completata,
