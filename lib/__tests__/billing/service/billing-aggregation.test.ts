@@ -5,6 +5,7 @@ import {
     summarizeCostByUser,
     summarizeCostByDay,
     summarizeCostByCallType,
+    getTopRequestsByCost,
 } from '../../../billing/service/billing-aggregation';
 import type { UserRequestCostRow, GeminiCallCostRow } from '../../../billing/repository/usage-tracking.repository';
 
@@ -117,6 +118,25 @@ describe('summarizeCostByCallType', () => {
         const result = summarizeCostByCallType(callRows);
         expect(result).toHaveLength(2);
         expect(result.map((r) => r.modelName)).toEqual(['gemini-3-pro', 'gemini-3.1-flash-lite']);
+    });
+});
+
+describe('getTopRequestsByCost', () => {
+    it('ordina per costo decrescente e limita al numero richiesto', () => {
+        const rows = [
+            row({ userRequestId: 'req-a', totalCostUsd: 0.001 }),
+            row({ userRequestId: 'req-b', totalCostUsd: 0.05 }),
+            row({ userRequestId: 'req-c', totalCostUsd: 0.02 }),
+        ];
+        const result = getTopRequestsByCost(rows, 2);
+        expect(result.map((r) => r.userRequestId)).toEqual(['req-b', 'req-c']);
+    });
+
+    it('di default limita a 10 senza mutare l\'array originale', () => {
+        const rows = Array.from({ length: 15 }, (_, i) => row({ userRequestId: `req-${i}`, totalCostUsd: i }));
+        const result = getTopRequestsByCost(rows);
+        expect(result).toHaveLength(10);
+        expect(rows).toHaveLength(15);
     });
 });
 

@@ -285,8 +285,16 @@ medio). `ExpandableCostTable.tsx` (Client Component) rimosso, sostituito da `Cos
 (Server Component, tabella semplice riusata per le tre viste). `billing-aggregation.ts`:
 `buildInteractionDetails` sostituita da `summarizeCostByCallType` (aggrega
 `gemini_calls_costed` per tipo operazione). Titolo pagina "Costi Gemini" → "Costi", nessun
-riferimento a "Gemini" nella UI. `tsc`/`eslint`/`vitest` puliti. **Non ancora chiusa:** manca la
-verifica manuale di Francesco (applicare la migration, controllare le tre tabelle su dati reali).
+riferimento a "Gemini" nella UI.
+
+**BILLING-00009 estesa (stessa sessione): top 10 richieste per costo.** Chiarito con Francesco
+che "richiesta" = singola domanda utente, l'espansione mostra le chiamate Gemini che la
+compongono (non altre interazioni) — diverso, e non un ritorno indietro, rispetto alle righe
+espandibili tolte da gioco/utente: qui il dettaglio è un livello sotto la riga, non un
+doppione dell'aggregato. Nuova `getTopRequestsByCost` + `TopRequestsTable.tsx` (Client
+Component, unico con stato client nel pannello). `tsc`/`eslint`/`vitest` puliti. **Non ancora
+chiusa:** manca la verifica manuale di Francesco (applicare la migration, controllare le
+quattro viste su dati reali).
 
 **DESIGN-00004 chiusa (2026-08-02):** verifica manuale confermata da Francesco (migration
 applicata, avatar/menu/saluto/profilo verificati). Epica DESIGN nuovamente completata,

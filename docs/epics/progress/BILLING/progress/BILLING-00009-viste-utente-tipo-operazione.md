@@ -52,11 +52,24 @@ diverso nel tempo (es. upgrade del modello di generazione). `CostTable` mostra l
 Verificato: `npx tsc --noEmit`, `npx eslint`, `npx vitest run` (8 test in
 `billing-aggregation.test.ts`, incluse `summarizeCostByUser`/`summarizeCostByCallType`) puliti.
 
+**Aggiunta (stessa sessione): top 10 richieste per costo.** Francesco ha chiarito che "richiesta"
+= singola domanda utente (`user_request`, già atomica), non un raggruppamento — le righe
+espandibili qui mostrano le singole chiamate Gemini (`gemini_calls`) che compongono quella
+domanda, non altre interazioni. Nuova `getTopRequestsByCost` (ordina `user_request_costs` per
+costo decrescente, prende le prime N — default 10). Nuovo `components/admin/TopRequestsTable.tsx`
+(Client Component, righe espandibili): colonne data/utente/gioco/costo totale, espansione mostra
+tipo operazione/modello/costo per ogni chiamata. Diverso da `ExpandableCostTable` (rimosso in
+precedenza): qui l'espansione è utile perché il dettaglio è a un livello sotto la riga (chiamate
+dentro una domanda), non un doppione dell'aggregato.
+
+Verificato: `npx tsc --noEmit`, `npx eslint`, `npx vitest run` (10 test, incluso
+`getTopRequestsByCost`) puliti.
+
 ## DoD
 
-- `/admin/costs` mostra tre tabelle di distribuzione: per gioco, per utente, per tipo di
-  operazione (embedding/generation/query_contextualization/query_enhancement/reranking), con il
-  modello usato per riga in quest'ultima.
+- `/admin/costs` mostra tre tabelle di distribuzione (gioco, utente, tipo di operazione, con
+  modello per riga in quest'ultima) più la tabella "Top 10 richieste per costo" con utente,
+  gioco, costo totale, espandibile per vedere le singole chiamate Gemini (tipo, modello, costo).
 - Nessuna etichetta "Gemini" nella UI del pannello.
 - `tsc`/`eslint`/`vitest` puliti.
 

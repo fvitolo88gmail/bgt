@@ -133,6 +133,16 @@ export function summarizeCostByCallType(callRows: GeminiCallCostRow[]): CallType
         .sort((a, b) => b.totalCostUsd - a.totalCostUsd);
 }
 
+/**
+ * Le `limit` interazioni (domande utente) più costose, ordinate per costo
+ * totale decrescente — ogni riga è un `user_request` singolo, non un
+ * aggregato: la vista serve a individuare i picchi di costo puntuali, non
+ * la distribuzione generale (già coperta da gioco/utente/tipo operazione).
+ */
+export function getTopRequestsByCost(rows: UserRequestCostRow[], limit = 10): UserRequestCostRow[] {
+    return [...rows].sort((a, b) => b.totalCostUsd - a.totalCostUsd).slice(0, limit);
+}
+
 export interface DailyCostPoint {
     date: string; // YYYY-MM-DD, UTC
     totalCostUsd: number;

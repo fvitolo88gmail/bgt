@@ -7,10 +7,12 @@ import {
     summarizeCostByUser,
     summarizeCostByCallType,
     summarizeCostByDay,
+    getTopRequestsByCost,
 } from '@/lib/billing/service/billing-aggregation';
 import { AdminShell } from '@/components/admin/AdminShell';
 import { CostTrendChart } from '@/components/admin/CostTrendChart';
 import { CostTable, type CostTableRow } from '@/components/admin/CostTable';
+import { TopRequestsTable, type TopRequestRow, type RequestCallDetail } from '@/components/admin/TopRequestsTable';
 
 function formatUsd(value: number): string {
     return `$${value.toFixed(6)}`;
@@ -58,6 +60,7 @@ export default async function AdminCostsPage() {
     const byUser = summarizeCostByUser(requestRows);
     const byCallType = summarizeCostByCallType(callRows);
     const byDay = summarizeCostByDay(requestRows);
+    const topRequests = getTopRequestsByCost(requestRows, 10);
 
     const { data: games } = await supabase.from('games').select('id, name');
     const gameNameById = new Map((games ?? []).map((g) => [g.id as string, g.name as string]));
@@ -100,6 +103,27 @@ export default async function AdminCostsPage() {
         avgCostUsd: c.avgCostPerCallUsd,
     }));
 
+    const topRequestRows: TopRequestRow[] = topRequests.map((r) => ({
+        userRequestId: r.userRequestId,
+        userLabel: r.userId ? (userLabelById.get(r.userId) ?? r.userId.slice(0, 8)) : '—',
+        gameLabel: gameNameById.get(r.gameId) ?? r.gameId,
+        mode: r.mode,
+        status: r.status,
+        createdAt: r.createdAt,
+        totalCostUsd: r.totalCostUsd,
+    }));
+
+    const topRequestIds = new Set(topRequests.map((r) => r.userRequestId));
+    const detailsByRequestId: Record<string, RequestCallDetail[]> = {};
+    for (const call of callRows) {
+        if (!topRequestIds.has(call.userRequestId)) continue;
+        (detailsByRequestId[call.userRequestId] ??= []).push({
+            callType: call.callType,
+            modelName: call.modelName,
+            costUsd: call.costUsd,
+        });
+    }
+
     return (
         <AdminShell active="Costi">
             <h2 className="mb-1.5 border-b border-line pb-3.5 font-serif text-xl text-ink">Costi</h2>
@@ -130,6 +154,11 @@ export default async function AdminCostsPage() {
                     <p className="mb-2.5 text-xs font-bold text-ink-soft">Distribuzione per tipo di operazione</p>
                     <div className="mb-6">
                         <CostTable rows={byCallTypeRows} labelHeader="Operazione" />
+                    </div>
+
+                    <p className="mb-2.5 text-xs font-bold text-ink-soft">Top 10 richieste per costo</p>
+                    <div className="mb-6">
+                        <TopRequestsTable rows={topRequestRows} detailsByRequestId={detailsByRequestId} />
                     </div>
 
                     <p className="mb-2.5 text-xs font-bold text-ink-soft">Andamento nel tempo</p>
