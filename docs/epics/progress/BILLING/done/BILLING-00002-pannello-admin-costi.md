@@ -68,6 +68,6 @@ Verificato: `npx tsc --noEmit`, `npx eslint` puliti.
 
 ## DoD
 
-Visualizzazione funzionante su dati reali raccolti da BILLING-00001. **Da riverificare
-manualmente**: shell/card/tabella coerenti col reference, avatar menu nell'Header (nome utente,
-voce Admin solo per admin, logout), `/admin` che redirige correttamente.
+Visualizzazione funzionante su dati reali raccolti da BILLING-00001. **Verificato manualmente da
+Francesco** (2026-08-02): shell/card/tabella coerenti col reference, avatar menu nell'Header,
+`/admin` che redirige correttamente. Task chiuso.

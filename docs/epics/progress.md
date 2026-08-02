@@ -10,7 +10,7 @@ todo/progress/done).*
 |---|---|---|
 | POC | `progress/POC/` | in corso (solo POC-00011 ancora aperto, in pausa; tutto il resto chiuso o deprecato) |
 | AUTH | `progress/AUTH/` | in corso, priorità corrente (v. D65) — AUTH-00001/00003/00004/00005/00006/00008/00011 ✅ (00008: invito via email rimandato, processo manuale via Studio nel frattempo), AUTH-00002 chiusa non applicabile, AUTH-00012 ✅ (redirect /login se già loggato + logout per inattività), prossimi: 00007/00009/00010 (00010 in attesa dominio) |
-| BILLING | `progress/BILLING/` | in corso, BILLING-00001 ✅ done, BILLING-00002 riaperta (revisione design, manca riverifica) |
+| BILLING | `progress/BILLING/` | in corso, BILLING-00001 ✅ done, BILLING-00002 ✅ done, prossimo BILLING-00003 (in attesa raccolta dati) |
 | TEACH | `todo/TEACH/` | da iniziare |
 | VISUAL | `todo/VISUAL/` | nice to have, in coda |
 | DESIGN | `progress/DESIGN/` | riaperta, DESIGN-00004 codice pronto (manca verifica manuale) |
@@ -146,8 +146,7 @@ redirige a `/admin/costs`; aggiunto link "Admin" nell'Header visibile solo per `
 voci sidebar non pronte (restano solo disabilitate, scelta esplicita di Francesco). Aggiunto
 `components/ui/UserMenu.tsx` — avatar in fondo all'Header, click espande nome utente + voci
 abilitate (Admin solo se il ruolo lo prevede, poi Esci) — sostituisce l'email/link testuali.
-`tsc`/`eslint` puliti. **Non ancora richiusa:** manca la riverifica manuale di Francesco sulla
-nuova versione.
+`tsc`/`eslint` puliti. **Chiusa (2026-08-02):** verifica manuale confermata da Francesco.
 
 **Aperta DESIGN-00004 (sessione 2026-07-31):** su richiesta di Francesco, epica DESIGN
 (completata da D64) riaperta — `done/DESIGN` → `progress/DESIGN` — per un task che estende il
