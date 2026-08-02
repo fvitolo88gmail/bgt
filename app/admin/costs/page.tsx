@@ -1,9 +1,17 @@
 import { createServerSupabaseClient } from '@/lib/shared/supabase-server';
 import { isAdmin } from '@/lib/profile/repository/profiles.repository';
-import { getUserRequestCosts } from '@/lib/billing/repository/usage-tracking.repository';
-import { summarizeOverallCost, summarizeCostByGame, summarizeCostByDay } from '@/lib/billing/service/billing-aggregation';
+import { getUserRequestCosts, getGeminiCallCosts } from '@/lib/billing/repository/usage-tracking.repository';
+import {
+    summarizeOverallCost,
+    summarizeCostByGame,
+    summarizeCostByUser,
+    summarizeCostByDay,
+    buildInteractionDetails,
+    type InteractionDetail,
+} from '@/lib/billing/service/billing-aggregation';
 import { AdminShell } from '@/components/admin/AdminShell';
 import { CostTrendChart } from '@/components/admin/CostTrendChart';
+import { ExpandableCostTable, type CostTableRow, type InteractionDetailRow } from '@/components/admin/ExpandableCostTable';
 
 function formatUsd(value: number): string {
     return `$${value.toFixed(6)}`;
@@ -16,6 +24,27 @@ function KpiCard({ label, value, valueClassName = '' }: { label: string; value: 
             <p className={`font-mono text-2xl font-medium text-ink ${valueClassName}`}>{value}</p>
         </div>
     );
+}
+
+function toDetailRow(d: InteractionDetail): InteractionDetailRow {
+    return {
+        userRequestId: d.userRequestId,
+        createdAt: d.createdAt,
+        mode: d.mode,
+        status: d.status,
+        totalCostUsd: d.totalCostUsd,
+        models: d.models,
+    };
+}
+
+function groupDetailsBy(details: InteractionDetail[], keyOf: (d: InteractionDetail) => string | null): Record<string, InteractionDetailRow[]> {
+    const grouped: Record<string, InteractionDetailRow[]> = {};
+    for (const d of details) {
+        const key = keyOf(d);
+        if (!key) continue;
+        (grouped[key] ??= []).push(toDetailRow(d));
+    }
+    return grouped;
 }
 
 export default async function AdminCostsPage() {
@@ -34,17 +63,47 @@ export default async function AdminCostsPage() {
         );
     }
 
-    const rows = await getUserRequestCosts(supabase);
-    const overall = summarizeOverallCost(rows);
-    const byGame = summarizeCostByGame(rows);
-    const byDay = summarizeCostByDay(rows);
+    const [requestRows, callRows] = await Promise.all([getUserRequestCosts(supabase), getGeminiCallCosts(supabase)]);
+    const overall = summarizeOverallCost(requestRows);
+    const byGame = summarizeCostByGame(requestRows);
+    const byUser = summarizeCostByUser(requestRows);
+    const byDay = summarizeCostByDay(requestRows);
+    const details = buildInteractionDetails(requestRows, callRows);
 
     const { data: games } = await supabase.from('games').select('id, name');
     const gameNameById = new Map((games ?? []).map((g) => [g.id as string, g.name as string]));
 
+    const { data: profiles } = await supabase.from('profiles').select('id, first_name, last_name');
+    const userLabelById = new Map(
+        (profiles ?? []).map((p) => {
+            const firstName = p.first_name as string | null;
+            const lastName = p.last_name as string | null;
+            const name = [firstName, lastName].filter(Boolean).join(' ');
+            return [p.id as string, name || (p.id as string).slice(0, 8)];
+        }),
+    );
+
+    const byGameRows: CostTableRow[] = byGame.map((g) => ({
+        key: g.gameId,
+        label: gameNameById.get(g.gameId) ?? g.gameId,
+        interactionCount: g.interactionCount,
+        totalCostUsd: g.totalCostUsd,
+        avgCostPerQueryUsd: g.avgCostPerQueryUsd,
+    }));
+    const detailsByGame = groupDetailsBy(details, (d) => d.gameId);
+
+    const byUserRows: CostTableRow[] = byUser.map((u) => ({
+        key: u.userId,
+        label: userLabelById.get(u.userId) ?? u.userId.slice(0, 8),
+        interactionCount: u.interactionCount,
+        totalCostUsd: u.totalCostUsd,
+        avgCostPerQueryUsd: u.avgCostPerQueryUsd,
+    }));
+    const detailsByUser = groupDetailsBy(details, (d) => d.userId);
+
     return (
         <AdminShell active="Costi">
-            <h2 className="mb-1.5 border-b border-line pb-3.5 font-serif text-xl text-ink">Costi Gemini</h2>
+            <h2 className="mb-1.5 border-b border-line pb-3.5 font-serif text-xl text-ink">Costi</h2>
             <p className="mb-6 text-[13.5px] text-ink-soft">
                 Costo proiettato a prezzi Tier 1, calcolato su token realmente consumati
             </p>
@@ -60,29 +119,13 @@ export default async function AdminCostsPage() {
                     </div>
 
                     <p className="mb-2.5 text-xs font-bold text-ink-soft">Distribuzione per gioco</p>
-                    <div className="mb-6 overflow-x-auto">
-                        <table className="w-full min-w-[480px] border-collapse text-[12.5px]">
-                            <thead>
-                                <tr className="text-left text-[11px] uppercase tracking-wide text-ink-faint">
-                                    <th className="px-2.5 py-2 font-semibold">Gioco</th>
-                                    <th className="px-2.5 py-2 font-semibold">Interazioni</th>
-                                    <th className="px-2.5 py-2 font-semibold">Costo totale</th>
-                                    <th className="px-2.5 py-2 font-semibold">Costo medio</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {byGame.map((g) => (
-                                    <tr key={g.gameId} className="border-t border-line-soft bg-card">
-                                        <td className="px-2.5 py-2.5 font-semibold text-ink">
-                                            {gameNameById.get(g.gameId) ?? g.gameId}
-                                        </td>
-                                        <td className="px-2.5 py-2.5 font-mono text-ink-soft">{g.interactionCount}</td>
-                                        <td className="px-2.5 py-2.5 font-mono text-ink-soft">{formatUsd(g.totalCostUsd)}</td>
-                                        <td className="px-2.5 py-2.5 font-mono text-ink-soft">{formatUsd(g.avgCostPerQueryUsd)}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                    <div className="mb-6">
+                        <ExpandableCostTable rows={byGameRows} detailsByKey={detailsByGame} labelHeader="Gioco" />
+                    </div>
+
+                    <p className="mb-2.5 text-xs font-bold text-ink-soft">Distribuzione per utente</p>
+                    <div className="mb-6">
+                        <ExpandableCostTable rows={byUserRows} detailsByKey={detailsByUser} labelHeader="Utente" />
                     </div>
 
                     <p className="mb-2.5 text-xs font-bold text-ink-soft">Andamento nel tempo</p>

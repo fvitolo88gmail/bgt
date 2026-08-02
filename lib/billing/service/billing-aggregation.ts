@@ -6,7 +6,7 @@
  * ogni aggregazione, quindi si fa qui in JS.
  */
 
-import type { UserRequestCostRow } from '../repository/usage-tracking.repository';
+import type { UserRequestCostRow, GeminiCallCostRow } from '../repository/usage-tracking.repository';
 
 export interface OverallCostSummary {
     interactionCount: number;
@@ -53,6 +53,80 @@ export function summarizeCostByGame(rows: UserRequestCostRow[]): GameCostSummary
             avgCostPerQueryUsd: stats.totalCostUsd / stats.interactionCount,
         }))
         .sort((a, b) => b.totalCostUsd - a.totalCostUsd);
+}
+
+export interface UserCostSummary {
+    userId: string;
+    interactionCount: number;
+    totalCostUsd: number;
+    avgCostPerQueryUsd: number;
+}
+
+/**
+ * Una riga per user_id, stesso criterio di ordinamento di
+ * `summarizeCostByGame`. Interazioni senza utente risolto (user_id null,
+ * non dovrebbe succedere con AUTH-00011 attivo ma lo schema lo permette)
+ * sono escluse, non raggruppate sotto una chiave fittizia.
+ */
+export function summarizeCostByUser(rows: UserRequestCostRow[]): UserCostSummary[] {
+    const byUser = new Map<string, { interactionCount: number; totalCostUsd: number }>();
+
+    for (const row of rows) {
+        if (!row.userId) continue;
+        const existing = byUser.get(row.userId) ?? { interactionCount: 0, totalCostUsd: 0 };
+        existing.interactionCount += 1;
+        existing.totalCostUsd += row.totalCostUsd;
+        byUser.set(row.userId, existing);
+    }
+
+    return [...byUser.entries()]
+        .map(([userId, stats]) => ({
+            userId,
+            interactionCount: stats.interactionCount,
+            totalCostUsd: stats.totalCostUsd,
+            avgCostPerQueryUsd: stats.totalCostUsd / stats.interactionCount,
+        }))
+        .sort((a, b) => b.totalCostUsd - a.totalCostUsd);
+}
+
+export interface InteractionDetail {
+    userRequestId: string;
+    gameId: string;
+    userId: string | null;
+    mode: UserRequestCostRow['mode'];
+    status: UserRequestCostRow['status'];
+    createdAt: string;
+    totalCostUsd: number;
+    models: string[]; // nomi modello distinti coinvolti nell'interazione
+}
+
+/**
+ * Unisce le interazioni (`user_request_costs`) al dettaglio per chiamata
+ * (`gemini_calls_costed`) per ottenere, per ogni interazione, l'elenco dei
+ * modelli coinvolti — usato per il dettaglio espanso delle tabelle di
+ * distribuzione (per gioco/per utente) nel pannello admin.
+ */
+export function buildInteractionDetails(
+    requestRows: UserRequestCostRow[],
+    callRows: GeminiCallCostRow[],
+): InteractionDetail[] {
+    const modelsByRequest = new Map<string, Set<string>>();
+    for (const call of callRows) {
+        const models = modelsByRequest.get(call.userRequestId) ?? new Set<string>();
+        models.add(call.modelName);
+        modelsByRequest.set(call.userRequestId, models);
+    }
+
+    return requestRows.map((row) => ({
+        userRequestId: row.userRequestId,
+        gameId: row.gameId,
+        userId: row.userId,
+        mode: row.mode,
+        status: row.status,
+        createdAt: row.createdAt,
+        totalCostUsd: row.totalCostUsd,
+        models: [...(modelsByRequest.get(row.userRequestId) ?? [])],
+    }));
 }
 
 export interface DailyCostPoint {

@@ -117,6 +117,7 @@ export async function logGeminiCall(params: {
 export interface UserRequestCostRow {
     userRequestId: string;
     gameId: string;
+    userId: string | null;
     mode: ChatMode;
     status: 'success' | 'error';
     createdAt: string;
@@ -126,6 +127,7 @@ export interface UserRequestCostRow {
 interface UserRequestCostQueryRow {
     user_request_id: string;
     game_id: string;
+    user_id: string | null;
     mode: string;
     status: string;
     created_at: string;
@@ -135,13 +137,13 @@ interface UserRequestCostQueryRow {
 /**
  * Una riga per interazione con il costo totale già sommato (vista
  * `user_request_costs`) — base per costo medio/query, distribuzione per
- * gioco e andamento nel tempo, aggregati poi in JS: volume ancora troppo
- * piccolo per giustificare RPC dedicate per ogni aggregazione.
+ * gioco/utente e andamento nel tempo, aggregati poi in JS: volume ancora
+ * troppo piccolo per giustificare RPC dedicate per ogni aggregazione.
  */
 export async function getUserRequestCosts(supabase: SupabaseClient): Promise<UserRequestCostRow[]> {
     const { data, error } = await supabase
         .from('user_request_costs')
-        .select('user_request_id, game_id, mode, status, created_at, total_cost_usd')
+        .select('user_request_id, game_id, user_id, mode, status, created_at, total_cost_usd')
         .order('created_at', { ascending: true });
 
     if (error) {
@@ -151,9 +153,48 @@ export async function getUserRequestCosts(supabase: SupabaseClient): Promise<Use
     return (data as UserRequestCostQueryRow[]).map((row) => ({
         userRequestId: row.user_request_id,
         gameId: row.game_id,
+        userId: row.user_id,
         mode: row.mode === 'conversation' ? 'conversation' : 'qa',
         status: row.status === 'error' ? 'error' : 'success',
         createdAt: row.created_at,
         totalCostUsd: Number(row.total_cost_usd),
+    }));
+}
+
+export interface GeminiCallCostRow {
+    userRequestId: string;
+    callType: GeminiCallType;
+    modelName: string;
+    costUsd: number;
+}
+
+interface GeminiCallCostQueryRow {
+    user_request_id: string;
+    call_type: string;
+    model_name: string;
+    cost_usd: number | string;
+}
+
+/**
+ * Una riga per chiamata Gemini con il modello usato — usata per il dettaglio
+ * espanso di una interazione nel pannello admin (una interazione può
+ * coinvolgere più modelli, es. embedding + generazione, quindi non è un dato
+ * riassumibile in `user_request_costs`).
+ */
+export async function getGeminiCallCosts(supabase: SupabaseClient): Promise<GeminiCallCostRow[]> {
+    const { data, error } = await supabase
+        .from('gemini_calls_costed')
+        .select('user_request_id, call_type, model_name, cost_usd')
+        .order('created_at', { ascending: true });
+
+    if (error) {
+        throw new Error(`Errore leggendo gemini_calls_costed: ${error.message}`);
+    }
+
+    return (data as GeminiCallCostQueryRow[]).map((row) => ({
+        userRequestId: row.user_request_id,
+        callType: row.call_type as GeminiCallType,
+        modelName: row.model_name,
+        costUsd: Number(row.cost_usd),
     }));
 }

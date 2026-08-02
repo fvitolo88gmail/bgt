@@ -1,15 +1,32 @@
 import { describe, it, expect } from 'vitest';
-import { summarizeOverallCost, summarizeCostByGame, summarizeCostByDay } from '../../../billing/service/billing-aggregation';
-import type { UserRequestCostRow } from '../../../billing/repository/usage-tracking.repository';
+import {
+    summarizeOverallCost,
+    summarizeCostByGame,
+    summarizeCostByUser,
+    summarizeCostByDay,
+    buildInteractionDetails,
+} from '../../../billing/service/billing-aggregation';
+import type { UserRequestCostRow, GeminiCallCostRow } from '../../../billing/repository/usage-tracking.repository';
 
 function row(overrides: Partial<UserRequestCostRow>): UserRequestCostRow {
     return {
         userRequestId: 'req-1',
         gameId: 'game-a',
+        userId: 'user-a',
         mode: 'qa',
         status: 'success',
         createdAt: '2026-07-30T23:46:53.000Z',
         totalCostUsd: 0.005,
+        ...overrides,
+    };
+}
+
+function callRow(overrides: Partial<GeminiCallCostRow>): GeminiCallCostRow {
+    return {
+        userRequestId: 'req-1',
+        callType: 'generation',
+        modelName: 'gemini-3.1-flash-lite',
+        costUsd: 0.003,
         ...overrides,
     };
 }
@@ -45,6 +62,45 @@ describe('summarizeCostByGame', () => {
             { gameId: 'hegemony', interactionCount: 1, totalCostUsd: 0.01, avgCostPerQueryUsd: 0.01 },
             { gameId: 'brass', interactionCount: 2, totalCostUsd: 0.003, avgCostPerQueryUsd: 0.0015 },
         ]);
+    });
+});
+
+describe('summarizeCostByUser', () => {
+    it('raggruppa per user_id e ordina per costo totale decrescente', () => {
+        const rows = [
+            row({ userId: 'alice', totalCostUsd: 0.001 }),
+            row({ userId: 'bob', totalCostUsd: 0.01 }),
+            row({ userId: 'alice', totalCostUsd: 0.002 }),
+        ];
+        expect(summarizeCostByUser(rows)).toEqual([
+            { userId: 'bob', interactionCount: 1, totalCostUsd: 0.01, avgCostPerQueryUsd: 0.01 },
+            { userId: 'alice', interactionCount: 2, totalCostUsd: 0.003, avgCostPerQueryUsd: 0.0015 },
+        ]);
+    });
+
+    it('esclude le interazioni senza user_id risolto', () => {
+        const rows = [row({ userId: null, totalCostUsd: 0.005 })];
+        expect(summarizeCostByUser(rows)).toEqual([]);
+    });
+});
+
+describe('buildInteractionDetails', () => {
+    it('associa a ogni interazione i modelli distinti usati dalle sue chiamate', () => {
+        const requestRows = [row({ userRequestId: 'req-1', totalCostUsd: 0.005 })];
+        const callRows = [
+            callRow({ userRequestId: 'req-1', callType: 'embedding', modelName: 'gemini-embedding-001' }),
+            callRow({ userRequestId: 'req-1', callType: 'generation', modelName: 'gemini-3.1-flash-lite' }),
+        ];
+        const result = buildInteractionDetails(requestRows, callRows);
+        expect(result).toHaveLength(1);
+        expect(result[0]?.models).toEqual(['gemini-embedding-001', 'gemini-3.1-flash-lite']);
+        expect(result[0]?.totalCostUsd).toBe(0.005);
+    });
+
+    it('non fallisce se un\'interazione non ha chiamate corrispondenti', () => {
+        const requestRows = [row({ userRequestId: 'req-orfano' })];
+        const result = buildInteractionDetails(requestRows, []);
+        expect(result[0]?.models).toEqual([]);
     });
 });
 
