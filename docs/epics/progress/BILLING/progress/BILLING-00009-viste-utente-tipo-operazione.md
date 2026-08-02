@@ -77,6 +77,13 @@ nessuno stato client — utilizzabile sia da `CostTable` (Server Component) sia 
 
 Verificato: `npx tsc --noEmit`, `npx eslint`, `npx vitest run` (10 test) puliti.
 
+**Fix (stessa sessione): tooltip tagliati dentro le tabelle.** `InfoTooltip` era `position:
+absolute`, tagliato dal clipping verticale implicito di `overflow-x-auto` (il wrapper scroll
+orizzontale delle tabelle) e dai bordi della viewport sulle righe vicino ai margini. Convertito
+in Client Component: posizione calcolata al volo (`getBoundingClientRect` sull'icona al
+`mouseEnter`) e resa con `position: fixed`, clampata ai bordi della viewport, sopra o sotto
+l'icona a seconda dello spazio disponibile.
+
 ## DoD
 
 - `/admin/costs` mostra tre tabelle di distribuzione (gioco, utente, tipo di operazione, con
