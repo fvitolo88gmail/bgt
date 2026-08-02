@@ -91,8 +91,9 @@ export default async function AdminCostsPage() {
     }));
 
     const byCallTypeRows: CostTableRow[] = byCallType.map((c) => ({
-        key: c.callType,
+        key: `${c.callType}::${c.modelName}`,
         label: CALL_TYPE_LABELS[c.callType] ?? c.callType,
+        model: c.modelName,
         countLabel: 'Chiamate',
         count: c.callCount,
         totalCostUsd: c.totalCostUsd,

@@ -43,13 +43,20 @@ diretta per capire dove va il costo senza uno step di interazione in più.
 (`ExpandableCostTable.tsx`, Client Component) su richiesta di Francesco — sostituita da
 `CostTable.tsx`, tabelle semplici senza stato client, più la terza vista per tipo di operazione.
 
-Verificato: `npx tsc --noEmit`, `npx eslint`, `npx vitest run` (7 test in
+**Aggiunta minore (stessa sessione):** modello visibile anche nella tabella per tipo di
+operazione — `summarizeCostByCallType` raggruppa per (`call_type`, `model_name`) invece che solo
+`call_type`, per non perdere l'informazione se lo stesso tipo di operazione passa a un modello
+diverso nel tempo (es. upgrade del modello di generazione). `CostTable` mostra la colonna
+"Modello" solo se almeno una riga la valorizza (le tabelle per gioco/utente restano senza).
+
+Verificato: `npx tsc --noEmit`, `npx eslint`, `npx vitest run` (8 test in
 `billing-aggregation.test.ts`, incluse `summarizeCostByUser`/`summarizeCostByCallType`) puliti.
 
 ## DoD
 
 - `/admin/costs` mostra tre tabelle di distribuzione: per gioco, per utente, per tipo di
-  operazione (embedding/generation/query_contextualization/query_enhancement/reranking).
+  operazione (embedding/generation/query_contextualization/query_enhancement/reranking), con il
+  modello usato per riga in quest'ultima.
 - Nessuna etichetta "Gemini" nella UI del pannello.
 - `tsc`/`eslint`/`vitest` puliti.
 

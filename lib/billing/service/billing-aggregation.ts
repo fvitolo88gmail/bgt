@@ -91,33 +91,43 @@ export function summarizeCostByUser(rows: UserRequestCostRow[]): UserCostSummary
 
 export interface CallTypeCostSummary {
     callType: GeminiCallCostRow['callType'];
+    modelName: string;
     callCount: number;
     totalCostUsd: number;
     avgCostPerCallUsd: number;
 }
 
 /**
- * Una riga per call_type (embedding, generation, query_contextualization,
- * query_enhancement, reranking), ordinata per costo totale decrescente —
- * a differenza delle altre viste, la base è `gemini_calls_costed` (una riga
+ * Una riga per (call_type, model_name), ordinata per costo totale
+ * decrescente — separati perché lo stesso call_type può passare a un
+ * modello diverso nel tempo (es. upgrade del modello di generazione), non
+ * riassumibile in un'unica riga senza perdere quell'informazione. A
+ * differenza delle altre viste, la base è `gemini_calls_costed` (una riga
  * per chiamata), non `user_request_costs` (una riga per interazione): qui
  * interessa il costo per singola chiamata, non per interazione utente.
  */
 export function summarizeCostByCallType(callRows: GeminiCallCostRow[]): CallTypeCostSummary[] {
-    const byCallType = new Map<string, { callCount: number; totalCostUsd: number }>();
+    const byCallTypeAndModel = new Map<
+        string,
+        { callType: GeminiCallCostRow['callType']; modelName: string; callCount: number; totalCostUsd: number }
+    >();
 
     for (const call of callRows) {
-        const existing = byCallType.get(call.callType) ?? { callCount: 0, totalCostUsd: 0 };
+        const key = `${call.callType}::${call.modelName}`;
+        const existing = byCallTypeAndModel.get(key) ?? {
+            callType: call.callType,
+            modelName: call.modelName,
+            callCount: 0,
+            totalCostUsd: 0,
+        };
         existing.callCount += 1;
         existing.totalCostUsd += call.costUsd;
-        byCallType.set(call.callType, existing);
+        byCallTypeAndModel.set(key, existing);
     }
 
-    return [...byCallType.entries()]
-        .map(([callType, stats]) => ({
-            callType: callType as GeminiCallCostRow['callType'],
-            callCount: stats.callCount,
-            totalCostUsd: stats.totalCostUsd,
+    return [...byCallTypeAndModel.values()]
+        .map((stats) => ({
+            ...stats,
             avgCostPerCallUsd: stats.totalCostUsd / stats.callCount,
         }))
         .sort((a, b) => b.totalCostUsd - a.totalCostUsd);

@@ -85,16 +85,38 @@ describe('summarizeCostByUser', () => {
 });
 
 describe('summarizeCostByCallType', () => {
-    it('raggruppa per call_type e ordina per costo totale decrescente', () => {
+    it('raggruppa per call_type + modello e ordina per costo totale decrescente', () => {
         const callRows = [
-            callRow({ callType: 'embedding', costUsd: 0.001 }),
-            callRow({ callType: 'generation', costUsd: 0.01 }),
-            callRow({ callType: 'embedding', costUsd: 0.002 }),
+            callRow({ callType: 'embedding', modelName: 'gemini-embedding-001', costUsd: 0.001 }),
+            callRow({ callType: 'generation', modelName: 'gemini-3.1-flash-lite', costUsd: 0.01 }),
+            callRow({ callType: 'embedding', modelName: 'gemini-embedding-001', costUsd: 0.002 }),
         ];
         expect(summarizeCostByCallType(callRows)).toEqual([
-            { callType: 'generation', callCount: 1, totalCostUsd: 0.01, avgCostPerCallUsd: 0.01 },
-            { callType: 'embedding', callCount: 2, totalCostUsd: 0.003, avgCostPerCallUsd: 0.0015 },
+            {
+                callType: 'generation',
+                modelName: 'gemini-3.1-flash-lite',
+                callCount: 1,
+                totalCostUsd: 0.01,
+                avgCostPerCallUsd: 0.01,
+            },
+            {
+                callType: 'embedding',
+                modelName: 'gemini-embedding-001',
+                callCount: 2,
+                totalCostUsd: 0.003,
+                avgCostPerCallUsd: 0.0015,
+            },
         ]);
+    });
+
+    it('tiene separati due modelli diversi per lo stesso call_type', () => {
+        const callRows = [
+            callRow({ callType: 'generation', modelName: 'gemini-3.1-flash-lite', costUsd: 0.01 }),
+            callRow({ callType: 'generation', modelName: 'gemini-3-pro', costUsd: 0.05 }),
+        ];
+        const result = summarizeCostByCallType(callRows);
+        expect(result).toHaveLength(2);
+        expect(result.map((r) => r.modelName)).toEqual(['gemini-3-pro', 'gemini-3.1-flash-lite']);
     });
 });
 
