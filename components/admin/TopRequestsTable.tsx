@@ -1,6 +1,8 @@
 'use client';
 
 import { Fragment, useState } from 'react';
+import { getCallTypeLabel, getCallTypeDescription } from '@/lib/billing/service/call-type-labels';
+import { InfoTooltip } from './InfoTooltip';
 
 export interface TopRequestRow {
     userRequestId: string;
@@ -25,17 +27,6 @@ function formatUsd(value: number): string {
 function formatDateTime(value: string): string {
     return new Date(value).toLocaleString('it-IT');
 }
-
-// Etichette leggibili per i call_type interni, stesse della tabella per
-// tipo di operazione — duplicata qui apposta: componenti indipendenti,
-// niente import incrociato solo per una mappa di 5 voci.
-const CALL_TYPE_LABELS: Record<string, string> = {
-    embedding: 'Embedding',
-    generation: 'Generazione',
-    query_contextualization: 'Contestualizzazione query',
-    query_enhancement: 'Query enhancement',
-    reranking: 'Reranking',
-};
 
 /**
  * Top N domande utente per costo, riga espandibile al click per vedere le
@@ -98,7 +89,10 @@ export function TopRequestsTable({
                                                     {details.map((d, i) => (
                                                         <tr key={`${d.callType}-${i}`} className="border-t border-line-soft">
                                                             <td className="px-2 py-1.5 text-ink-soft">
-                                                                {CALL_TYPE_LABELS[d.callType] ?? d.callType}
+                                                                {getCallTypeLabel(d.callType)}
+                                                                {getCallTypeDescription(d.callType) && (
+                                                                    <InfoTooltip text={getCallTypeDescription(d.callType)!} />
+                                                                )}
                                                             </td>
                                                             <td className="px-2 py-1.5 font-mono text-ink-soft">{d.modelName}</td>
                                                             <td className="px-2 py-1.5 font-mono text-ink-soft">

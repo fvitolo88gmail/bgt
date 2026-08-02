@@ -9,6 +9,7 @@ import {
     summarizeCostByDay,
     getTopRequestsByCost,
 } from '@/lib/billing/service/billing-aggregation';
+import { getCallTypeLabel, getCallTypeDescription } from '@/lib/billing/service/call-type-labels';
 import { AdminShell } from '@/components/admin/AdminShell';
 import { CostTrendChart } from '@/components/admin/CostTrendChart';
 import { CostTable, type CostTableRow } from '@/components/admin/CostTable';
@@ -26,17 +27,6 @@ function KpiCard({ label, value, valueClassName = '' }: { label: string; value: 
         </div>
     );
 }
-
-// Etichette leggibili per i call_type interni (v. schema gemini_calls) —
-// il valore grezzo (es. "query_contextualization") resta nel DB/nel codice,
-// solo la UI lo traduce.
-const CALL_TYPE_LABELS: Record<string, string> = {
-    embedding: 'Embedding',
-    generation: 'Generazione',
-    query_contextualization: 'Contestualizzazione query',
-    query_enhancement: 'Query enhancement',
-    reranking: 'Reranking',
-};
 
 export default async function AdminCostsPage() {
     const supabase = await createServerSupabaseClient();
@@ -95,7 +85,8 @@ export default async function AdminCostsPage() {
 
     const byCallTypeRows: CostTableRow[] = byCallType.map((c) => ({
         key: `${c.callType}::${c.modelName}`,
-        label: CALL_TYPE_LABELS[c.callType] ?? c.callType,
+        label: getCallTypeLabel(c.callType),
+        infoText: getCallTypeDescription(c.callType) ?? undefined,
         model: c.modelName,
         countLabel: 'Chiamate',
         count: c.callCount,

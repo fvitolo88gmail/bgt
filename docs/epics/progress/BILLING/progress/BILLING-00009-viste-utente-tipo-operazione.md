@@ -65,11 +65,25 @@ dentro una domanda), non un doppione dell'aggregato.
 Verificato: `npx tsc --noEmit`, `npx eslint`, `npx vitest run` (10 test, incluso
 `getTopRequestsByCost`) puliti.
 
+**Aggiunta (stessa sessione): tooltip informativo sul tipo di operazione.** Icona "i" accanto al
+nome operazione, sia nella tabella "Distribuzione per tipo di operazione" sia nel dettaglio
+espanso della tabella top 10, con una breve spiegazione di cosa fa quella chiamata (embedding,
+generazione, contestualizzazione query, ecc.). Consolidate le due mappe `CALL_TYPE_LABELS`
+duplicate (`page.tsx` e `TopRequestsTable.tsx`) in un unico
+`lib/billing/service/call-type-labels.ts` (`getCallTypeLabel`/`getCallTypeDescription`).
+`components/admin/InfoTooltip.tsx` (nuovo): icona + tooltip solo CSS (`group`/`group-hover`),
+nessuno stato client — utilizzabile sia da `CostTable` (Server Component) sia da
+`TopRequestsTable` (Client Component).
+
+Verificato: `npx tsc --noEmit`, `npx eslint`, `npx vitest run` (10 test) puliti.
+
 ## DoD
 
 - `/admin/costs` mostra tre tabelle di distribuzione (gioco, utente, tipo di operazione, con
   modello per riga in quest'ultima) più la tabella "Top 10 richieste per costo" con utente,
   gioco, costo totale, espandibile per vedere le singole chiamate Gemini (tipo, modello, costo).
+- Icona info con tooltip esplicativo accanto al tipo di operazione, sia nella tabella di
+  distribuzione sia nel dettaglio espanso della top 10.
 - Nessuna etichetta "Gemini" nella UI del pannello.
 - `tsc`/`eslint`/`vitest` puliti.
 

@@ -292,9 +292,15 @@ che "richiesta" = singola domanda utente, l'espansione mostra le chiamate Gemini
 compongono (non altre interazioni) — diverso, e non un ritorno indietro, rispetto alle righe
 espandibili tolte da gioco/utente: qui il dettaglio è un livello sotto la riga, non un
 doppione dell'aggregato. Nuova `getTopRequestsByCost` + `TopRequestsTable.tsx` (Client
-Component, unico con stato client nel pannello). `tsc`/`eslint`/`vitest` puliti. **Non ancora
+Component, unico con stato client nel pannello).
+
+**BILLING-00009 aggiunta minore (stessa sessione): tooltip sul tipo di operazione.** Icona info
+accanto al nome operazione (tabella distribuzione + dettaglio top 10) con spiegazione breve di
+cosa fa quella chiamata. Consolidate le mappe `call_type` → etichetta duplicate in
+`lib/billing/service/call-type-labels.ts`; `InfoTooltip.tsx` nuovo, solo CSS (nessuno stato
+client, riusabile da Server e Client Component). `tsc`/`eslint`/`vitest` puliti. **Non ancora
 chiusa:** manca la verifica manuale di Francesco (applicare la migration, controllare le
-quattro viste su dati reali).
+quattro viste + i tooltip su dati reali).
 
 **DESIGN-00004 chiusa (2026-08-02):** verifica manuale confermata da Francesco (migration
 applicata, avatar/menu/saluto/profilo verificati). Epica DESIGN nuovamente completata,
