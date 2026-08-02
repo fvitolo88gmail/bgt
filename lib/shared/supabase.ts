@@ -7,8 +7,16 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 if (!supabaseUrl) throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL');
 if (!supabaseAnonKey) throw new Error('Missing NEXT_PUBLIC_SUPABASE_ANON_KEY');
 
-// client anonimo senza sessione — retrieval/chat pubblici, non autenticati (uso esistente)
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// client anonimo senza sessione — retrieval/chat pubblici, non autenticati (uso esistente).
+// auth disabilitata esplicitamente: senza questo, il costruttore crea comunque un GoTrueClient
+// con persistSession/autoRefreshToken di default sulla stessa storage key di
+// createBrowserSupabaseClient() (stesso project ref) — due istanze GoTrueClient sulla stessa
+// chiave nel browser causano refresh del token che si sovrascrivono a vicenda e la sessione
+// dell'utente risulta intermittentemente invalida (redirect a /login a metà navigazione,
+// getUser() che fallisce in punti imprevisti pur essendo l'utente loggato).
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+});
 
 export function createServiceClient() {
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;

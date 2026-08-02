@@ -269,12 +269,16 @@ export function ConversationSidebar({
             </div>
 
             {isMenuOpen && (
-                // A tutto schermo (fixed inset-0), non un dropdown limitato in altezza:
-                // con molte conversazioni un menu troncato non sarebbe comunque
-                // consultabile. min-h-0 sul contenuto è necessario perché un figlio
-                // flex non si restringe sotto il proprio contenuto senza di esso,
-                // altrimenti overflow-y-auto non scrolla mai.
-                <nav className="fixed inset-0 z-40 flex flex-col bg-app-sidebar md:hidden">
+                // A tutto schermo (absolute inset-0 sull'area sotto l'header globale, non
+                // fixed sul viewport), non un dropdown limitato in altezza: con molte
+                // conversazioni un menu troncato non sarebbe comunque consultabile.
+                // absolute invece di fixed: "fixed inset-0" è relativo al viewport e si
+                // sovrapponeva all'header globale (in-flow, sopra quest'area), coprendo la
+                // prima conversazione della lista — absolute lo ancora invece al contenitore
+                // "relative" in page.tsx, che inizia già sotto l'header. min-h-0 sul
+                // contenuto è necessario perché un figlio flex non si restringe sotto il
+                // proprio contenuto senza di esso, altrimenti overflow-y-auto non scrolla mai.
+                <nav className="absolute inset-0 z-40 flex flex-col bg-app-sidebar md:hidden">
                     <div className="flex shrink-0 items-center justify-between border-b border-line bg-app-sidebar-header px-3.5 py-3">
                         <span className="text-xs font-semibold text-app-sidebar-header-ink">Conversazioni</span>
                         <button

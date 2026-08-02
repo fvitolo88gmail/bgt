@@ -243,7 +243,11 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
         // architecture.md), non nera (quella è riservata ai pannelli admin).
         // flex-col sotto md: sotto quella soglia ConversationSidebar collassa
         // in una seconda top bar invece di stare affiancata alla chat.
-        <div className="flex w-full flex-1 flex-col overflow-hidden md:flex-row">
+        // relative: ancora l'overlay a tutto schermo di ConversationSidebar (mobile) a
+        // quest'area invece che al viewport — altrimenti "fixed inset-0" si sovrappone
+        // all'header globale (in-flow, sopra questo div) invece di iniziare sotto di esso,
+        // coprendone visivamente la prima riga di contenuto.
+        <div className="relative flex w-full flex-1 flex-col overflow-hidden md:flex-row">
             {mode === 'conversation' && (
                 <ConversationSidebar
                     gameId={id}

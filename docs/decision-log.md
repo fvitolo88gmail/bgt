@@ -948,6 +948,45 @@ esporre conversazioni di altri utenti.
 
 ---
 
+## Sessione 9 — 2026-08-03
+
+### D78 — Bug: conversazioni invisibili nel listing, client anonimo condivideva storage key auth col browser
+**Contesto:** utente segnala conversazioni recenti assenti dal listing dopo il deploy. Diagnosi:
+`lib/shared/supabase.ts` istanziava il client anonimo `supabase` (usato lato client in
+`app/game/[id]/page.tsx`/`app/home/page.tsx`) con `createClient()` di default —
+`persistSession`/`autoRefreshToken` attivi sulla stessa storage key (`sb-<ref>-auth-token`) del
+client con sessione `createBrowserSupabaseClient()`. Due `GoTrueClient` sulla stessa chiave nel
+browser (warning esplicito di libreria) causavano refresh del token che si sovrascrivevano a
+vicenda, invalidando intermittentemente la sessione (redirect a `/login` a metà navigazione
+confermati nei log prod). Se un turno di `/api/chat` cadeva in quella finestra, il `getUser()`
+fail-soft in `route.ts` restituiva null e `chat_sessions.user_id` restava null (upsert
+`ignoreDuplicates` non lo corregge più ai turni successivi), invisibile a `listSessionsForGame`.
+**Scelta:** `supabase` (client anonimo) creato con `auth: { persistSession: false,
+autoRefreshToken: false }` — non tocca più lo storage di sessione. Backfill una tantum
+(`20260803010000_backfill_chat_sessions_user_id.sql`) recupera l'owner delle sessioni già orfane
+via `user_requests.session_id`/`user_id`.
+**Motivazione:** il client anonimo è per retrieval pubblico, non deve mai partecipare allo stato
+auth del browser — la causa era architetturale (due istanze GoTrueClient), non una singola
+chiamata flaky da rendere fail-hard.
+
+---
+
+### D79 — Bug: prima conversazione del listing coperta dall'header su mobile
+**Contesto:** dopo D78, la conversazione segnalata da Francesco risultava comunque assente da
+mobile pur essendo presente nella risposta di `GET /api/chat/sessions` (verificato da devtools) —
+non un problema di dati/auth. Causa: l'overlay mobile di `ConversationSidebar` era `fixed
+inset-0`, relativo al viewport. L'header globale (`Header.tsx`) è in-flow (non fixed) ma con
+`z-[60]`, quindi occupava comunque la stessa banda di pixel in cima al viewport e vinceva lo
+stacking sull'overlay (z-40) — coprendone la prima riga di contenuto (l'header interno
+"Conversazioni" e l'inizio della lista, cioè la prima conversazione).
+**Scelta:** l'overlay è ora `absolute inset-0` invece di `fixed inset-0`, ancorato al contenitore
+`relative` in `app/game/[id]/page.tsx` (che inizia già sotto l'header globale, essendo un
+fratello successivo nel flusso) invece che al viewport.
+**Motivazione:** anchoring al contenitore giusto invece di ricalcolare/hardcodare l'altezza
+dell'header globale in px — resta corretto anche se l'altezza dell'header cambia in futuro.
+
+---
+
 ### D[N] — Titolo decisione
 **Contesto:** perché si è posta la questione
 **Opzioni:** opzione A · opzione B · opzione C
