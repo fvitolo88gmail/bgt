@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { matchChunksForPrompt } from '@/lib/chat/service/retrieval';
 import { buildPrompt, buildConversationPrompt, buildContext, buildHistorySection } from '@/lib/chat/prompt';
 import { geminiClient } from '@/lib/shared/gemini';
-import { supabase } from '@/lib/shared/supabase';
+import { createServiceClient } from '@/lib/shared/supabase';
 import { createServerSupabaseClient } from '@/lib/shared/supabase-server';
-import { getOrCreateSession } from '@/lib/chat/repository/session.repository';
+import { getOrCreateSession, setSessionTitle, touchSessionLastMessage } from '@/lib/chat/repository/session.repository';
 import { fetchRecentHistory, appendMessage } from '@/lib/chat/repository/chat-history.repository';
 import { contextualizeQueryForRetrieval } from '@/lib/chat/service/query-contextualization';
+import { generateSessionTitle } from '@/lib/chat/service/title-generation';
 import { createUserRequest, updateUserRequestOutcome } from '@/lib/billing/repository/usage-tracking.repository';
 
 type ChatMode = 'qa' | 'conversation';
@@ -34,6 +35,34 @@ async function updateUserRequestOutcomeSafely(
         await updateUserRequestOutcome(userRequestId, params);
     } catch (err) {
         console.error('[usage-tracking] impossibile aggiornare l\'esito di user_request:', err);
+    }
+}
+
+// Al primo turno di una conversazione genera il titolo (LLM, tracciata come
+// user_request esistente della domanda che l'ha innescato); ai turni
+// successivi si limita ad aggiornare last_message_at per l'ordinamento
+// nella sidebar (CHAT-LISTING-00002). Fail-soft in entrambi i casi: un
+// problema qui non deve mai bloccare la risposta già calcolata all'utente.
+async function finalizeSessionTitleSafely(params: {
+    supabase: Parameters<typeof setSessionTitle>[0];
+    sessionId: string;
+    isFirstTurn: boolean;
+    question: string;
+    answer: string;
+    userRequestId: string | null;
+}): Promise<void> {
+    const { supabase, sessionId, isFirstTurn, question, answer, userRequestId } = params;
+    try {
+        if (isFirstTurn) {
+            const title = await generateSessionTitle(question, answer, userRequestId);
+            if (title) {
+                await setSessionTitle(supabase, sessionId, title);
+                return;
+            }
+        }
+        await touchSessionLastMessage(supabase, sessionId);
+    } catch (err) {
+        console.error('[chat] impossibile finalizzare titolo/timestamp della sessione:', err);
     }
 }
 
@@ -68,14 +97,12 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const sessionId = mode === 'conversation' && body.sessionId
-            ? await getOrCreateSession(supabase, gameId, body.sessionId)
-            : null;
-
         // proxy.ts garantisce già che la richiesta arrivi con una sessione
-        // valida — getUser() qui serve solo a risolvere l'id per il
-        // tracking, fail-soft: un errore non deve bloccare la chat, user_id
-        // resta nullable in user_requests proprio per questo.
+        // valida — getUser() qui serve a risolvere l'id sia per il tracking
+        // sia per popolare chat_sessions.user_id alla creazione (necessario
+        // alla sidebar, CHAT-LISTING-00002, per scopare l'elenco per utente
+        // via RLS). Fail-soft: un errore non deve bloccare la chat, user_id
+        // resta nullable sia qui sia in user_requests proprio per questo.
         const userId = await createServerSupabaseClient()
             .then((client) => client.auth.getUser())
             .then(({ data }) => data.user?.id ?? null)
@@ -84,10 +111,22 @@ export async function POST(req: NextRequest) {
                 return null;
             });
 
+        // chat_sessions/chat_messages ora possono avere user_id valorizzato (v. sopra) — le
+        // policy RLS su queste tabelle richiedono auth.uid() = user_id, che il client anonimo
+        // `supabase` non può mai soddisfare (nessun cookie/sessione allegata). Le scritture qui
+        // sotto passano quindi dal service client (D77): l'accesso resta comunque scoped
+        // dall'app (sessionId generato lato client, verificato implicitamente da mode+gameId),
+        // stesso principio già seguito da usage-tracking.repository per i log interni.
+        const chatDataClient = createServiceClient();
+
+        const sessionId = mode === 'conversation' && body.sessionId
+            ? await getOrCreateSession(chatDataClient, gameId, body.sessionId, userId)
+            : null;
+
         userRequestId = await createUserRequestSafely({ gameId, sessionId, userId, mode });
 
         const history = sessionId
-            ? await fetchRecentHistory(supabase, sessionId)
+            ? await fetchRecentHistory(chatDataClient, sessionId)
             : [];
 
         // Solo in conversazione: un follow-up ("dimmi di più su questo")
@@ -106,8 +145,16 @@ export async function POST(req: NextRequest) {
             const answer = 'Non ho trovato questa informazione nel manuale.';
             let assistantMessageId: string | null = null;
             if (sessionId) {
-                await appendMessage(supabase, sessionId, 'user', question);
-                assistantMessageId = await appendMessage(supabase, sessionId, 'assistant', answer);
+                await appendMessage(chatDataClient, sessionId, 'user', question);
+                assistantMessageId = await appendMessage(chatDataClient, sessionId, 'assistant', answer);
+                await finalizeSessionTitleSafely({
+                    supabase: chatDataClient,
+                    sessionId,
+                    isFirstTurn: history.length === 0,
+                    question,
+                    answer,
+                    userRequestId,
+                });
             }
             await updateUserRequestOutcomeSafely(userRequestId, { chunksRetrievedCount: 0, status: 'success' });
             return NextResponse.json({ answer, sources: [], messageId: assistantMessageId });
@@ -124,8 +171,16 @@ export async function POST(req: NextRequest) {
 
         let assistantMessageId: string | null = null;
         if (sessionId) {
-            await appendMessage(supabase, sessionId, 'user', question);
-            assistantMessageId = await appendMessage(supabase, sessionId, 'assistant', answer);
+            await appendMessage(chatDataClient, sessionId, 'user', question);
+            assistantMessageId = await appendMessage(chatDataClient, sessionId, 'assistant', answer);
+            await finalizeSessionTitleSafely({
+                supabase: chatDataClient,
+                sessionId,
+                isFirstTurn: history.length === 0,
+                question,
+                answer,
+                userRequestId,
+            });
         }
 
         await updateUserRequestOutcomeSafely(userRequestId, { chunksRetrievedCount: matches.length, status: 'success' });

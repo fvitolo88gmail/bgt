@@ -338,6 +338,15 @@ Costruito in `lib/chat/prompt/`. Istruisce il modello a rispondere esclusivament
 
 ---
 
+## Convenzione colore pannelli laterali (CHAT-LISTING-00002)
+Standard di coerenza tra i pannelli di navigazione laterale della piattaforma, per distinguere a colpo d'occhio in che area ci si trova:
+- **Nero/neutro** (`--admin-sidebar*`, v. `theme.css`) — console admin e altri pannelli di amministrazione utenti (`components/admin/AdminShell.tsx`).
+- **Violetto** (`--app-sidebar*`, alias di `--primary`/`--primary-hover`, stesso hue 320 del tema "Ludico Vivace") — pannelli di navigazione dell'applicazione stessa, non amministrativi. Primo caso reale: `components/chat/ConversationSidebar.tsx`.
+
+I pannelli laterali non confinano il contenuto principale in un riquadro bordato separato: sidebar e area di contenuto condividono la piena altezza/larghezza disponibile (pattern già seguito da `AdminShell`), un eventuale max-width resta solo sul testo per leggibilità, non sullo sfondo.
+
+---
+
 ## Fase 2 — Forum BGG
 Lo schema è già pronto (campi bgg_* in chunks, tabella forum_threads). La Fase 2 aggiunge:
 - Script `forum-ingest.ts` e `sync-forum.ts`

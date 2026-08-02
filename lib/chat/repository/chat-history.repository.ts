@@ -48,6 +48,50 @@ export async function fetchRecentHistory(
     }));
 }
 
+export interface DisplayMessage {
+    id: string;
+    role: 'user' | 'assistant';
+    content: string;
+    feedback: 'good' | 'bad' | null;
+}
+
+interface DisplayMessageRow {
+    id: string;
+    role: string;
+    content: string;
+    feedback: string | null;
+}
+
+/**
+ * Legge TUTTI i turni di una sessione, in ordine cronologico, con id e
+ * feedback — a differenza di `fetchRecentHistory` (usata per iniettare
+ * contesto nel prompt, limitata e senza id) questa è per la ripresa di una
+ * conversazione dalla sidebar (CHAT-LISTING-00003): serve l'id per
+ * riagganciare il pollice su/giù e nessun limite, l'utente deve rivedere
+ * l'intera conversazione che ha selezionato.
+ */
+export async function fetchMessagesForDisplay(
+    supabase: SupabaseClient,
+    sessionId: string,
+): Promise<DisplayMessage[]> {
+    const { data, error } = await supabase
+        .from('chat_messages')
+        .select('id, role, content, feedback')
+        .eq('session_id', sessionId)
+        .order('created_at', { ascending: true });
+
+    if (error) {
+        throw new ChatHistoryError(`Errore leggendo i messaggi della sessione ${sessionId}: ${error.message}`);
+    }
+
+    return (data as DisplayMessageRow[]).map((row) => ({
+        id: row.id,
+        role: row.role === 'assistant' ? 'assistant' : 'user',
+        content: row.content,
+        feedback: row.feedback === 'good' || row.feedback === 'bad' ? row.feedback : null,
+    }));
+}
+
 /**
  * Salva un turno (domanda utente o risposta assistente) nella sessione.
  * Ritorna l'id del messaggio inserito — serve al chiamante per agganciare

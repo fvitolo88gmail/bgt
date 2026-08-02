@@ -14,7 +14,7 @@ todo/progress/done).*
 | TEACH | `todo/TEACH/` | da iniziare |
 | VISUAL | `todo/VISUAL/` | nice to have, in coda |
 | DESIGN | `done/DESIGN/` | ✅ completata — DESIGN-00004 chiusa, verifica manuale confermata |
-| CHAT-LISTING | `todo/CHAT-LISTING/` | da iniziare |
+| CHAT-LISTING | `progress/CHAT-LISTING/` | in corso — CHAT-LISTING-00001/00002/00003 ✅ done (modello dati, sidebar, ripresa conversazione con history reale), prossimo CHAT-LISTING-00004 (limite risposte configurabile — nota aperta: per conversazione/utente/periodo da decidere, impatta BILLING) |
 | ADMIN-CONSOLE | `todo/ADMIN-CONSOLE/` | da iniziare |
 | GAME-REQUEST | `todo/GAME-REQUEST/` | da iniziare, priorità molto bassa |
 | EXPANSIONS | `done/EXPANSIONS/` | ✅ completata — EXPANSIONS-00001 chiusa, verifica manuale confermata (v. D75) |

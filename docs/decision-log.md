@@ -929,6 +929,25 @@ semplice miglioramento incrementale dell'euristica.
 
 ---
 
+## Sessione 8 — 2026-08-02
+
+### D77 — CHAT-LISTING-00002: chat_sessions/chat_messages scritte da route.ts passano al service client
+**Contesto:** la sidebar richiede `chat_sessions.user_id` popolato per scopare l'elenco per
+utente (gap già segnalato in BILLING-00001, mai risolto). Valorizzandolo, il client anonimo
+usato finora in `app/api/chat/route.ts`/`feedback/route.ts` (nessun cookie/sessione allegata)
+non soddisfa più le policy RLS insert/update (`auth.uid() = user_id`), che finora passavano solo
+perché `user_id` era sempre null.
+**Scelta:** le scritture server-side su `chat_sessions`/`chat_messages` in `route.ts` e
+`feedback/route.ts` usano ora `createServiceClient()` invece del client anonimo. L'endpoint
+nuovo `GET /api/chat/sessions` (letto direttamente dal browser per la sidebar) resta invece sul
+client con sessione via cookie + filtro esplicito `user_id`, RLS come enforcement reale.
+**Motivazione:** stesso principio già seguito da `usage-tracking.repository` (log interni,
+service client, accesso scoped dalla logica applicativa non dal client); per l'endpoint di
+lettura esposto al browser la RLS resta necessaria, il service client lì avrebbe rischiato di
+esporre conversazioni di altri utenti.
+
+---
+
 ### D[N] — Titolo decisione
 **Contesto:** perché si è posta la questione
 **Opzioni:** opzione A · opzione B · opzione C

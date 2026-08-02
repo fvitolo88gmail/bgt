@@ -14,7 +14,8 @@ export type GeminiCallType =
     | 'generation'
     | 'query_contextualization'
     | 'query_enhancement'
-    | 'reranking';
+    | 'reranking'
+    | 'title_generation';
 
 export interface GeminiCallContext {
     userRequestId: string;

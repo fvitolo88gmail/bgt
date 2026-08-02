@@ -7,3 +7,4 @@
 export { buildPrompt } from './qa';
 export { buildConversationPrompt, buildHistorySection, type ConversationTurn } from './conversation';
 export { buildContext } from './shared';
+export { buildTitlePrompt } from './title';

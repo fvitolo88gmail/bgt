@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/shared/supabase';
+import { createServiceClient } from '@/lib/shared/supabase';
 import { setMessageFeedback } from '@/lib/chat/repository/chat-history.repository';
 
 // Endpoint dedicato al pollice su/giù sulle risposte assistant (solo
@@ -17,7 +17,10 @@ export async function PATCH(req: NextRequest) {
             );
         }
 
-        await setMessageFeedback(supabase, messageId, feedback);
+        // chat_messages può appartenere a una sessione con user_id valorizzato (D77): il client
+        // anonimo non soddisfa mai la policy RLS di update in quel caso — service client, stesso
+        // principio già seguito per le altre scritture chat_sessions/chat_messages in route.ts.
+        await setMessageFeedback(createServiceClient(), messageId, feedback);
 
         return NextResponse.json({ ok: true });
     } catch (err) {

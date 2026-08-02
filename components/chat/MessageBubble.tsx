@@ -35,9 +35,13 @@ export function MessageBubble({ message, onFeedback }: MessageBubbleProps) {
     return (
         <div className={`flex ${!isAssistant ? 'justify-end' : 'justify-start'}`}>
             <Card
-                className={`max-w-prose px-4 py-2 ${
-                    !isAssistant ? 'border-transparent bg-primary text-white' : 'text-ink'
-                }`}
+                className={
+                    !isAssistant
+                        // Bubble utente: angolo in basso a destra "piatto" (coda verso il
+                        // basso), riprendendo l'asimmetria del design di riferimento.
+                        ? 'max-w-[70%] rounded-md rounded-br-[3px] border-transparent bg-primary px-4 py-2.5 text-white shadow-none'
+                        : 'max-w-[75%] rounded-md rounded-bl-[3px] border-line-soft px-4 py-3 text-ink'
+                }
             >
                 {isAssistant ? (
                     <div className="text-sm [&_p]:mb-2 [&_ul]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_strong]:font-semibold [&_a]:font-medium [&_a]:text-primary [&_a]:underline hover:[&_a]:text-primary-hover">

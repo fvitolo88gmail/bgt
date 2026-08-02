@@ -16,7 +16,14 @@ export async function Header() {
     const email = user?.email ?? '';
 
     return (
-        <header className="flex items-center justify-between gap-2 border-b border-line-soft bg-card px-4 py-3">
+        // relative z-[60]: deve restare sopra sia gli overlay a tutto schermo
+        // (es. ConversationSidebar espansa da mobile, z-40) sia la bar
+        // "Conversazioni" stessa (z-50, v. ConversationSidebar.tsx) — a
+        // z-index pari vince l'ultimo nel DOM, e la bar viene dopo
+        // nell'albero (dentro <main>), coprendo il menu utente aperto qui.
+        // z-[60] (arbitrary value): 50 è il valore massimo della scala
+        // predefinita di Tailwind, "z-60" da solo non genera alcuna regola.
+        <header className="relative z-[60] flex items-center justify-between gap-2 border-b border-line-soft bg-card px-4 py-3">
             <Link href="/home" className="flex items-center gap-2 font-serif text-base font-bold text-ink">
                 <OwlMark size={24} />
                 BGT

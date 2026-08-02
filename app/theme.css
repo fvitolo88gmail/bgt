@@ -69,6 +69,26 @@
   --admin-sidebar-active: oklch(34% 0.03 50);
   --admin-sidebar-ink: oklch(75% 0.01 60);
   --admin-sidebar-ink-muted: oklch(55% 0.01 60);
+
+  /* Standard di coerenza tra pannelli laterali della piattaforma (v. architecture.md):
+     nero/neutro (--admin-sidebar*) per la console admin e altri pannelli di
+     amministrazione utenti; violetto CHIARO (stesso hue 320 del tema "Ludico
+     Vivace", non --primary pieno — troppo scuro/saturo, "da app di lavoro
+     tipo Slack" secondo Francesco) per i pannelli di navigazione
+     dell'applicazione stessa — qui la sidebar conversazioni della chat
+     (CHAT-LISTING-00002). Testo scuro su sfondo chiaro, non bianco su scuro. */
+  --app-sidebar: var(--primary-soft);
+  --app-sidebar-active: oklch(86% 0.045 320);
+  --app-sidebar-ink: var(--ink-soft);
+  --app-sidebar-ink-muted: var(--ink-faint);
+
+  /* Header del pannello ("Conversazioni"), non l'implementazione originale
+     del reference: violetto scuro (--primary pieno, lo stesso scartato
+     sopra per l'intero pannello) solo sulla fascia header, così resta
+     distinguibile a colpo d'occhio dal corpo lista (violetto chiaro) invece
+     di confondersi visivamente con i titoli delle conversazioni sotto. */
+  --app-sidebar-header: var(--primary);
+  --app-sidebar-header-ink: oklch(97% 0.01 320 / 92%);
 }
 
 /* Mascotte in attesa risposta: 4 salti veri (su rapido/giù rapido, non una
@@ -194,4 +214,41 @@
   --color-admin-sidebar-active: var(--admin-sidebar-active);
   --color-admin-sidebar-ink: var(--admin-sidebar-ink);
   --color-admin-sidebar-ink-muted: var(--admin-sidebar-ink-muted);
+
+  --color-app-sidebar: var(--app-sidebar);
+  --color-app-sidebar-active: var(--app-sidebar-active);
+  --color-app-sidebar-ink: var(--app-sidebar-ink);
+  --color-app-sidebar-ink-muted: var(--app-sidebar-ink-muted);
+  --color-app-sidebar-header: var(--app-sidebar-header);
+  --color-app-sidebar-header-ink: var(--app-sidebar-header-ink);
+}
+
+/* Scrollbar dei pannelli laterali (ConversationSidebar): "color-scheme: light"
+   qui sopra forza uno scrollbar nativo chiaro/bianco ovunque, che stona su
+   uno sfondo violetto — track sempre trasparente, thumb visibile solo in
+   hover sul contenitore (non sempre presente). */
+.app-sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.app-sidebar-scroll:hover {
+  scrollbar-color: var(--app-sidebar-active) transparent;
+}
+
+.app-sidebar-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.app-sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.app-sidebar-scroll::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 999px;
+}
+
+.app-sidebar-scroll:hover::-webkit-scrollbar-thumb {
+  background: var(--app-sidebar-active);
 }

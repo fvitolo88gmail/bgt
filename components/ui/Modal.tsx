@@ -27,7 +27,11 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
     if (!open) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4" onClick={onClose}>
+        // z-[70]: deve restare sopra qualunque altro overlay/header a z-index
+        // più alto già in uso nell'app (es. header globale z-[60], overlay
+        // mobile di ConversationSidebar z-40/50) — una modale non deve mai
+        // poter essere coperta da un pannello sottostante.
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-ink/40 p-4" onClick={onClose}>
             <div
                 role="dialog"
                 aria-modal="true"

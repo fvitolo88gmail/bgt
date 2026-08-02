@@ -3,7 +3,7 @@ import { contextualizeQueryForRetrieval } from '../../../chat/service/query-cont
 import { geminiClient } from '../../../shared/gemini';
 import type { ConversationTurn } from '../../../chat/prompt';
 
-vi.mock('./gemini', () => ({
+vi.mock('../../../shared/gemini', () => ({
     geminiClient: { generate: vi.fn() },
 }));
 
