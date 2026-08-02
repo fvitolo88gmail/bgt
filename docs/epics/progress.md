@@ -13,11 +13,11 @@ todo/progress/done).*
 | BILLING | `progress/BILLING/` | in corso, BILLING-00001/00002 ✅ done, BILLING-00009 in progress (manca riverifica), poi BILLING-00003 (in attesa raccolta dati) |
 | TEACH | `todo/TEACH/` | da iniziare |
 | VISUAL | `todo/VISUAL/` | nice to have, in coda |
-| DESIGN | `progress/DESIGN/` | riaperta, DESIGN-00004 codice pronto (manca verifica manuale) |
+| DESIGN | `done/DESIGN/` | ✅ completata — DESIGN-00004 chiusa, verifica manuale confermata |
 | CHAT-LISTING | `todo/CHAT-LISTING/` | da iniziare |
 | ADMIN-CONSOLE | `todo/ADMIN-CONSOLE/` | da iniziare |
 | GAME-REQUEST | `todo/GAME-REQUEST/` | da iniziare, priorità molto bassa |
-| EXPANSIONS | `progress/EXPANSIONS/` | in corso — EXPANSIONS-00001 in verifica (v. D75) |
+| EXPANSIONS | `done/EXPANSIONS/` | ✅ completata — EXPANSIONS-00001 chiusa, verifica manuale confermata (v. D75) |
 
 ## Priorità corrente
 
@@ -287,6 +287,14 @@ medio). `ExpandableCostTable.tsx` (Client Component) rimosso, sostituito da `Cos
 `gemini_calls_costed` per tipo operazione). Titolo pagina "Costi Gemini" → "Costi", nessun
 riferimento a "Gemini" nella UI. `tsc`/`eslint`/`vitest` puliti. **Non ancora chiusa:** manca la
 verifica manuale di Francesco (applicare la migration, controllare le tre tabelle su dati reali).
+
+**DESIGN-00004 chiusa (2026-08-02):** verifica manuale confermata da Francesco (migration
+applicata, avatar/menu/saluto/profilo verificati). Epica DESIGN nuovamente completata,
+`progress/DESIGN` → `done/DESIGN`.
+
+**EXPANSIONS-00001 chiusa (2026-08-02):** verifica manuale confermata da Francesco (migration
+applicata, SETI + Space Agencies ingestati, toggle base/espansione testato in `/game/{id}`).
+Epica EXPANSIONS completata, `progress/EXPANSIONS` → `done/EXPANSIONS`.
 
 ## Note aperte
 

@@ -1,7 +1,6 @@
 # Epica DESIGN — Nuovo design dell'app
 
-**Stato:** riaperta (2026-07-31) — DESIGN-00004 in coda, seguito di BILLING-00002 (menu avatar
-introdotto lì come primo tentativo minimale)
+**Stato:** ✅ completata (2026-08-02) — DESIGN-00004 chiusa, verifica manuale confermata
 
 ## Contesto
 
@@ -21,7 +20,7 @@ Vedi directory `DESIGN/` per i task singoli.
 | DESIGN-00001 | Scelta tema e palette colori | ✅ |
 | DESIGN-00002 | Generalizzazione stili/CSS componenti base | ✅ |
 | DESIGN-00003 | Applicazione del nuovo design ai componenti esistenti | ✅ |
-| DESIGN-00004 | Menu avatar utente + pagina profilo | in progress — manca verifica manuale |
+| DESIGN-00004 | Menu avatar utente + pagina profilo | ✅ |
 
 ## Note aperte
 

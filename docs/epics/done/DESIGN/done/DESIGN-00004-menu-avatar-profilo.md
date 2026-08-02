@@ -68,10 +68,7 @@ Verificato: `npx tsc --noEmit`, `npx eslint`, `npx vitest run` (31 test, incluso
 - `/home` mostra il saluto (solo nome) e il sottotitolo sopra il dropdown di selezione gioco
   esistente, nessuna regressione sul flusso di selezione.
 
-**Ancora da verificare manualmente**: aprire `/profile`, salvare nome/cognome e controllare che
-la notifica appaia e sparisca da sola, che l'avatar mostri le iniziali giuste, che il menu
-mostri nome+email non cliccabili seguiti da Profilo/Admin/Esci, e che `/home` mostri solo il
-nome nel saluto.
+**Chiusa (2026-08-02):** verifica manuale confermata da Francesco.
 
 **Aggiunte minori (stessa sessione), UX finiture:**
 - Cursore a manina sull'avatar e su tutti i `Button`/`Dropdown` (mancava su alcuni controlli

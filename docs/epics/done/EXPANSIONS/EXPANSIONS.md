@@ -1,6 +1,6 @@
 # Epica EXPANSIONS — Espansioni collegate al gioco base
 
-**Stato:** in corso
+**Stato:** ✅ completata (2026-08-02) — verifica manuale confermata
 
 ## Contesto
 
@@ -20,7 +20,7 @@ poter includere base + espansioni attive nella sessione corrente.
 
 | ID | Titolo | Stato |
 |---|---|---|
-| EXPANSIONS-00001 | Modello dati base/espansione + retrieval multi-game + toggle chat | in verifica |
+| EXPANSIONS-00001 | Modello dati base/espansione + retrieval multi-game + toggle chat | ✅ |
 
 ## Note aperte
 

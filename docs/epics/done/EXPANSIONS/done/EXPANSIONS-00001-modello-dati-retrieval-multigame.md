@@ -32,6 +32,5 @@ retrieval includa i suoi chunk solo quando l'utente lo richiede esplicitamente i
 
 ## Verifica
 
-- Locale, da fare da Francesco: applicare la migration, creare le righe `games` di SETI (base)
-  e Space Agencies (`base_game_id` = id di SETI), ingestare entrambi i manuali, testare il
-  toggle in `/game/{id}` con e senza espansione attiva.
+**Chiusa (2026-08-02):** verifica manuale confermata da Francesco (migration applicata, SETI +
+Space Agencies ingestati, toggle testato con e senza espansione attiva).
