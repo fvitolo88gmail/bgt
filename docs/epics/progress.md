@@ -272,15 +272,21 @@ locale, non ancora testato end-to-end.
 
 **BILLING-00009 avviata (sessione 2026-08-02):** Francesco ha chiesto una vista per utente
 (oltre a quella per gioco già esistente) e di riportare il modello usato per riga anziché nel
-titolo pagina — richiesta ambigua su come mostrare più modelli per interazione (embedding +
-generazione), chiarita chiedendo a Francesco: righe di distribuzione espandibili al click,
-mostrano l'elenco delle interazioni con modello/i coinvolto/i. Vista `user_request_costs`
-guadagna `user_id` (migration `20260802000000_user_request_costs_add_user.sql`, non ancora
-applicata), nuova lettura `getGeminiCallCosts` (una riga per chiamata, con `model_name`),
-`summarizeCostByUser`/`buildInteractionDetails` in `billing-aggregation.ts`, componente
-`ExpandableCostTable` riusato per gioco e utente. Titolo pagina "Costi Gemini" → "Costi", nessun
+titolo pagina. Prima stesura: righe di distribuzione espandibili al click (dettaglio interazioni
+con modello/i coinvolti). Vista `user_request_costs` guadagna `user_id` — primo tentativo di
+migration falliva (`CREATE OR REPLACE VIEW` non permette di spostare colonne esistenti, 42P16),
+corretto mettendo `user_id` in coda alla select list.
+
+**BILLING-00009 rivista (stessa sessione):** Francesco è tornato sui suoi passi — righe
+espandibili "poco significative". Sostituite con una terza tabella semplice "Distribuzione per
+tipo di operazione" (`call_type`: embedding/generation/query_contextualization/
+query_enhancement/reranking), stesso pattern delle altre due (chiamate, costo totale, costo
+medio). `ExpandableCostTable.tsx` (Client Component) rimosso, sostituito da `CostTable.tsx`
+(Server Component, tabella semplice riusata per le tre viste). `billing-aggregation.ts`:
+`buildInteractionDetails` sostituita da `summarizeCostByCallType` (aggrega
+`gemini_calls_costed` per tipo operazione). Titolo pagina "Costi Gemini" → "Costi", nessun
 riferimento a "Gemini" nella UI. `tsc`/`eslint`/`vitest` puliti. **Non ancora chiusa:** manca la
-verifica manuale di Francesco.
+verifica manuale di Francesco (applicare la migration, controllare le tre tabelle su dati reali).
 
 ## Note aperte
 

@@ -89,44 +89,38 @@ export function summarizeCostByUser(rows: UserRequestCostRow[]): UserCostSummary
         .sort((a, b) => b.totalCostUsd - a.totalCostUsd);
 }
 
-export interface InteractionDetail {
-    userRequestId: string;
-    gameId: string;
-    userId: string | null;
-    mode: UserRequestCostRow['mode'];
-    status: UserRequestCostRow['status'];
-    createdAt: string;
+export interface CallTypeCostSummary {
+    callType: GeminiCallCostRow['callType'];
+    callCount: number;
     totalCostUsd: number;
-    models: string[]; // nomi modello distinti coinvolti nell'interazione
+    avgCostPerCallUsd: number;
 }
 
 /**
- * Unisce le interazioni (`user_request_costs`) al dettaglio per chiamata
- * (`gemini_calls_costed`) per ottenere, per ogni interazione, l'elenco dei
- * modelli coinvolti — usato per il dettaglio espanso delle tabelle di
- * distribuzione (per gioco/per utente) nel pannello admin.
+ * Una riga per call_type (embedding, generation, query_contextualization,
+ * query_enhancement, reranking), ordinata per costo totale decrescente —
+ * a differenza delle altre viste, la base è `gemini_calls_costed` (una riga
+ * per chiamata), non `user_request_costs` (una riga per interazione): qui
+ * interessa il costo per singola chiamata, non per interazione utente.
  */
-export function buildInteractionDetails(
-    requestRows: UserRequestCostRow[],
-    callRows: GeminiCallCostRow[],
-): InteractionDetail[] {
-    const modelsByRequest = new Map<string, Set<string>>();
+export function summarizeCostByCallType(callRows: GeminiCallCostRow[]): CallTypeCostSummary[] {
+    const byCallType = new Map<string, { callCount: number; totalCostUsd: number }>();
+
     for (const call of callRows) {
-        const models = modelsByRequest.get(call.userRequestId) ?? new Set<string>();
-        models.add(call.modelName);
-        modelsByRequest.set(call.userRequestId, models);
+        const existing = byCallType.get(call.callType) ?? { callCount: 0, totalCostUsd: 0 };
+        existing.callCount += 1;
+        existing.totalCostUsd += call.costUsd;
+        byCallType.set(call.callType, existing);
     }
 
-    return requestRows.map((row) => ({
-        userRequestId: row.userRequestId,
-        gameId: row.gameId,
-        userId: row.userId,
-        mode: row.mode,
-        status: row.status,
-        createdAt: row.createdAt,
-        totalCostUsd: row.totalCostUsd,
-        models: [...(modelsByRequest.get(row.userRequestId) ?? [])],
-    }));
+    return [...byCallType.entries()]
+        .map(([callType, stats]) => ({
+            callType: callType as GeminiCallCostRow['callType'],
+            callCount: stats.callCount,
+            totalCostUsd: stats.totalCostUsd,
+            avgCostPerCallUsd: stats.totalCostUsd / stats.callCount,
+        }))
+        .sort((a, b) => b.totalCostUsd - a.totalCostUsd);
 }
 
 export interface DailyCostPoint {

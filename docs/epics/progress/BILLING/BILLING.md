@@ -33,7 +33,7 @@ Vedi directory `BILLING/` per i task singoli.
 | BILLING-00006 | Verifica compliance vendita crediti/abbonamento | todo |
 | BILLING-00007 | BYOK per gruppo ristretto di tester | todo |
 | BILLING-00008 | AI Provider Adapters (generazione, selezionabile per utente) | todo |
-| BILLING-00009 | Vista per utente + dettaglio modello nel pannello costi | in progress |
+| BILLING-00009 | Viste per utente e per tipo di operazione nel pannello costi | in progress |
 
 ## Note aperte
 

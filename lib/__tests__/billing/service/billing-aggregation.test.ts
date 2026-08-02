@@ -4,7 +4,7 @@ import {
     summarizeCostByGame,
     summarizeCostByUser,
     summarizeCostByDay,
-    buildInteractionDetails,
+    summarizeCostByCallType,
 } from '../../../billing/service/billing-aggregation';
 import type { UserRequestCostRow, GeminiCallCostRow } from '../../../billing/repository/usage-tracking.repository';
 
@@ -84,23 +84,17 @@ describe('summarizeCostByUser', () => {
     });
 });
 
-describe('buildInteractionDetails', () => {
-    it('associa a ogni interazione i modelli distinti usati dalle sue chiamate', () => {
-        const requestRows = [row({ userRequestId: 'req-1', totalCostUsd: 0.005 })];
+describe('summarizeCostByCallType', () => {
+    it('raggruppa per call_type e ordina per costo totale decrescente', () => {
         const callRows = [
-            callRow({ userRequestId: 'req-1', callType: 'embedding', modelName: 'gemini-embedding-001' }),
-            callRow({ userRequestId: 'req-1', callType: 'generation', modelName: 'gemini-3.1-flash-lite' }),
+            callRow({ callType: 'embedding', costUsd: 0.001 }),
+            callRow({ callType: 'generation', costUsd: 0.01 }),
+            callRow({ callType: 'embedding', costUsd: 0.002 }),
         ];
-        const result = buildInteractionDetails(requestRows, callRows);
-        expect(result).toHaveLength(1);
-        expect(result[0]?.models).toEqual(['gemini-embedding-001', 'gemini-3.1-flash-lite']);
-        expect(result[0]?.totalCostUsd).toBe(0.005);
-    });
-
-    it('non fallisce se un\'interazione non ha chiamate corrispondenti', () => {
-        const requestRows = [row({ userRequestId: 'req-orfano' })];
-        const result = buildInteractionDetails(requestRows, []);
-        expect(result[0]?.models).toEqual([]);
+        expect(summarizeCostByCallType(callRows)).toEqual([
+            { callType: 'generation', callCount: 1, totalCostUsd: 0.01, avgCostPerCallUsd: 0.01 },
+            { callType: 'embedding', callCount: 2, totalCostUsd: 0.003, avgCostPerCallUsd: 0.0015 },
+        ]);
     });
 });
 

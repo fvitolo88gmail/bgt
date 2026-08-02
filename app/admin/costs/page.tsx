@@ -5,13 +5,12 @@ import {
     summarizeOverallCost,
     summarizeCostByGame,
     summarizeCostByUser,
+    summarizeCostByCallType,
     summarizeCostByDay,
-    buildInteractionDetails,
-    type InteractionDetail,
 } from '@/lib/billing/service/billing-aggregation';
 import { AdminShell } from '@/components/admin/AdminShell';
 import { CostTrendChart } from '@/components/admin/CostTrendChart';
-import { ExpandableCostTable, type CostTableRow, type InteractionDetailRow } from '@/components/admin/ExpandableCostTable';
+import { CostTable, type CostTableRow } from '@/components/admin/CostTable';
 
 function formatUsd(value: number): string {
     return `$${value.toFixed(6)}`;
@@ -26,26 +25,16 @@ function KpiCard({ label, value, valueClassName = '' }: { label: string; value: 
     );
 }
 
-function toDetailRow(d: InteractionDetail): InteractionDetailRow {
-    return {
-        userRequestId: d.userRequestId,
-        createdAt: d.createdAt,
-        mode: d.mode,
-        status: d.status,
-        totalCostUsd: d.totalCostUsd,
-        models: d.models,
-    };
-}
-
-function groupDetailsBy(details: InteractionDetail[], keyOf: (d: InteractionDetail) => string | null): Record<string, InteractionDetailRow[]> {
-    const grouped: Record<string, InteractionDetailRow[]> = {};
-    for (const d of details) {
-        const key = keyOf(d);
-        if (!key) continue;
-        (grouped[key] ??= []).push(toDetailRow(d));
-    }
-    return grouped;
-}
+// Etichette leggibili per i call_type interni (v. schema gemini_calls) —
+// il valore grezzo (es. "query_contextualization") resta nel DB/nel codice,
+// solo la UI lo traduce.
+const CALL_TYPE_LABELS: Record<string, string> = {
+    embedding: 'Embedding',
+    generation: 'Generazione',
+    query_contextualization: 'Contestualizzazione query',
+    query_enhancement: 'Query enhancement',
+    reranking: 'Reranking',
+};
 
 export default async function AdminCostsPage() {
     const supabase = await createServerSupabaseClient();
@@ -67,8 +56,8 @@ export default async function AdminCostsPage() {
     const overall = summarizeOverallCost(requestRows);
     const byGame = summarizeCostByGame(requestRows);
     const byUser = summarizeCostByUser(requestRows);
+    const byCallType = summarizeCostByCallType(callRows);
     const byDay = summarizeCostByDay(requestRows);
-    const details = buildInteractionDetails(requestRows, callRows);
 
     const { data: games } = await supabase.from('games').select('id, name');
     const gameNameById = new Map((games ?? []).map((g) => [g.id as string, g.name as string]));
@@ -86,20 +75,29 @@ export default async function AdminCostsPage() {
     const byGameRows: CostTableRow[] = byGame.map((g) => ({
         key: g.gameId,
         label: gameNameById.get(g.gameId) ?? g.gameId,
-        interactionCount: g.interactionCount,
+        countLabel: 'Interazioni',
+        count: g.interactionCount,
         totalCostUsd: g.totalCostUsd,
-        avgCostPerQueryUsd: g.avgCostPerQueryUsd,
+        avgCostUsd: g.avgCostPerQueryUsd,
     }));
-    const detailsByGame = groupDetailsBy(details, (d) => d.gameId);
 
     const byUserRows: CostTableRow[] = byUser.map((u) => ({
         key: u.userId,
         label: userLabelById.get(u.userId) ?? u.userId.slice(0, 8),
-        interactionCount: u.interactionCount,
+        countLabel: 'Interazioni',
+        count: u.interactionCount,
         totalCostUsd: u.totalCostUsd,
-        avgCostPerQueryUsd: u.avgCostPerQueryUsd,
+        avgCostUsd: u.avgCostPerQueryUsd,
     }));
-    const detailsByUser = groupDetailsBy(details, (d) => d.userId);
+
+    const byCallTypeRows: CostTableRow[] = byCallType.map((c) => ({
+        key: c.callType,
+        label: CALL_TYPE_LABELS[c.callType] ?? c.callType,
+        countLabel: 'Chiamate',
+        count: c.callCount,
+        totalCostUsd: c.totalCostUsd,
+        avgCostUsd: c.avgCostPerCallUsd,
+    }));
 
     return (
         <AdminShell active="Costi">
@@ -120,12 +118,17 @@ export default async function AdminCostsPage() {
 
                     <p className="mb-2.5 text-xs font-bold text-ink-soft">Distribuzione per gioco</p>
                     <div className="mb-6">
-                        <ExpandableCostTable rows={byGameRows} detailsByKey={detailsByGame} labelHeader="Gioco" />
+                        <CostTable rows={byGameRows} labelHeader="Gioco" />
                     </div>
 
                     <p className="mb-2.5 text-xs font-bold text-ink-soft">Distribuzione per utente</p>
                     <div className="mb-6">
-                        <ExpandableCostTable rows={byUserRows} detailsByKey={detailsByUser} labelHeader="Utente" />
+                        <CostTable rows={byUserRows} labelHeader="Utente" />
+                    </div>
+
+                    <p className="mb-2.5 text-xs font-bold text-ink-soft">Distribuzione per tipo di operazione</p>
+                    <div className="mb-6">
+                        <CostTable rows={byCallTypeRows} labelHeader="Operazione" />
                     </div>
 
                     <p className="mb-2.5 text-xs font-bold text-ink-soft">Andamento nel tempo</p>
