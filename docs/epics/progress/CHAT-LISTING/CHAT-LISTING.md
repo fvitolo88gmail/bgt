@@ -24,10 +24,15 @@ Vedi directory `CHAT-LISTING/` per i task singoli.
 | CHAT-LISTING-00001 | Modello dati: conversazioni multiple per utente/gioco | ✅ done |
 | CHAT-LISTING-00002 | Sidebar con elenco conversazioni | ✅ done |
 | CHAT-LISTING-00003 | Ripresa di una conversazione dalla sidebar | ✅ done |
-| CHAT-LISTING-00004 | Limite configurabile di risposte per conversazione | todo — prossimo |
+| CHAT-LISTING-00004 | Limite configurabile di risposte per conversazione | todo |
+| CHAT-LISTING-00005 | Layout unificato della pagina conversazione | in corso — verifica manuale da fare |
 
 ## Note aperte
 
+- `CHAT-LISTING-00005` (layout) è stato eseguito prima di `CHAT-LISTING-00004`, che resta il
+  prossimo task funzionale dell'epica: deroga esplicita all'ordine, concordata con Francesco —
+  00004 è bloccato da una decisione ancora aperta (vedi nota qui sotto), 00005 non dipende da
+  quella decisione.
 - Da chiarire se il limite di risposte (CHAT-LISTING-00004) è per conversazione, per utente, o
   globale per periodo — impatta anche `BILLING` (consumo quota) e va deciso prima di
   implementare.

@@ -81,14 +81,6 @@
   --app-sidebar-active: oklch(86% 0.045 320);
   --app-sidebar-ink: var(--ink-soft);
   --app-sidebar-ink-muted: var(--ink-faint);
-
-  /* Header del pannello ("Conversazioni"), non l'implementazione originale
-     del reference: violetto scuro (--primary pieno, lo stesso scartato
-     sopra per l'intero pannello) solo sulla fascia header, così resta
-     distinguibile a colpo d'occhio dal corpo lista (violetto chiaro) invece
-     di confondersi visivamente con i titoli delle conversazioni sotto. */
-  --app-sidebar-header: var(--primary);
-  --app-sidebar-header-ink: oklch(97% 0.01 320 / 92%);
 }
 
 /* Mascotte in attesa risposta: 4 salti veri (su rapido/giù rapido, non una
@@ -219,8 +211,6 @@
   --color-app-sidebar-active: var(--app-sidebar-active);
   --color-app-sidebar-ink: var(--app-sidebar-ink);
   --color-app-sidebar-ink-muted: var(--app-sidebar-ink-muted);
-  --color-app-sidebar-header: var(--app-sidebar-header);
-  --color-app-sidebar-header-ink: var(--app-sidebar-header-ink);
 }
 
 /* Scrollbar dei pannelli laterali (ConversationSidebar): "color-scheme: light"

@@ -57,7 +57,12 @@ interface ConversationSidebarProps {
     // per far ricomparire nell'elenco la conversazione corrente/il titolo
     // appena generato senza un polling continuo.
     refreshKey: number;
+    // Apertura del pannello sotto md. Lo stato vive nel chiamante perché il
+    // trigger è nell'header del gioco, che sta fuori da questo componente.
+    isMenuOpen: boolean;
+    onCloseMenu: () => void;
     onSelect: (sessionId: string) => void;
+    onNewConversation: () => void;
     // Chiamato solo se la conversazione eliminata era quella aperta: il
     // chiamante decide cosa mostrare al posto di una chat ormai orfana
     // (in pratica, ripartire da una conversazione vuota).
@@ -77,6 +82,30 @@ function TrashIcon() {
             <path d="M10 11v6" />
             <path d="M14 11v6" />
         </svg>
+    );
+}
+
+function PlusIcon() {
+    return (
+        <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 5v14M5 12h14" />
+        </svg>
+    );
+}
+
+// Prima voce del pannello, sopra l'elenco: è l'unico modo di tornare a una
+// chat vuota una volta ripresa una conversazione, e qui sta accanto alle
+// conversazioni su cui agisce invece che sospeso sopra i messaggi.
+function NewConversationButton({ onClick }: { onClick: () => void }) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            className="flex w-full cursor-pointer items-center gap-2 rounded-[7px] border border-line px-2.5 py-2 text-xs font-semibold text-ink transition-colors hover:bg-app-sidebar-active"
+        >
+            <PlusIcon />
+            Nuova conversazione
+        </button>
     );
 }
 
@@ -147,32 +176,35 @@ function ConversationList({
     );
 }
 
-// Nessun pulsante "nuova conversazione": la chat parte già vuota ogni volta
-// che si entra nella pagina (nessuna conversazione selezionata) e la
-// registrazione avviene solo alla prima domanda inviata (getOrCreateSession)
-// — non serve un'azione esplicita per ottenere quello stato.
-//
-// Responsive mutuato da AdminShell (stesso standard di piattaforma, v.
-// architecture.md): sotto `md` il pannello collassa in una seconda top bar
-// (sotto quella con nome gioco/modalità) con hamburger, invece di stringere
-// la chat in uno spazio residuo troppo piccolo per essere utile.
+/**
+ * Pannello delle conversazioni, senza intestazione propria: il titolo della
+ * schermata è l'header del gioco, che corre a piena larghezza sopra pannello
+ * e chat — così la riga di separazione in cima è una sola, e non c'è nulla da
+ * allineare a mano tra due fasce affiancate.
+ *
+ * Sotto `md` il pannello non è affiancato alla chat (lo spazio residuo non
+ * basterebbe): diventa un overlay sull'area sotto l'header, aperto dal
+ * trigger che il chiamante espone nell'header stesso.
+ */
 export function ConversationSidebar({
     gameId,
     activeSessionId,
     refreshKey,
+    isMenuOpen,
+    onCloseMenu,
     onSelect,
+    onNewConversation,
     onActiveConversationDeleted,
 }: ConversationSidebarProps) {
     const [conversations, setConversations] = useState<ConversationSummary[]>([]);
     const [loading, setLoading] = useState(true);
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
     // Conversazione in attesa di conferma eliminazione (null = nessuna modale
     // aperta) e stato di invio, per disabilitare "Elimina" mentre la
     // richiesta è in corso invece di permettere doppi click.
     const [deleteTarget, setDeleteTarget] = useState<ConversationSummary | null>(null);
     const [deleting, setDeleting] = useState(false);
     const [toast, setToast] = useState<{ message: string; variant: ToastVariant } | null>(null);
-    // Un hook per contenitore (overlay mobile espanso + sidebar desktop): la
+    // Un hook per contenitore (overlay mobile + pannello desktop): la
     // sfumatura in fondo compare solo quando c'è davvero altro sotto
     // l'ultima voce visibile, non come decorazione fissa.
     const [expandedListRef, expandedShowFade] = useBottomFade([conversations, loading, isMenuOpen]);
@@ -203,9 +235,14 @@ export function ConversationSidebar({
         };
     }, [gameId, refreshKey]);
 
-    function handleSelect(sessionId: string) {
-        setIsMenuOpen(false);
+    function handleSelectFromMenu(sessionId: string) {
+        onCloseMenu();
         onSelect(sessionId);
+    }
+
+    function handleNewFromMenu() {
+        onCloseMenu();
+        onNewConversation();
     }
 
     // Apre la modale di conferma — l'eliminazione vera e propria parte solo
@@ -238,71 +275,26 @@ export function ConversationSidebar({
 
     return (
         <>
-            {/* Seconda top bar, solo sotto md. relative z-50: stesso motivo dell'header
-                globale (v. Header.tsx) — senza essere posizionata, l'overlay a tutto
-                schermo qui sotto (fixed, z-40) la coprirebbe anche se è lei stessa il
-                trigger per aprirlo/chiuderlo. bg-app-sidebar-header (violetto scuro, non
-                lo stesso chiaro della lista): a colpo d'occhio non si confonde con i
-                titoli delle conversazioni, che usano lo stesso trattamento visivo del
-                pannello chiaro. border-line invece di un violetto dedicato: stesso colore
-                dell'header del gioco, per restare coerenti quando le due bar sono vicine. */}
-            <div className="relative z-50 flex shrink-0 items-center justify-between border-b border-line bg-app-sidebar-header px-3.5 py-3 md:hidden">
-                <span className="text-xs font-semibold text-app-sidebar-header-ink">Conversazioni</span>
-                <button
-                    type="button"
-                    aria-label={isMenuOpen ? 'Chiudi conversazioni' : 'Apri conversazioni'}
-                    aria-expanded={isMenuOpen}
-                    onClick={() => setIsMenuOpen((open) => !open)}
-                    className="flex h-8 w-8 items-center justify-center rounded-[7px] text-app-sidebar-header-ink hover:bg-white/10"
-                >
-                    <span className="sr-only">Menu conversazioni</span>
-                    {isMenuOpen ? (
-                        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 6l12 12M18 6L6 18" />
-                        </svg>
-                    ) : (
-                        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 7h16M4 12h16M4 17h16" />
-                        </svg>
-                    )}
-                </button>
-            </div>
-
             {isMenuOpen && (
-                // A tutto schermo (absolute inset-0 sull'area sotto l'header globale, non
-                // fixed sul viewport), non un dropdown limitato in altezza: con molte
-                // conversazioni un menu troncato non sarebbe comunque consultabile.
-                // absolute invece di fixed: "fixed inset-0" è relativo al viewport e si
-                // sovrapponeva all'header globale (in-flow, sopra quest'area), coprendo la
-                // prima conversazione della lista — absolute lo ancora invece al contenitore
-                // "relative" in page.tsx, che inizia già sotto l'header. min-h-0 sul
-                // contenuto è necessario perché un figlio flex non si restringe sotto il
-                // proprio contenuto senza di esso, altrimenti overflow-y-auto non scrolla mai.
+                // A tutto schermo sull'area sotto l'header (absolute inset-0 sul contenitore
+                // posizionato in page.tsx), non un dropdown limitato in altezza: con molte
+                // conversazioni un menu troncato non sarebbe consultabile. min-h-0 sulla lista
+                // è necessario perché un figlio flex non si restringe sotto il proprio
+                // contenuto senza di esso, altrimenti overflow-y-auto non scrolla mai.
                 <nav className="absolute inset-0 z-40 flex flex-col bg-app-sidebar md:hidden">
-                    <div className="flex shrink-0 items-center justify-between border-b border-line bg-app-sidebar-header px-3.5 py-3">
-                        <span className="text-xs font-semibold text-app-sidebar-header-ink">Conversazioni</span>
-                        <button
-                            type="button"
-                            aria-label="Chiudi conversazioni"
-                            onClick={() => setIsMenuOpen(false)}
-                            className="flex h-8 w-8 items-center justify-center rounded-[7px] text-app-sidebar-header-ink hover:bg-white/10"
-                        >
-                            <span className="sr-only">Chiudi</span>
-                            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 6l12 12M18 6L6 18" />
-                            </svg>
-                        </button>
+                    <div className="shrink-0 px-4 pt-4">
+                        <NewConversationButton onClick={handleNewFromMenu} />
                     </div>
                     <div
                         ref={expandedListRef}
-                        className="app-sidebar-scroll min-h-0 flex-1 space-y-1 overflow-y-auto px-3.5 pt-3 pb-4"
+                        className="app-sidebar-scroll min-h-0 flex-1 space-y-1 overflow-y-auto px-4 pt-3 pb-4"
                         style={expandedShowFade ? fadeMaskStyle : undefined}
                     >
                         <ConversationList
                             conversations={conversations}
                             loading={loading}
                             activeSessionId={activeSessionId}
-                            onSelect={handleSelect}
+                            onSelect={handleSelectFromMenu}
                             onDelete={handleDelete}
                         />
                     </div>
@@ -312,22 +304,16 @@ export function ConversationSidebar({
             {/* Violetto (bg-app-sidebar): pannello di navigazione dell'applicazione,
                 per coerenza con lo standard di piattaforma — nero per i pannelli di
                 amministrazione (v. AdminShell/--admin-sidebar), violetto per quelli
-                applicativi (v. architecture.md). Visibile solo da md in su. */}
-            <div className="hidden w-[220px] shrink-0 flex-col bg-app-sidebar md:flex">
-                {/* min-h/py/border-b allineati all'header del gioco (v. page.tsx, "px-8
-                    py-4" con due righe di testo) — senza, l'header di questo pannello
-                    risultava visibilmente più basso e col bordo sfalsato rispetto a
-                    quello della chat sulla stessa riga. bg-app-sidebar-header (violetto
-                    scuro) invece del chiaro della lista sotto: si distingue a colpo
-                    d'occhio dai titoli delle conversazioni, che non usano questo tono. */}
-                <div className="flex min-h-[75px] shrink-0 items-center border-b border-line bg-app-sidebar-header px-3.5 py-4">
-                    <p className="text-[10.5px] font-bold tracking-wide text-app-sidebar-header-ink uppercase">
-                        Conversazioni
-                    </p>
+                applicativi (v. architecture.md). border-r: senza, la separazione dalla
+                chat sarebbe il solo salto di colore, e i bordi orizzontali della colonna
+                accanto si interromperebbero nel vuoto invece di terminare su una linea. */}
+            <div className="hidden w-[240px] shrink-0 flex-col border-r border-line bg-app-sidebar md:flex">
+                <div className="shrink-0 p-3">
+                    <NewConversationButton onClick={onNewConversation} />
                 </div>
                 <div
                     ref={desktopListRef}
-                    className="app-sidebar-scroll flex-1 space-y-1 overflow-y-auto p-3.5"
+                    className="app-sidebar-scroll min-h-0 flex-1 space-y-1 overflow-y-auto px-3 pb-3"
                     style={desktopShowFade ? fadeMaskStyle : undefined}
                 >
                     <ConversationList

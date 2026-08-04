@@ -14,7 +14,7 @@ todo/progress/done).*
 | TEACH | `todo/TEACH/` | da iniziare |
 | VISUAL | `todo/VISUAL/` | nice to have, in coda |
 | DESIGN | `done/DESIGN/` | ✅ completata — DESIGN-00004 chiusa, verifica manuale confermata |
-| CHAT-LISTING | `progress/CHAT-LISTING/` | in corso — CHAT-LISTING-00001/00002/00003 ✅ done (modello dati, sidebar, ripresa conversazione con history reale), prossimo CHAT-LISTING-00004 (limite risposte configurabile — nota aperta: per conversazione/utente/periodo da decidere, impatta BILLING) |
+| CHAT-LISTING | `progress/CHAT-LISTING/` | in corso — CHAT-LISTING-00001/00002/00003 ✅ done (modello dati, sidebar, ripresa conversazione con history reale), CHAT-LISTING-00005 (layout unificato) implementata, verifica manuale da fare; CHAT-LISTING-00004 (limite risposte configurabile) resta il prossimo task funzionale — nota aperta: per conversazione/utente/periodo da decidere, impatta BILLING |
 | ADMIN-CONSOLE | `todo/ADMIN-CONSOLE/` | da iniziare |
 | GAME-REQUEST | `todo/GAME-REQUEST/` | da iniziare, priorità molto bassa |
 | EXPANSIONS | `done/EXPANSIONS/` | ✅ completata — EXPANSIONS-00001 chiusa, verifica manuale confermata (v. D75) |
@@ -313,6 +313,25 @@ applicata, avatar/menu/saluto/profilo verificati). Epica DESIGN nuovamente compl
 **EXPANSIONS-00001 chiusa (2026-08-02):** verifica manuale confermata da Francesco (migration
 applicata, SETI + Space Agencies ingestati, toggle base/espansione testato in `/game/{id}`).
 Epica EXPANSIONS completata, `progress/EXPANSIONS` → `done/EXPANSIONS`.
+
+**CHAT-LISTING-00005 avviata (sessione 2026-08-04):** Francesco ha segnalato che la pagina
+conversazione si legge come due pagine accostate. Header del gioco portato a piena larghezza
+sopra pannello e chat (una sola linea orizzontale in cima, niente più `min-h-[75px]` da tenere
+allineato con l'header del gioco che cresce con le espansioni); pannello senza fascia header
+propria, con `border-r` e "Nuova conversazione" in cima al posto del tondo flottante sopra i
+messaggi; token `--app-sidebar-header*` rimossi (due superfici invece di tre); padding
+orizzontale uniformato a `px-4 sm:px-6` sulle tre fasce della colonna chat. Sotto `md` la
+seconda top bar "Conversazioni" sparisce, il pannello si apre da un'icona nell'header (stato
+sollevato da `ConversationSidebar` a `page.tsx`). Aggiunto `relative` al contenitore scrollabile
+dei messaggi: lo scroll su `offsetTop` presuppone che l'`offsetParent` sia quel contenitore.
+Eseguita fuori ordine rispetto a CHAT-LISTING-00004, per scelta esplicita di Francesco — v. D80.
+
+**Revisione footer (stessa sessione):** sotto la barra di input restavano due fasce bordate
+consecutive (input bar + footer globale), con le colonne interrotte appena sopra il footer.
+`Footer` diventa Client Component e non compare sulle route a piena altezza (oggi solo
+`/game/[id]`); la frase è una costante esportata, riusata dalla chat sotto il campo di input
+senza fascia né bordo propri. `tsc`/`eslint` puliti, `vitest run lib/__tests__` 55/55 ✅.
+**Non ancora chiusa:** manca la verifica manuale.
 
 ## Note aperte
 

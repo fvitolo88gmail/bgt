@@ -987,6 +987,22 @@ dell'header globale in px — resta corretto anche se l'altezza dell'header camb
 
 ---
 
+### D80 — Header della pagina conversazione a piena larghezza sopra pannello e chat
+**Contesto:** `/game/[id]` in modalità conversation si leggeva come due pagine accostate: due
+fasce header affiancate allineate a mano con `min-h-[75px]` (che si sfalsa appena l'header del
+gioco cresce con le espansioni), nessun bordo tra le colonne, e in fondo due fasce bordate
+consecutive (barra di input + footer globale).
+**Opzioni:** allineare meglio le fasce affiancate · header unico sopra entrambe le colonne.
+**Scelta:** header unico a piena larghezza; il pannello perde la propria fascia header (e i token
+`--app-sidebar-header*`), guadagna `border-r` e ospita "Nuova conversazione" al posto del tondo
+flottante. `Footer` non compare sulle route a piena altezza, il disclaimer passa sotto il campo
+di input.
+**Motivazione:** con una sola linea orizzontale in cima e una in fondo non resta niente da tenere
+allineato tra contenitori indipendenti — una classe di bug già corretta a mano più volte scompare
+per struttura, non per aggiustamento.
+
+---
+
 ### D[N] — Titolo decisione
 **Contesto:** perché si è posta la questione
 **Opzioni:** opzione A · opzione B · opzione C

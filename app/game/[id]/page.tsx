@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 import { OwlLoader } from '@/components/ui/OwlLoader';
+import { CITATIONS_DISCLAIMER } from '@/components/ui/Footer';
 import { supabase } from '@/lib/shared/supabase';
 
 export default function GamePage({ params }: { params: Promise<{ id: string }> }) {
@@ -17,10 +18,13 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
     const searchParams = useSearchParams();
     // modalità scelta in /home, passata via query param. Default "qa" se assente o non riconosciuta.
     const mode = searchParams.get('mode') === 'conversation' ? 'conversation' : 'qa';
-    // Sessione mutabile (non più fissa per apertura pagina): la sidebar (solo
-    // modalità conversation, CHAT-LISTING-00002) può farne partire una nuova
+    // Sessione mutabile (non più fissa per apertura pagina): il pannello
+    // conversazioni (solo modalità conversation) può farne partire una nuova
     // o selezionarne una precedente dall'elenco.
     const [sessionId, setSessionId] = useState(() => crypto.randomUUID());
+    // Apertura del pannello conversazioni sotto md. Lo stato vive qui, non in
+    // ConversationSidebar, perché il trigger sta nell'header del gioco.
+    const [isConversationsOpen, setIsConversationsOpen] = useState(false);
     // Incrementato dopo ogni risposta salvata, per far ricomparire nella
     // sidebar la conversazione corrente/il titolo appena generato al primo
     // turno, senza polling continuo.
@@ -237,29 +241,38 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
     }
 
     return (
-        // Struttura mutuata da AdminShell (sidebar + contenuto a piena altezza,
+        // Struttura mutuata da AdminShell (pannello + contenuto a piena altezza,
         // nessun riquadro bordato che confini la chat) per coerenza di
-        // piattaforma: qui la sidebar è violetta (pannello applicativo, v.
-        // architecture.md), non nera (quella è riservata ai pannelli admin).
-        // flex-col sotto md: sotto quella soglia ConversationSidebar collassa
-        // in una seconda top bar invece di stare affiancata alla chat.
-        // relative: ancora l'overlay a tutto schermo di ConversationSidebar (mobile) a
-        // quest'area invece che al viewport — altrimenti "fixed inset-0" si sovrappone
-        // all'header globale (in-flow, sopra questo div) invece di iniziare sotto di esso,
-        // coprendone visivamente la prima riga di contenuto.
-        <div className="relative flex w-full flex-1 flex-col overflow-hidden md:flex-row">
-            {mode === 'conversation' && (
-                <ConversationSidebar
-                    gameId={id}
-                    activeSessionId={sessionId}
-                    refreshKey={sidebarRefreshKey}
-                    onSelect={handleSelectConversation}
-                    onActiveConversationDeleted={handleActiveConversationDeleted}
-                />
-            )}
+        // piattaforma: qui il pannello è violetto (applicativo, v.
+        // architecture.md), non nero (quello è riservato ai pannelli admin).
+        // L'header del gioco sta sopra entrambe le colonne, non dentro quella
+        // della chat: così la riga di separazione in cima è una sola e continua,
+        // e non c'è un'altezza da tenere allineata tra due fasce affiancate.
+        <div className="flex w-full flex-1 flex-col overflow-hidden">
+            <div className="flex shrink-0 items-start gap-3 border-b border-line px-4 py-4 sm:px-6">
+                {/* Sotto md il pannello conversazioni non è affiancato alla chat: si apre
+                    da qui come overlay. Da md in su la colonna è sempre visibile. */}
+                {mode === 'conversation' && (
+                    <button
+                        type="button"
+                        aria-label={isConversationsOpen ? 'Chiudi conversazioni' : 'Apri conversazioni'}
+                        aria-expanded={isConversationsOpen}
+                        onClick={() => setIsConversationsOpen((open) => !open)}
+                        className="-ml-1 flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-[7px] text-ink-soft transition-colors hover:bg-primary-soft md:hidden"
+                    >
+                        {isConversationsOpen ? (
+                            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M6 6l12 12M18 6L6 18" />
+                            </svg>
+                        ) : (
+                            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+                            </svg>
+                        )}
+                    </button>
+                )}
 
-            <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-                <div className="border-b border-line px-4 py-4 sm:px-8">
+                <div className="min-w-0 flex-1">
                     <h1 className="font-serif text-lg font-bold text-ink">{gameName ?? 'Assistente Regole'}</h1>
                     <p className="text-[10.5px] font-bold tracking-wide text-ink-faint uppercase">
                         {mode === 'conversation' ? 'Conversazione — con storico' : 'Domande — senza storico'}
@@ -280,70 +293,81 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                         </div>
                     )}
                 </div>
+            </div>
 
-                <div ref={messagesContainerRef} className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-8 py-5">
-                    {/* max-w interno solo per leggibilità del testo — lo sfondo/i bordi della chat restano a piena larghezza, non confinati in un riquadro */}
-                    <div className="mx-auto flex w-full max-w-3xl flex-col space-y-4">
-                        {loadingHistory && (
-                            <p className="text-sm text-ink-faint">Carico la conversazione...</p>
-                        )}
+            {/* relative: ancora l'overlay del pannello conversazioni (sotto md) a
+                quest'area, che inizia già sotto l'header globale e sotto quello del
+                gioco — un inset-0 su un antenato più in alto ne coprirebbe una parte. */}
+            <div className="relative flex min-h-0 flex-1">
+                {mode === 'conversation' && (
+                    <ConversationSidebar
+                        gameId={id}
+                        activeSessionId={sessionId}
+                        refreshKey={sidebarRefreshKey}
+                        isMenuOpen={isConversationsOpen}
+                        onCloseMenu={() => setIsConversationsOpen(false)}
+                        onSelect={handleSelectConversation}
+                        onNewConversation={handleNewConversation}
+                        onActiveConversationDeleted={handleActiveConversationDeleted}
+                    />
+                )}
 
-                        {historyError && (
-                            <p className="text-sm text-danger">
-                                Errore caricando questa conversazione. Riprova selezionandola di nuovo dalla sidebar.
-                            </p>
-                        )}
+                <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+                    {/* relative: lo scroll ai nuovi messaggi calcola `offsetTop` rispetto
+                        all'offsetParent, che deve essere questo contenitore — se lo fosse un
+                        antenato più in alto, il valore includerebbe anche l'altezza dell'header. */}
+                    <div ref={messagesContainerRef} className="relative min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4 py-5 sm:px-6">
+                        {/* max-w interno solo per leggibilità del testo — lo sfondo/i bordi della chat restano a piena larghezza, non confinati in un riquadro */}
+                        <div className="mx-auto flex w-full max-w-3xl flex-col space-y-4">
+                            {loadingHistory && (
+                                <p className="text-sm text-ink-faint">Carico la conversazione...</p>
+                            )}
 
-                        {messages.map((msg, i) => (
-                            <div key={i} ref={i === messages.length - 1 ? lastMessageRef : undefined}>
-                                <MessageBubble message={msg} onFeedback={(feedback) => handleFeedback(i, feedback)} />
-                            </div>
-                        ))}
+                            {historyError && (
+                                <p className="text-sm text-danger">
+                                    Errore caricando questa conversazione. Riprova selezionandola di nuovo dalla sidebar.
+                                </p>
+                            )}
 
-                        {loading && (
-                            <div className="flex items-center gap-3">
-                                <Card className="rounded-md rounded-bl-[3px] border-line-soft px-4 py-3">
-                                    <p className="text-sm text-ink-faint">Sto cercando...</p>
-                                </Card>
-                                <OwlLoader />
-                            </div>
-                        )}
+                            {messages.map((msg, i) => (
+                                <div key={i} ref={i === messages.length - 1 ? lastMessageRef : undefined}>
+                                    <MessageBubble message={msg} onFeedback={(feedback) => handleFeedback(i, feedback)} />
+                                </div>
+                            ))}
+
+                            {loading && (
+                                <div className="flex items-center gap-3">
+                                    <Card className="rounded-md rounded-bl-[3px] border-line-soft px-4 py-3">
+                                        <p className="text-sm text-ink-faint">Sto cercando...</p>
+                                    </Card>
+                                    <OwlLoader />
+                                </div>
+                            )}
+                        </div>
                     </div>
-                </div>
 
-                <div className="relative border-t border-line px-8 py-4">
-                    {/* Ancorato a questo contenitore (non alla lista messaggi, che scrolla):
-                        "-top" negativo lo fa fluttuare appena sopra la barra di input,
-                        indipendentemente da quanto la chat sopra sia scrollata. Sempre in
-                        questa posizione sia a schermo largo che stretto (non richiesta una
-                        variante responsive). */}
-                    {mode === 'conversation' && messages.length > 0 && (
-                        <button
-                            type="button"
-                            onClick={handleNewConversation}
-                            title="Nuova conversazione"
-                            aria-label="Nuova conversazione"
-                            className="absolute -top-16 right-4 z-10 flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-primary text-white shadow-md transition-colors hover:bg-primary-hover sm:right-8"
-                        >
-                            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M12 5v14M5 12h14" />
-                            </svg>
-                        </button>
-                    )}
-
-                    <div className="mx-auto flex w-full max-w-3xl gap-2.5">
-                        <Input
-                            type="text"
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-                            placeholder="Fai una domanda sulle regole..."
-                        />
-                        <Button onClick={handleSubmit} disabled={loading}>
-                            {/* "Avvia nuova conversazione" solo in modalità conversation: in QA
-                                non esiste il concetto di conversazione salvata da avviare. */}
-                            {mode === 'conversation' && messages.length === 0 ? 'Avvia nuova conversazione' : 'Invia'}
-                        </Button>
+                    <div className="shrink-0 border-t border-line px-4 py-4 sm:px-6">
+                        <div className="mx-auto w-full max-w-3xl">
+                            <div className="flex gap-2.5">
+                                <Input
+                                    type="text"
+                                    value={input}
+                                    onChange={(e) => setInput(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+                                    placeholder="Fai una domanda sulle regole..."
+                                />
+                                <Button onClick={handleSubmit} disabled={loading}>
+                                    {/* "Avvia nuova conversazione" solo in modalità conversation: in QA
+                                        non esiste il concetto di conversazione salvata da avviare. */}
+                                    {mode === 'conversation' && messages.length === 0 ? 'Avvia nuova conversazione' : 'Invia'}
+                                </Button>
+                            </div>
+                            {/* Qui invece che nel footer globale (nascosto su questa pagina): senza
+                                bordo né fascia propria, resta accanto alle risposte di cui parla. */}
+                            <p className="mt-2 text-center text-[10.5px] text-ink-faint">
+                                {CITATIONS_DISCLAIMER}
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
