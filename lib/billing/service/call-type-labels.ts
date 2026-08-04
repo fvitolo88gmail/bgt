@@ -31,6 +31,10 @@ export const CALL_TYPE_INFO: Record<string, CallTypeInfo> = {
         label: 'Reranking',
         description: 'Riordina i chunk recuperati per rilevanza rispetto alla domanda, prima di costruire il contesto.',
     },
+    title_generation: {
+        label: 'Generazione titolo',
+        description: 'Genera il titolo della conversazione a partire dal primo turno di domanda e risposta.',
+    },
 };
 
 export function getCallTypeLabel(callType: string): string {
