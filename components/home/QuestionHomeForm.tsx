@@ -71,36 +71,40 @@ export function QuestionHomeForm({ games, recentConversations }: QuestionHomeFor
                             }
                         }}
                     />
-                    {/* Due righe indipendenti, non una sola riga che deve ospitare tutto:
-                        gioco+badge (riga 1) va a capo in modo naturale se non c'entra —
-                        wrap "da tag", non un elemento che resta orfano accanto al bottone —
-                        e il bottone (riga 2) sta sempre da solo, allineato a destra. Il
-                        layout non dipende così da quanti badge ci sono o da quanto è lungo
-                        il nome del gioco: cambia solo quante righe occupa la riga 1. */}
+                    {/* Tre righe indipendenti, ciascuna con un solo tipo di contenuto —
+                        non una riga che deve ospitare tutto e va a capo in modo imprevedibile
+                        a seconda di quanti badge ci sono o quanto è lungo il nome del gioco:
+                        1) gioco (sempre una riga sola), 2) badge fonte (un gruppo a parte, va
+                        a capo solo al proprio interno se non c'entra), 3) bottone, sempre da
+                        solo, allineato a destra. */}
                     <div className="mt-2 flex flex-col gap-2">
-                        <div className="flex flex-wrap items-center gap-2">
+                        <div className="flex items-center gap-2">
                             <span className="shrink-0 font-mono text-[11px] text-ink-faint">gioco:</span>
                             {games.length > 0 ? (
-                                <>
-                                    <GameChipSelect games={games} value={gameId} onChange={setGameId} />
-                                    {/* Solo le fonti pronte, non un badge "mancante" per l'altra. */}
-                                    {selectedGame?.manualReady && (
-                                        <Badge variant="neutral" className="shrink-0" aria-label="Manuale disponibile">
-                                            <ManualIcon />
-                                            <span>Manuale ✓</span>
-                                        </Badge>
-                                    )}
-                                    {selectedGame?.communityReady && (
-                                        <Badge variant="community" className="shrink-0" aria-label="Community disponibile">
-                                            <CommunityIcon />
-                                            <span>Community ✓</span>
-                                        </Badge>
-                                    )}
-                                </>
+                                <GameChipSelect games={games} value={gameId} onChange={setGameId} />
                             ) : (
                                 <span className="text-xs text-ink-faint">Nessun gioco disponibile</span>
                             )}
                         </div>
+
+                        {/* Solo le fonti pronte, non un badge "mancante" per l'altra. */}
+                        {(selectedGame?.manualReady || selectedGame?.communityReady) && (
+                            <div className="flex flex-wrap items-center gap-2">
+                                {selectedGame?.manualReady && (
+                                    <Badge variant="neutral" className="shrink-0" aria-label="Manuale disponibile">
+                                        <ManualIcon />
+                                        <span>Manuale ✓</span>
+                                    </Badge>
+                                )}
+                                {selectedGame?.communityReady && (
+                                    <Badge variant="community" className="shrink-0" aria-label="Community disponibile">
+                                        <CommunityIcon />
+                                        <span>Community ✓</span>
+                                    </Badge>
+                                )}
+                            </div>
+                        )}
+
                         <Button
                             type="submit"
                             disabled={!question.trim() || !gameId}
