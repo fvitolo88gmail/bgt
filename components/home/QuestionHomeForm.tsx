@@ -71,30 +71,29 @@ export function QuestionHomeForm({ games, recentConversations }: QuestionHomeFor
                             }
                         }}
                     />
-                    {/* Sempre su una riga (mai in colonna, mai overflow-x-auto — taglierebbe
-                        anche in verticale il menu a tendina del chip): a restringersi sotto sm
-                        sono, in ordine, la label "gioco:" (nascosta: il chip col nome del gioco
-                        basta da solo), il chip (max-w più stretto) e i badge/bottone (solo
-                        icona) — nessun elemento resta "orfano" a capo su una riga propria. */}
-                    <div className="mt-2 flex items-center justify-between gap-1.5 sm:gap-2">
-                        <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
-                            <span className="hidden shrink-0 font-mono text-[11px] text-ink-faint sm:inline">gioco:</span>
+                    {/* Due righe indipendenti, non una sola riga che deve ospitare tutto:
+                        gioco+badge (riga 1) va a capo in modo naturale se non c'entra —
+                        wrap "da tag", non un elemento che resta orfano accanto al bottone —
+                        e il bottone (riga 2) sta sempre da solo, allineato a destra. Il
+                        layout non dipende così da quanti badge ci sono o da quanto è lungo
+                        il nome del gioco: cambia solo quante righe occupa la riga 1. */}
+                    <div className="mt-2 flex flex-col gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <span className="shrink-0 font-mono text-[11px] text-ink-faint">gioco:</span>
                             {games.length > 0 ? (
                                 <>
                                     <GameChipSelect games={games} value={gameId} onChange={setGameId} />
-                                    {/* Solo le fonti pronte, non un badge "mancante" per l'altra.
-                                        Testo nascosto sotto sm (icona + aria-label bastano),
-                                        stessa logica del bottone "Chiedi" qui accanto. */}
+                                    {/* Solo le fonti pronte, non un badge "mancante" per l'altra. */}
                                     {selectedGame?.manualReady && (
                                         <Badge variant="neutral" className="shrink-0" aria-label="Manuale disponibile">
                                             <ManualIcon />
-                                            <span className="hidden sm:inline">Manuale ✓</span>
+                                            <span>Manuale ✓</span>
                                         </Badge>
                                     )}
                                     {selectedGame?.communityReady && (
                                         <Badge variant="community" className="shrink-0" aria-label="Community disponibile">
                                             <CommunityIcon />
-                                            <span className="hidden sm:inline">Community ✓</span>
+                                            <span>Community ✓</span>
                                         </Badge>
                                     )}
                                 </>
@@ -105,10 +104,9 @@ export function QuestionHomeForm({ games, recentConversations }: QuestionHomeFor
                         <Button
                             type="submit"
                             disabled={!question.trim() || !gameId}
-                            aria-label="Chiedi"
-                            className="flex shrink-0 items-center gap-1.5 px-2.5 sm:px-4"
+                            className="flex shrink-0 items-center gap-1.5 self-end"
                         >
-                            <span className="hidden sm:inline">Chiedi</span>
+                            Chiedi
                             <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0" fill="currentColor" aria-hidden="true">
                                 <polygon points="3,20 21,12 3,4 3,10 15,12 3,14" />
                             </svg>
