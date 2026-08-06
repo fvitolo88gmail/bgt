@@ -35,6 +35,3 @@ Vedi directory `HOME/` per i task singoli.
   conversazione con storico. La ripresa di una conversazione precedente riapre comunque sempre in
   modalità "conversazione" (coerente con lo schema esistente: `chat_sessions` non ha una colonna
   "modalità").
-- Badge di stato fonte (Manuale/Community) disattivati temporaneamente in `QuestionHomeForm`
-  (flag `SHOW_SOURCE_BADGES`, non rimossi) — la loro posizione accanto a chip/bottone non ha
-  retto su mobile a più iterazioni di fix, da ripensare da zero.

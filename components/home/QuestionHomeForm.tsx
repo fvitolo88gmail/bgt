@@ -30,10 +30,6 @@ function CommunityIcon() {
     );
 }
 
-// Disattivati temporaneamente (posizione da ripensare, v. HOME.md) — icone e
-// markup restano pronti, non rimossi.
-const SHOW_SOURCE_BADGES = false;
-
 interface QuestionHomeFormProps {
     games: GameOption[];
     recentConversations: RecentConversation[];
@@ -75,51 +71,48 @@ export function QuestionHomeForm({ games, recentConversations }: QuestionHomeFor
                             }
                         }}
                     />
-                    {/* Due righe con ruoli fissi, non legate al numero di badge: 1) gioco +
-                        bottone — sempre e solo questi due elementi, quindi sempre ci stanno
-                        (il chip tronca con ellipsis, il bottone si riduce alla sola icona
-                        sotto sm); 2) badge fonte, riga a parte che va a capo solo al proprio
-                        interno — 0, 1 o 2 badge non influenzano mai la riga sopra. */}
-                    <div className="mt-2 flex flex-col gap-2">
-                        <div className="flex items-center justify-between gap-2">
-                            <div className="flex min-w-0 items-center gap-2">
-                                <span className="shrink-0 font-mono text-[11px] text-ink-faint">gioco:</span>
-                                {games.length > 0 ? (
+                    {/* Sempre su una riga (mai in colonna, mai overflow-x-auto — taglierebbe
+                        anche in verticale il menu a tendina del chip): a restringersi sotto sm
+                        sono, in ordine, la label "gioco:" (nascosta: il chip col nome del gioco
+                        basta da solo), il chip (max-w più stretto) e i badge/bottone (solo
+                        icona) — nessun elemento resta "orfano" a capo su una riga propria. */}
+                    <div className="mt-2 flex items-center justify-between gap-1.5 sm:gap-2">
+                        <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+                            <span className="hidden shrink-0 font-mono text-[11px] text-ink-faint sm:inline">gioco:</span>
+                            {games.length > 0 ? (
+                                <>
                                     <GameChipSelect games={games} value={gameId} onChange={setGameId} />
-                                ) : (
-                                    <span className="text-xs text-ink-faint">Nessun gioco disponibile</span>
-                                )}
-                            </div>
-                            <Button
-                                type="submit"
-                                disabled={!question.trim() || !gameId}
-                                aria-label="Chiedi"
-                                className="flex shrink-0 items-center gap-1.5 px-2.5 sm:px-4"
-                            >
-                                <span className="hidden sm:inline">Chiedi</span>
-                                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0" fill="currentColor" aria-hidden="true">
-                                    <polygon points="3,20 21,12 3,4 3,10 15,12 3,14" />
-                                </svg>
-                            </Button>
+                                    {/* Solo le fonti pronte, non un badge "mancante" per l'altra.
+                                        Testo nascosto sotto sm (icona + aria-label bastano),
+                                        stessa logica del bottone "Chiedi" qui accanto. */}
+                                    {selectedGame?.manualReady && (
+                                        <Badge variant="neutral" className="shrink-0" aria-label="Manuale disponibile">
+                                            <ManualIcon />
+                                            <span className="hidden sm:inline">Manuale ✓</span>
+                                        </Badge>
+                                    )}
+                                    {selectedGame?.communityReady && (
+                                        <Badge variant="community" className="shrink-0" aria-label="Community disponibile">
+                                            <CommunityIcon />
+                                            <span className="hidden sm:inline">Community ✓</span>
+                                        </Badge>
+                                    )}
+                                </>
+                            ) : (
+                                <span className="text-xs text-ink-faint">Nessun gioco disponibile</span>
+                            )}
                         </div>
-
-                        {/* Solo le fonti pronte, non un badge "mancante" per l'altra. */}
-                        {SHOW_SOURCE_BADGES && (selectedGame?.manualReady || selectedGame?.communityReady) && (
-                            <div className="flex flex-wrap items-center gap-2">
-                                {selectedGame?.manualReady && (
-                                    <Badge variant="neutral" className="shrink-0" aria-label="Manuale disponibile">
-                                        <ManualIcon />
-                                        <span>Manuale ✓</span>
-                                    </Badge>
-                                )}
-                                {selectedGame?.communityReady && (
-                                    <Badge variant="community" className="shrink-0" aria-label="Community disponibile">
-                                        <CommunityIcon />
-                                        <span>Community ✓</span>
-                                    </Badge>
-                                )}
-                            </div>
-                        )}
+                        <Button
+                            type="submit"
+                            disabled={!question.trim() || !gameId}
+                            aria-label="Chiedi"
+                            className="flex shrink-0 items-center gap-1.5 px-2.5 sm:px-4"
+                        >
+                            <span className="hidden sm:inline">Chiedi</span>
+                            <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0" fill="currentColor" aria-hidden="true">
+                                <polygon points="3,20 21,12 3,4 3,10 15,12 3,14" />
+                            </svg>
+                        </Button>
                     </div>
                 </div>
 
