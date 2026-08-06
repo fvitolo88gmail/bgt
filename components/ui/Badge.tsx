@@ -20,7 +20,9 @@ interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
 export function Badge({ variant = 'neutral', className = '', ...props }: BadgeProps) {
     return (
         <span
-            className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-medium ${VARIANT_CLASSES[variant]} ${className}`}
+            // inline-flex + items-center: un'icona accanto al testo va allineata
+            // al centro verticale, non lasciata al flusso inline di default.
+            className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium ${VARIANT_CLASSES[variant]} ${className}`}
             {...props}
         />
     );

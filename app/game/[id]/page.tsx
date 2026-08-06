@@ -10,18 +10,26 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 import { OwlLoader } from '@/components/ui/OwlLoader';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { CITATIONS_DISCLAIMER } from '@/components/ui/Footer';
 import { supabase } from '@/lib/shared/supabase';
 
 export default function GamePage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
     const searchParams = useSearchParams();
+    // sessionId in query (arrivo da "Riprendi" in home) forza sempre la
+    // modalità conversation: è l'unica modalità con storico da ricaricare.
+    const initialSessionId = searchParams.get('sessionId');
     // modalità scelta in /home, passata via query param. Default "qa" se assente o non riconosciuta.
-    const mode = searchParams.get('mode') === 'conversation' ? 'conversation' : 'qa';
+    const mode = initialSessionId || searchParams.get('mode') === 'conversation' ? 'conversation' : 'qa';
+    // Domanda passata dalla home ("Chiedi subito") — inviata in automatico al
+    // primo render, non richiede una seconda interazione dell'utente.
+    const initialQuestion = searchParams.get('q');
     // Sessione mutabile (non più fissa per apertura pagina): il pannello
     // conversazioni (solo modalità conversation) può farne partire una nuova
-    // o selezionarne una precedente dall'elenco.
-    const [sessionId, setSessionId] = useState(() => crypto.randomUUID());
+    // o selezionarne una precedente dall'elenco. Se si arriva con un
+    // sessionId dalla home, si parte già su quello invece che su uno nuovo.
+    const [sessionId, setSessionId] = useState(() => initialSessionId ?? crypto.randomUUID());
     // Apertura del pannello conversazioni sotto md. Lo stato vive qui, non in
     // ConversationSidebar, perché il trigger sta nell'header del gioco.
     const [isConversationsOpen, setIsConversationsOpen] = useState(false);
@@ -107,6 +115,23 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
         };
     }, [id]);
 
+    // Bootstrap da /home: sessionId da riprendere o prima domanda da inviare
+    // subito. Solo al mount (ref di guardia contro il doppio effect di
+    // React Strict Mode in sviluppo) — dopo il primo invio l'utente
+    // interagisce normalmente con input/sessionId locali.
+    const bootstrappedRef = useRef(false);
+    useEffect(() => {
+        if (bootstrappedRef.current) return;
+        bootstrappedRef.current = true;
+
+        if (initialSessionId) {
+            handleSelectConversation(initialSessionId);
+        } else if (initialQuestion) {
+            handleSubmit(initialQuestion);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     // Aggiorna subito lo stato locale (feedback "premuto") e invia in background;
     // in caso di errore lo stato resta com'era prima del click, l'utente può riprovare.
     // Click sul voto già selezionato → toggle: il feedback torna a null (deselezionato).
@@ -144,10 +169,10 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
         );
     }
 
-    async function handleSubmit() {
-        if (!input.trim() || loading) return;
+    async function handleSubmit(questionOverride?: string) {
+        const question = (questionOverride ?? input).trim();
+        if (!question || loading) return;
 
-        const question = input.trim();
         setInput('');
         setMessages((prev) => [...prev, { role: 'user', content: question }]);
         setLoading(true);
@@ -273,10 +298,23 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                 )}
 
                 <div className="min-w-0 flex-1">
-                    <h1 className="font-serif text-lg font-bold text-ink">{gameName ?? 'Assistente Regole'}</h1>
-                    <p className="text-[10.5px] font-bold tracking-wide text-ink-faint uppercase">
-                        {mode === 'conversation' ? 'Conversazione — con storico' : 'Domande — senza storico'}
-                    </p>
+                    {/* Skeleton a due righe (titolo+sottotitolo) finché il nome non arriva
+                        dal fetch client-side: evita sia un testo fallback che sfarfalla sia
+                        un sottotitolo (noto subito, da `mode`) isolato accanto a un titolo
+                        ancora vuoto. */}
+                    {gameName === null ? (
+                        <div className="flex flex-col gap-1.5 py-0.5">
+                            <Skeleton className="h-[18px] w-40" />
+                            <Skeleton className="h-[11px] w-28" />
+                        </div>
+                    ) : (
+                        <>
+                            <h1 className="font-serif text-lg font-bold text-ink">{gameName}</h1>
+                            <p className="text-[10.5px] font-bold tracking-wide text-ink-faint uppercase">
+                                {mode === 'conversation' ? 'Conversazione — con storico' : 'Domande — senza storico'}
+                            </p>
+                        </>
+                    )}
 
                     {expansions.length > 0 && (
                         <div className="mt-2 flex flex-wrap gap-3">
@@ -356,7 +394,7 @@ export default function GamePage({ params }: { params: Promise<{ id: string }> }
                                     onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
                                     placeholder="Fai una domanda sulle regole..."
                                 />
-                                <Button onClick={handleSubmit} disabled={loading}>
+                                <Button onClick={() => handleSubmit()} disabled={loading}>
                                     {/* "Avvia nuova conversazione" solo in modalità conversation: in QA
                                         non esiste il concetto di conversazione salvata da avviare. */}
                                     {mode === 'conversation' && messages.length === 0 ? 'Avvia nuova conversazione' : 'Invia'}

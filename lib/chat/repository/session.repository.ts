@@ -100,6 +100,50 @@ export async function listSessionsForGame(
     });
 }
 
+export interface RecentSessionSummary extends SessionSummary {
+    gameId: string;
+    gameName: string;
+}
+
+interface RecentSessionRow extends SessionSummaryRow {
+    game_id: string;
+    games: { name: string } | { name: string }[] | null;
+}
+
+/**
+ * Conversazioni recenti di un utente su tutti i giochi (per la sezione
+ * "Riprendi" in home) — a differenza di `listSessionsForGame` non filtra per
+ * gameId. Solo sessioni con almeno un turno salvato (`last_message_at` non
+ * null): una sessione creata ma mai usata non è una conversazione da
+ * riprendere.
+ */
+export async function listRecentSessionsForUser(
+    supabase: SupabaseClient,
+    userId: string,
+    limit: number,
+): Promise<RecentSessionSummary[]> {
+    const { data, error } = await supabase
+        .from('chat_sessions')
+        .select('id, title, last_message_at, created_at, game_id, games(name)')
+        .eq('user_id', userId)
+        .not('last_message_at', 'is', null)
+        .order('last_message_at', { ascending: false })
+        .limit(limit);
+
+    if (error) {
+        throw new SessionError(`Errore elencando le conversazioni recenti per user_id=${userId}: ${error.message}`);
+    }
+
+    return (data as unknown as RecentSessionRow[]).map((row) => ({
+        id: row.id,
+        title: row.title,
+        lastMessageAt: row.last_message_at,
+        createdAt: row.created_at,
+        gameId: row.game_id,
+        gameName: (Array.isArray(row.games) ? row.games[0]?.name : row.games?.name) ?? 'Gioco',
+    }));
+}
+
 /**
  * Imposta il titolo di una conversazione (generato altrove, es. da un
  * riassunto del primo turno) e aggiorna last_message_at per l'ordinamento
