@@ -75,8 +75,8 @@ export function QuestionHomeForm({ games, recentConversations }: QuestionHomeFor
                         non una riga che deve ospitare tutto e va a capo in modo imprevedibile
                         a seconda di quanti badge ci sono o quanto è lungo il nome del gioco:
                         1) gioco (sempre una riga sola), 2) badge fonte (un gruppo a parte, va
-                        a capo solo al proprio interno se non c'entra), 3) bottone, sempre da
-                        solo, allineato a destra. */}
+                        a capo solo al proprio interno se non c'entra), 3) bottone a piena
+                        larghezza. */}
                     <div className="mt-2 flex flex-col gap-2">
                         <div className="flex items-center gap-2">
                             <span className="shrink-0 font-mono text-[11px] text-ink-faint">gioco:</span>
@@ -105,10 +105,13 @@ export function QuestionHomeForm({ games, recentConversations }: QuestionHomeFor
                             </div>
                         )}
 
+                        {/* Larghezza piena (non allineato a destra da solo): flush con gli
+                            stessi margini di textarea/gioco/badge sopra, invece di un
+                            elemento isolato che galleggia su una riga altrimenti vuota. */}
                         <Button
                             type="submit"
                             disabled={!question.trim() || !gameId}
-                            className="flex shrink-0 items-center gap-1.5 self-end"
+                            className="flex w-full items-center justify-center gap-1.5"
                         >
                             Chiedi
                             <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0" fill="currentColor" aria-hidden="true">
