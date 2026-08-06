@@ -71,20 +71,32 @@ export function QuestionHomeForm({ games, recentConversations }: QuestionHomeFor
                             }
                         }}
                     />
-                    {/* Tre righe indipendenti, ciascuna con un solo tipo di contenuto —
-                        non una riga che deve ospitare tutto e va a capo in modo imprevedibile
-                        a seconda di quanti badge ci sono o quanto è lungo il nome del gioco:
-                        1) gioco (sempre una riga sola), 2) badge fonte (un gruppo a parte, va
-                        a capo solo al proprio interno se non c'entra), 3) bottone a piena
-                        larghezza. */}
+                    {/* Due righe con ruoli fissi, non legate al numero di badge: 1) gioco +
+                        bottone — sempre e solo questi due elementi, quindi sempre ci stanno
+                        (il chip tronca con ellipsis, il bottone si riduce alla sola icona
+                        sotto sm); 2) badge fonte, riga a parte che va a capo solo al proprio
+                        interno — 0, 1 o 2 badge non influenzano mai la riga sopra. */}
                     <div className="mt-2 flex flex-col gap-2">
-                        <div className="flex items-center gap-2">
-                            <span className="shrink-0 font-mono text-[11px] text-ink-faint">gioco:</span>
-                            {games.length > 0 ? (
-                                <GameChipSelect games={games} value={gameId} onChange={setGameId} />
-                            ) : (
-                                <span className="text-xs text-ink-faint">Nessun gioco disponibile</span>
-                            )}
+                        <div className="flex items-center justify-between gap-2">
+                            <div className="flex min-w-0 items-center gap-2">
+                                <span className="shrink-0 font-mono text-[11px] text-ink-faint">gioco:</span>
+                                {games.length > 0 ? (
+                                    <GameChipSelect games={games} value={gameId} onChange={setGameId} />
+                                ) : (
+                                    <span className="text-xs text-ink-faint">Nessun gioco disponibile</span>
+                                )}
+                            </div>
+                            <Button
+                                type="submit"
+                                disabled={!question.trim() || !gameId}
+                                aria-label="Chiedi"
+                                className="flex shrink-0 items-center gap-1.5 px-2.5 sm:px-4"
+                            >
+                                <span className="hidden sm:inline">Chiedi</span>
+                                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0" fill="currentColor" aria-hidden="true">
+                                    <polygon points="3,20 21,12 3,4 3,10 15,12 3,14" />
+                                </svg>
+                            </Button>
                         </div>
 
                         {/* Solo le fonti pronte, non un badge "mancante" per l'altra. */}
@@ -104,20 +116,6 @@ export function QuestionHomeForm({ games, recentConversations }: QuestionHomeFor
                                 )}
                             </div>
                         )}
-
-                        {/* Larghezza piena (non allineato a destra da solo): flush con gli
-                            stessi margini di textarea/gioco/badge sopra, invece di un
-                            elemento isolato che galleggia su una riga altrimenti vuota. */}
-                        <Button
-                            type="submit"
-                            disabled={!question.trim() || !gameId}
-                            className="flex w-full items-center justify-center gap-1.5"
-                        >
-                            Chiedi
-                            <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0" fill="currentColor" aria-hidden="true">
-                                <polygon points="3,20 21,12 3,4 3,10 15,12 3,14" />
-                            </svg>
-                        </Button>
                     </div>
                 </div>
 
