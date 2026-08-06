@@ -47,9 +47,10 @@ export function GameChipSelect({ games, value, onChange }: GameChipSelectProps) 
                 aria-expanded={open}
                 title={selected?.name}
                 // max-w: senza un limite il chip cresce con il nome e spinge "Chiedi"
-                // fuori dalla riga — oltre la soglia il nome tronca con ellipsis,
-                // il title sopra fa da tooltip col nome completo.
-                className="inline-flex max-w-40 cursor-pointer items-center gap-1.5 rounded-full bg-primary-soft px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary-soft/70"
+                // fuori dalla riga — oltre la soglia il nome tronca con ellipsis, il
+                // title sopra fa da tooltip col nome completo. Più stretto sotto sm:
+                // meno spazio per badge/bottone accanto sulla stessa riga.
+                className="inline-flex max-w-32 cursor-pointer items-center gap-1.5 rounded-full bg-primary-soft px-2.5 py-1.5 text-xs font-semibold text-primary hover:bg-primary-soft/70 sm:max-w-40 sm:px-3"
             >
                 <span className="min-w-0 truncate">{selected?.name ?? 'Scegli un gioco'}</span>
                 <svg viewBox="0 0 24 24" className={`h-2.5 w-2.5 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">

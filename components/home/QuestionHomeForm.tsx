@@ -72,13 +72,13 @@ export function QuestionHomeForm({ games, recentConversations }: QuestionHomeFor
                         }}
                     />
                     {/* Sempre su una riga (mai in colonna, mai overflow-x-auto — taglierebbe
-                        anche in verticale il menu a tendina del chip): a restringersi è il
-                        bottone, non il layout. Sotto sm mostra solo l'icona (il chip tronca
-                        già con ellipsis, i badge sono shrink-0) — gioco/badge possono comunque
-                        andare a capo (flex-wrap) se lo spazio non basta lo stesso. */}
-                    <div className="mt-2 flex items-center justify-between gap-2">
-                        <div className="flex min-w-0 flex-wrap items-center gap-2">
-                            <span className="shrink-0 font-mono text-[11px] text-ink-faint">gioco:</span>
+                        anche in verticale il menu a tendina del chip): a restringersi sotto sm
+                        sono, in ordine, la label "gioco:" (nascosta: il chip col nome del gioco
+                        basta da solo), il chip (max-w più stretto) e i badge/bottone (solo
+                        icona) — nessun elemento resta "orfano" a capo su una riga propria. */}
+                    <div className="mt-2 flex items-center justify-between gap-1.5 sm:gap-2">
+                        <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+                            <span className="hidden shrink-0 font-mono text-[11px] text-ink-faint sm:inline">gioco:</span>
                             {games.length > 0 ? (
                                 <>
                                     <GameChipSelect games={games} value={gameId} onChange={setGameId} />
@@ -106,7 +106,7 @@ export function QuestionHomeForm({ games, recentConversations }: QuestionHomeFor
                             type="submit"
                             disabled={!question.trim() || !gameId}
                             aria-label="Chiedi"
-                            className="flex shrink-0 items-center gap-1.5 px-3 sm:px-4"
+                            className="flex shrink-0 items-center gap-1.5 px-2.5 sm:px-4"
                         >
                             <span className="hidden sm:inline">Chiedi</span>
                             <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0" fill="currentColor" aria-hidden="true">
