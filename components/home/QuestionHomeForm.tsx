@@ -30,6 +30,10 @@ function CommunityIcon() {
     );
 }
 
+// Disattivati temporaneamente (posizione da ripensare, v. HOME.md) — icone e
+// markup restano pronti, non rimossi.
+const SHOW_SOURCE_BADGES = false;
+
 interface QuestionHomeFormProps {
     games: GameOption[];
     recentConversations: RecentConversation[];
@@ -100,7 +104,7 @@ export function QuestionHomeForm({ games, recentConversations }: QuestionHomeFor
                         </div>
 
                         {/* Solo le fonti pronte, non un badge "mancante" per l'altra. */}
-                        {(selectedGame?.manualReady || selectedGame?.communityReady) && (
+                        {SHOW_SOURCE_BADGES && (selectedGame?.manualReady || selectedGame?.communityReady) && (
                             <div className="flex flex-wrap items-center gap-2">
                                 {selectedGame?.manualReady && (
                                     <Badge variant="neutral" className="shrink-0" aria-label="Manuale disponibile">
